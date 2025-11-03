@@ -1,66 +1,26 @@
 const vi = {
-  emptyStateComponent: {
-    generic: {
-      heading: 'Không có dữ liệu',
-      content: 'Hiện tại chưa có dữ liệu để hiển thị',
-      button: 'Thử lại',
-    },
-  },
-  errorScreen: {
-    title: 'Đã xảy ra lỗi',
-    friendlySubtitle: 'Có gì đó không ổn. Vui lòng thử lại.',
-    reset: 'Thử lại',
-  },
-  language: {
-    selectLanguage: 'Chọn ngôn ngữ',
-    vietnamese: 'Tiếng Việt',
-    english: 'English',
-    australian: 'Australia',
+  splash: {
+    version: 'Phiên bản: {{version}}',
   },
   login: {
-    hello: 'Xin chào bạn!',
+    hello: 'Xin chào',
     username: 'Tên đăng nhập',
+    usernamePlaceholder: 'Nhập tên đăng nhập',
     password: 'Mật khẩu',
-    rememberAccount: 'Ghi nhớ tài khoản',
-    forgotPassword: 'Quên mật khẩu',
-    login: 'Đăng nhập',
-    orLoginWith: 'Hoặc đăng nhập với',
-    noAccount: 'Chưa có tài khoản?',
-    register: 'Đăng ký',
+    passwordPlaceholder: 'Nhập mật khẩu',
+    loginButton: 'Đăng nhập',
+    rememberMe: 'Lưu tài khoản',
+    forgotPassword: 'Quên mật khẩu?',
+    usernameRequired: 'Vui lòng nhập tên đăng nhập',
+    passwordRequired: 'Vui lòng nhập mật khẩu',
+    passwordMin: 'Mật khẩu phải có ít nhất 6 ký tự',
   },
-  dateTime: {
-    selectTime: 'Chọn giờ',
-    selectDate: 'Chọn ngày',
-    selectMonthYear: 'Chọn tháng & năm',
-    confirm: 'Xác nhận',
-    cancel: 'Hủy',
-    apply: 'Áp dụng',
-    month: 'Tháng',
-    year: 'Năm',
-    months: {
-      january: 'Tháng 1',
-      february: 'Tháng 2',
-      march: 'Tháng 3',
-      april: 'Tháng 4',
-      may: 'Tháng 5',
-      june: 'Tháng 6',
-      july: 'Tháng 7',
-      august: 'Tháng 8',
-      september: 'Tháng 9',
-      october: 'Tháng 10',
-      november: 'Tháng 11',
-      december: 'Tháng 12',
-    },
-    weekDays: {
-      sun: 'CN',
-      mon: 'T2',
-      tue: 'T3',
-      wed: 'T4',
-      thu: 'T5',
-      fri: 'T6',
-      sat: 'T7',
-    },
-  },
+  checkin: {
+    checkin: 'Xác thực đặt lịch',
+    sologanhapsoDT: 'Vui lòng nhập số điện thoại đã đặt lịch của bạn để cửa hàng có thể xác thực',
+    nhapsoDT: 'Nhập số điện thoại',
+    confirmButton: 'Xác nhận đặt lịch',
+  }
 };
 
 export default vi;

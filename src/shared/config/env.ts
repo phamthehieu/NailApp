@@ -1,4 +1,6 @@
 // Environment Configuration
+import packageJson from '../../../package.json';
+
 export const ENV = {
     API_BASE_URL: process.env.API_BASE_URL,
     API_BASE_URL_GPS: process.env.API_BASE_URL_GPS,
@@ -21,9 +23,9 @@ export const ENV = {
     ENABLE_ANALYTICS: process.env.ENABLE_ANALYTICS,
 
     // App Configuration
-    APP_NAME: process.env.APP_NAME,
-    APP_VERSION: process.env.APP_VERSION,
-    BUILD_NUMBER: process.env.BUILD_NUMBER,
+    APP_NAME: process.env.APP_NAME || packageJson.name,
+    APP_VERSION: process.env.APP_VERSION || packageJson.version,
+    BUILD_NUMBER: process.env.BUILD_NUMBER || '1',
 
     // App Error/Navigation configs
     CATCH_ERRORS:

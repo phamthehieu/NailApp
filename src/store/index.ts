@@ -49,3 +49,30 @@ export function clear(): void {
     storage.clearAll();
   } catch {}
 }
+
+export function loadBool(key: string): boolean | undefined {
+  try {
+    if (!storage.contains(key)) return undefined;
+    return storage.getBoolean(key) ?? undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+export function saveBool(key: string, value: boolean): boolean {
+  try {
+    storage.set(key, value);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function getBool(key: string, defaultValue: boolean = true): boolean {
+  const value = loadBool(key);
+  return value !== undefined ? value : defaultValue;
+}
+
+export function setBool(key: string, value: boolean) {
+  saveBool(key, value);
+}

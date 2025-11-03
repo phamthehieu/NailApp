@@ -10,28 +10,25 @@ import { ErrorBoundary } from '@features/error/ErrorBoundary';
 import ENV from '@shared/config/env';
 import { Paths } from './paths';
 import { RootStackParamList } from './types';
-import LoginScreen from '@features/auth/ui/LoginScreen';
+import { LoginScreen } from '@features/auth';
+import SplashScreen from '@/features/splash/SplashScreen';
+import CheckinScreen from '@/features/check_in/ui/CheckinScreen';
 
-const Stack = createNativeStackNavigator<RootStackParamList>()
+const Stack = createNativeStackNavigator<RootStackParamList>();
 
-const exitRoutes: (keyof RootStackParamList)[] = [Paths.Login];
+const exitRoutes: (keyof RootStackParamList)[] = [Paths.Splash];
 
 const AppStack = () => {
-    const {
-        theme: { colors },
-    } = useAppTheme();
 
     return (
         <Stack.Navigator
             screenOptions={{
                 headerShown: false,
-                navigationBarColor: colors.background,
-                contentStyle: {
-                    backgroundColor: colors.background,
-                },
             }}
         >
+            <Stack.Screen name={Paths.Splash} component={SplashScreen} />
             <Stack.Screen name={Paths.Login} component={LoginScreen} />
+            <Stack.Screen name={Paths.Checkin} component={CheckinScreen} />
         </Stack.Navigator >
     );
 };

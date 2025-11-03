@@ -1,6 +1,6 @@
 {
   "name": "NailApp",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "private": true,
   "scripts": {
     "android": "react-native run-android",
@@ -30,6 +30,7 @@
     "date-fns": "^4.1.0",
     "i18next": "25.4.2",
     "intl-pluralrules": "^2.0.1",
+    "lottie-react-native": "^7.2.2",
     "lucide-react-native": "^0.544.0",
     "react": "19.0.0",
     "react-aria": "^3.33.0",
@@ -42,6 +43,7 @@
     "react-native-flexbox-grid": "^0.3.2",
     "react-native-gesture-handler": "~2.24.0",
     "react-native-keyboard-controller": "^1.12.7",
+    "react-native-keychain": "^10.0.0",
     "react-native-linear-gradient": "^2.8.3",
     "react-native-localize": "^3.5.2",
     "react-native-mmkv": "^3.2.0",

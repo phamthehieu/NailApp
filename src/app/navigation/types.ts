@@ -6,4 +6,6 @@ export type RootScreenProps<
 
 export type RootStackParamList = {
   Login: undefined;
+  Splash: undefined;
+  Checkin: undefined;
 };

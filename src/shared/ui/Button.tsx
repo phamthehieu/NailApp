@@ -1,4 +1,4 @@
-import { ComponentType } from 'react';
+import { ComponentType, forwardRef, Ref } from 'react';
 import {
     Pressable,
     PressableProps,
@@ -85,7 +85,7 @@ export interface ButtonProps extends PressableProps {
     disabledStyle?: StyleProp<ViewStyle>;
 }
 
-export function Button(props: ButtonProps) {
+export const Button = forwardRef(function Button(props: ButtonProps, ref: Ref<any>) {
     const {
         tx,
         text,
@@ -127,6 +127,7 @@ export function Button(props: ButtonProps) {
 
     return (
         <Pressable
+            ref={ref}
             style={$viewStyle}
             accessibilityRole="button"
             accessibilityState={{ disabled: !!disabled }}
@@ -154,7 +155,7 @@ export function Button(props: ButtonProps) {
             )}
         </Pressable>
     );
-}
+});
 
 const $baseViewStyle: ThemedStyle<ViewStyle> = ({ spacing }) => ({
     minHeight: 56,
@@ -191,32 +192,32 @@ const $viewPresets: Record<Presets, ThemedStyleArray<ViewStyle>> = {
         $baseViewStyle,
         ({ colors }) => ({
             borderWidth: 1,
-            borderColor: colors.palette.neutral400,
-            backgroundColor: colors.palette.neutral100,
+            borderColor: colors.border,
+            backgroundColor: colors.background,
         }),
     ],
     filled: [
         $styles.row,
         $baseViewStyle,
-        ({ colors }) => ({ backgroundColor: colors.palette.neutral300 }),
+        ({ colors }) => ({ backgroundColor: colors.background }),
     ],
     reversed: [
         $styles.row,
         $baseViewStyle,
-        ({ colors }) => ({ backgroundColor: colors.palette.neutral800 }),
+        ({ colors }) => ({ backgroundColor: colors.background }),
     ],
 };
 
 const $textPresets: Record<Presets, ThemedStyleArray<TextStyle>> = {
     default: [$baseTextStyle],
     filled: [$baseTextStyle],
-    reversed: [$baseTextStyle, ({ colors }) => ({ color: colors.palette.neutral100 })],
+    reversed: [$baseTextStyle, ({ colors }) => ({ color: colors.text })],
 };
 
 const $pressedViewPresets: Record<Presets, ThemedStyle<ViewStyle>> = {
-    default: ({ colors }) => ({ backgroundColor: colors.palette.neutral200 }),
-    filled: ({ colors }) => ({ backgroundColor: colors.palette.neutral400 }),
-    reversed: ({ colors }) => ({ backgroundColor: colors.palette.neutral700 }),
+    default: ({ colors }) => ({ backgroundColor: colors.background }),
+    filled: ({ colors }) => ({ backgroundColor: colors.background }),
+    reversed: ({ colors }) => ({ backgroundColor: colors.background }),
 };
 
 const $pressedTextPresets: Record<Presets, ThemedStyle<TextStyle>> = {
