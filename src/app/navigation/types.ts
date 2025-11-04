@@ -8,4 +8,10 @@ export type RootStackParamList = {
   Login: undefined;
   Splash: undefined;
   Checkin: undefined;
+  ChooseShop: undefined;
+  Account: undefined;
+  System: undefined;
+  Report: undefined;
+  Manage: undefined;
+  BottomNavigator: undefined;
 };

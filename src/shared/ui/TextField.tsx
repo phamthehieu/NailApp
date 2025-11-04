@@ -153,7 +153,8 @@ export const TextField = forwardRef(function TextField(props: TextFieldProps, re
         $inputWrapperStyle,
         $inputWrapperStyleOverride,
         TextInputProps.multiline && { minHeight: 112 },
-        LeftAccessory && { paddingStart: 0 },
+        (LeftAccessory || RightAccessory) && { alignItems: 'center' as const },
+        LeftAccessory && { paddingStart: 10 },
         RightAccessory && { paddingEnd: 0 },
         status === 'error' && { borderColor: colors.error },
         isFocused && { borderColor: colors.yellow },
@@ -164,6 +165,7 @@ export const TextField = forwardRef(function TextField(props: TextFieldProps, re
         disabled && { color: colors.placeholderTextColor },
         isRTL && { textAlign: 'right' as TextStyle['textAlign'] },
         TextInputProps.multiline && { height: 'auto' },
+        (LeftAccessory || RightAccessory) && !TextInputProps.multiline && { marginVertical: 0 },
         $inputStyleOverride,
     ]
 
@@ -215,7 +217,7 @@ export const TextField = forwardRef(function TextField(props: TextFieldProps, re
                 <TextInput
                     ref={input}
                     underlineColorAndroid={colors.card}
-                    textAlignVertical="top"
+                    textAlignVertical={TextInputProps.multiline ? "top" : "center"}
                     placeholder={placeholderContent}
                     placeholderTextColor={colors.placeholderTextColor}
                     cursorColor={TextInputProps.cursorColor ?? colors.yellow}

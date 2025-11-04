@@ -67,7 +67,7 @@ export interface ListItemProps extends TouchableOpacityProps {
     /**
      * Icon mà nên hiển thị bên trái.
      */
-    leftIcon?: IconTypes
+    leftIcon?: ReactElement
     /**
      * Một màu tùy chọn cho icon bên trái.
      */
@@ -75,7 +75,7 @@ export interface ListItemProps extends TouchableOpacityProps {
     /**
      * Icon mà nên hiển thị bên phải.
      */
-    rightIcon?: IconTypes
+    rightIcon?: ReactElement
     /**
      * Một màu tùy chọn cho icon bên phải.
      */
@@ -93,7 +93,7 @@ export interface ListItemProps extends TouchableOpacityProps {
 }
 
 interface ListItemActionProps {
-    icon?: IconTypes
+    icon?: ReactElement
     iconColor?: string
     Component?: ReactElement
     size: number
@@ -187,17 +187,7 @@ function ListItemAction(props: ListItemActionProps) {
 
     if (icon !== undefined) {
         return (
-            <Icon
-                size={24}
-                icon={icon}
-                color={iconColor}
-                containerStyle={themed([
-                    $iconContainerStyles,
-                    side === "left" && $iconContainerLeft,
-                    side === "right" && $iconContainerRight,
-                    { height: size },
-                ])}
-            />
+           <View style={{ height: size, width: size, justifyContent: 'center', alignItems: 'center', flexGrow: 0 }}>{icon}</View>
         )
     }
 
@@ -206,12 +196,12 @@ function ListItemAction(props: ListItemActionProps) {
 
 const $separatorTop: ThemedStyle<ViewStyle> = ({ colors }) => ({
     borderTopWidth: 1,
-    borderTopColor: colors.separator,
+    borderTopColor: colors.border,
 })
 
 const $separatorBottom: ThemedStyle<ViewStyle> = ({ colors }) => ({
     borderBottomWidth: 1,
-    borderBottomColor: colors.separator,
+    borderBottomColor: colors.border,
 })
 
 const $textStyle: ThemedStyle<TextStyle> = ({ spacing }) => ({

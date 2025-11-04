@@ -3,29 +3,33 @@ import { RootScreenProps } from '@/app/navigation/types';
 import { useAppTheme } from '@/shared/theme';
 import StatusBarComponent from '@/shared/ui/StatusBar';
 import { Text } from '@/shared/ui/Text';
-import { ScrollView, View, Dimensions, KeyboardAvoidingView, Platform, Keyboard, Animated, PanResponder, PanResponderInstance, findNodeHandle } from 'react-native';
+import { ScrollView, View, Dimensions, KeyboardAvoidingView, Platform, Keyboard, Animated, PanResponder, PanResponderInstance, findNodeHandle, Pressable } from 'react-native';
 import { LayoutAnimation, UIManager } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AutoImage } from '@/shared/ui/AutoImage';
 import LottieView from 'lottie-react-native';
 import { useIsTablet } from '@/shared/lib/useIsTablet';
 import { TextField, TextFieldAccessoryProps } from '@/shared/ui/TextField';
-import { useRef, useMemo, useEffect, useCallback } from 'react';
+import { useRef, useMemo, useEffect, useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { TextInput, TouchableOpacity } from 'react-native';
 import { Eye, EyeOff, MapPinCheck  } from 'lucide-react-native';
 import { Button } from '@/shared/ui/Button';
 import { useAuthForm } from '@/features/auth/hooks/useAuthForm';
+import { useLanguage } from '@/shared/lib/useLanguage';
 import { $styles } from './styles';
+import Loader from '@/shared/ui/Loader';
 
 const LoginScreen = ({navigation}: RootScreenProps<Paths.Login>) => {
     const { t } = useTranslation();
+    const { currentLanguage, changeLanguage, getLanguageName } = useLanguage();
     const {
         theme: { colors },
     } = useAppTheme();
     const isTablet = useIsTablet();
     const screenWidth = Dimensions.get('window').width;
     const styles = $styles(colors, isTablet, screenWidth);
+    const [loading, setLoading] = useState(false);
 
     const {
         username,
@@ -116,9 +120,16 @@ const LoginScreen = ({navigation}: RootScreenProps<Paths.Login>) => {
     }, []);
 
     const handleLogin = useCallback(async () => {
+        setLoading(true);
         animateEase();
         const ok = await login();
-        if (!ok) return;
+        if (!ok) {
+            setLoading(false);
+            return;
+        } else {
+            navigation.navigate(Paths.ChooseShop);
+        }
+        setLoading(false);
     }, [login]);
 
     return (
@@ -152,6 +163,21 @@ const LoginScreen = ({navigation}: RootScreenProps<Paths.Login>) => {
 
                             <AutoImage source={require('@assets/images/logo.png')} style={styles.headerTitleIcon} />
                         </View>
+
+                        <Pressable style={styles.headerFlagContainer} onPress={() => {
+                            const nextLanguage = currentLanguage === 'vi' ? 'en' : 'vi';
+                            changeLanguage(nextLanguage);
+                        }}>
+                            <Text text={getLanguageName(currentLanguage === 'vi' ? 'en' : 'vi')} style={styles.headerFlagText} />
+                            <AutoImage
+                                source={currentLanguage === 'vi'
+                                    ? require('@assets/images/english.png')
+                                    : require('@assets/images/vietnam.png')}
+                                style={styles.headerFlagImage}
+                                resizeMode="cover"
+                            />
+                        </Pressable>
+
                     </View>
 
                     <View
@@ -300,6 +326,8 @@ const LoginScreen = ({navigation}: RootScreenProps<Paths.Login>) => {
                    <MapPinCheck  size={20} color={colors.black} />
                 </TouchableOpacity>
             </Animated.View>
+
+            <Loader loading={loading} title={t('loading.processing')} />
 
         </SafeAreaView >
     );

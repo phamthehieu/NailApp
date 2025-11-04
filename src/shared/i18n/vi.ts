@@ -20,7 +20,33 @@ const vi = {
     sologanhapsoDT: 'Vui lòng nhập số điện thoại đã đặt lịch của bạn để cửa hàng có thể xác thực',
     nhapsoDT: 'Nhập số điện thoại',
     confirmButton: 'Xác nhận đặt lịch',
-  }
+  },
+  loading: {
+    processing: 'Đang xử lý...',
+  },
+  chooseShop: {
+    chooseShop: 'Chọn cửa hàng',
+    searchPlaceholder: 'Tìm kiếm cửa hàng',
+    noShopFound: 'Không tìm thấy cửa hàng',
+  },
+  errorScreen: {
+    title: 'Đã xảy ra lỗi',
+    friendlySubtitle: 'Vui lòng thử lại sau',
+    reset: 'Thử lại',
+  },
+  network: {
+    noConnection: 'Không có kết nối mạng',
+    noConnectionMessage: 'Vui lòng kiểm tra kết nối internet của bạn',
+    checkConnection: 'Kiểm tra kết nối',
+    connectionRestored: 'Kết nối mạng đã được khôi phục',
+  },
+  emptyStateComponent: {
+    generic: {
+      heading: 'Không tìm thấy dữ liệu',
+      content: 'Vui lòng thử lại sau',
+      button: 'Thử lại',
+    },
+  },
 };
 
 export default vi;

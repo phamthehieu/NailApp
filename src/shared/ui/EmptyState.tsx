@@ -6,8 +6,9 @@ import type { ThemedStyle } from '../theme/types';
 
 import { Button, ButtonProps } from './Button';
 import { Text, TextProps } from './Text';
+import { useTranslation } from 'react-i18next';
 
-const sadFace = require('../../assets/images/sad-face.png');
+const sadFace = require('@assets/icon/no_data.png');
 
 interface EmptyStateProps {
     /**
@@ -116,13 +117,13 @@ export function EmptyState(props: EmptyStateProps) {
         themed,
         theme: { spacing },
     } = useAppTheme();
-
+    const {t} = useTranslation();
     const EmptyStatePresets = {
         generic: {
             imageSource: sadFace,
-            heading: translate('emptyStateComponent:generic.heading'),
-            content: translate('emptyStateComponent:generic.content'),
-            button: translate('emptyStateComponent:generic.button'),
+            heading: t('emptyStateComponent:generic.heading'),
+            content: t('emptyStateComponent:generic.content'),
+            button: t('emptyStateComponent:generic.button'),
         } as EmptyStatePresetItem,
     } as const;
 
@@ -191,7 +192,7 @@ export function EmptyState(props: EmptyStateProps) {
                     source={imageSource}
                     {...imageProps}
                     style={$imageStyles}
-                    tintColor={theme.colors.palette.neutral900}
+                    tintColor={theme.colors.background}
                 />
             )}
 

@@ -67,7 +67,7 @@ const $heading: ThemedStyle<TextStyle> = ({ colors, spacing }) => ({
 
 const $errorSection: ThemedStyle<ViewStyle> = ({ colors, spacing }) => ({
   flex: 2,
-  backgroundColor: colors.separator,
+  backgroundColor: colors.background,
   marginVertical: spacing.md,
   borderRadius: 6,
 });
@@ -82,7 +82,7 @@ const $errorContent: ThemedStyle<TextStyle> = ({ colors }) => ({
 
 const $errorBacktrace: ThemedStyle<TextStyle> = ({ colors, spacing }) => ({
   marginTop: spacing.md,
-  color: colors.textDim,
+  color: colors.text,
 });
 
 const $resetButton: ThemedStyle<ViewStyle> = ({ colors, spacing }) => ({

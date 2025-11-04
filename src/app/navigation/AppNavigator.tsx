@@ -12,7 +12,12 @@ import { Paths } from './paths';
 import { RootStackParamList } from './types';
 import { LoginScreen } from '@features/auth';
 import SplashScreen from '@/features/splash/SplashScreen';
-import CheckinScreen from '@/features/check_in/ui/CheckinScreen';
+import { CheckinScreen, ChooseShopScreen } from '@/features/store';
+import { AccountScreen } from '@/features/account';
+import { SystemScreen } from '@/features/system';
+import { ReportScreen } from '@/features/report';
+import { ManageScreen } from '@/features/manage';
+import BottomNavigator from './BottomNavigator';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -28,7 +33,17 @@ const AppStack = () => {
         >
             <Stack.Screen name={Paths.Splash} component={SplashScreen} />
             <Stack.Screen name={Paths.Login} component={LoginScreen} />
+
             <Stack.Screen name={Paths.Checkin} component={CheckinScreen} />
+            <Stack.Screen name={Paths.ChooseShop} component={ChooseShopScreen} />
+
+            <Stack.Screen name={Paths.BottomNavigator} component={BottomNavigator} />
+            
+            <Stack.Screen name={Paths.Account} component={AccountScreen} />
+            <Stack.Screen name={Paths.System} component={SystemScreen} />
+            <Stack.Screen name={Paths.Report} component={ReportScreen} />
+            <Stack.Screen name={Paths.Manage} component={ManageScreen} />
+
         </Stack.Navigator >
     );
 };

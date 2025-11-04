@@ -12,6 +12,7 @@ import { Text } from '@/shared/ui/Text';
 import { TextField } from '@/shared/ui/TextField';
 import LottieView from 'lottie-react-native';
 import { Button } from '@/shared/ui/Button';
+import Loader from '@/shared/ui/Loader';
 
 
 const CheckinScreen = ({navigation}: RootScreenProps<Paths.Checkin>) => {
@@ -20,11 +21,15 @@ const CheckinScreen = ({navigation}: RootScreenProps<Paths.Checkin>) => {
     const { t } = useTranslation();
     const screenWidth = Dimensions.get('window').width;
     const styles = $styles(colors, isTablet, screenWidth);
-    const scrollViewRef = useRef<ScrollView>(null);
     const [phone, setPhone] = useState('');
+    const [loading, setLoading] = useState(false);
     const handleCheckin = () => {
-        console.log('handleCheckin');
+        setLoading(true);
+        setTimeout(() => {
+            setLoading(false);
+        }, 3000);
     };
+
     return (
         <SafeAreaView style={styles.container} edges={['top', 'left', 'right', 'bottom']}>
             <StatusBarComponent backgroundColor={colors.yellow} />
@@ -39,13 +44,6 @@ const CheckinScreen = ({navigation}: RootScreenProps<Paths.Checkin>) => {
                 behavior={Platform.OS === 'ios' ? 'padding' : undefined}
                 keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 10}
             >
-                <ScrollView
-                    ref={scrollViewRef}
-                    contentContainerStyle={styles.contentContainer}
-                    showsVerticalScrollIndicator={false}
-                    keyboardShouldPersistTaps="handled"
-                    nestedScrollEnabled={true}
-                >
 
                 <View style={styles.contentWrapper}>
                     <LottieView
@@ -59,11 +57,17 @@ const CheckinScreen = ({navigation}: RootScreenProps<Paths.Checkin>) => {
 
                 <View style={styles.phoneContainer}>
 
-                <TextField
+                    <TextField
                         placeholder={t('checkin.nhapsoDT')}
                         value={phone}
                         onChangeText={setPhone}
                         inputWrapperStyle={styles.phoneInput}
+                        keyboardType="numeric"
+                        maxLength={10}
+                        returnKeyType="done"
+                        onSubmitEditing={handleCheckin}
+                        autoCapitalize="none"
+                        autoComplete="tel"
                     />
 
                 </View>
@@ -73,10 +77,11 @@ const CheckinScreen = ({navigation}: RootScreenProps<Paths.Checkin>) => {
                     onPress={handleCheckin}
                     style={styles.buttonCheckin}
                     textStyle={styles.buttonCheckinText}
-                        />
+                />
 
-                </ScrollView>
             </KeyboardAvoidingView>
+
+            <Loader loading={loading} title={t('loading.processing')} />
 
         </SafeAreaView >
     );
@@ -115,7 +120,7 @@ const $styles = (colors: Colors, isTablet: boolean, screenWidth: number) => {
         phoneContainer: {
             marginTop: 20,
             width: '100%',
-            maxWidth: contentMaxWidth,
+            paddingHorizontal: 16,
             alignSelf: 'center',
         },
         phoneInput: {
@@ -136,13 +141,11 @@ const $styles = (colors: Colors, isTablet: boolean, screenWidth: number) => {
         },
         buttonCheckin: {
             marginTop: 20,
-            width: '100%',
-            maxWidth: contentMaxWidth,
+            paddingHorizontal: 24,
             alignSelf: 'center',
             backgroundColor: colors.yellow,
             borderRadius: 12,
             marginBottom: 40,
-            marginHorizontal: 24,
             borderColor: colors.yellow,
         },
         buttonCheckinText: {

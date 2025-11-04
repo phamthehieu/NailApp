@@ -1,5 +1,7 @@
 import { ApiResponse, create } from 'apisauce';
 import ENV from '../../shared/config/env';
+import { checkNetworkConnection } from '../../shared/lib/useNetworkStatus';
+import { translate } from '../../shared/i18n/translate';
 
 const BASE_URL = ENV.API_BASE_URL;
 const DEFAULT_TIMEOUT = ENV.API_TIMEOUT;
@@ -104,6 +106,17 @@ export async function callApi<T>(
     params, data, headers, timeout = DEFAULT_TIMEOUT,
     retry = 0, cancelToken,
   } = opts;
+
+  // Kiểm tra kết nối mạng trước khi gọi API
+  const isConnected = await checkNetworkConnection();
+  if (!isConnected) {
+    throw new ApiError(
+      'NETWORK_ERROR',
+      translate('network:noConnectionMessage'),
+      undefined,
+      { isNetworkError: true }
+    );
+  }
 
   const send = () => api.any<T>({ method, url, params, data, headers, timeout, cancelToken });
 

@@ -3,8 +3,8 @@ import { sharedColors } from './colors.shared';
 export const colors = {
   background: '#181D25',
   text: '#FFFFFF',
-  card: '#11141A',
-  border: '#2C323E',
+  card: '#1E1E21',
+  border: '#4c566b',
   placeholderTextColor: '#999999',
   error: '#EF4444',
   primary: '#1D61E7',

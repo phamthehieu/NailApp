@@ -7,6 +7,7 @@ import { initI18n } from '@shared/i18n';
 import { AppNavigator } from '@app/navigation/AppNavigator';
 import { useNavigationPersistence } from '@app/navigation/navigationUtilities';
 import { ThemeProvider } from '@shared/theme/context';
+import { NetworkStatusBanner } from '@shared/ui/NetworkStatusBanner';
 import { loadDateFnsLocale } from '@shared/lib/formatDate';
 import * as storage from '@store/index';
 
@@ -40,6 +41,7 @@ export function App() {
               initialState={initialNavigationState}
               onStateChange={onNavigationStateChange}
             />
+            <NetworkStatusBanner />
           </ThemeProvider>
         </KeyboardProvider>
     </SafeAreaProvider>

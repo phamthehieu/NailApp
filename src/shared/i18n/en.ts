@@ -23,6 +23,25 @@ const en: Translations = {
         nhapsoDT: 'Enter phone number',
         confirmButton: 'Confirm booking',
     },
+    loading: {
+        processing: 'Processing...',
+    },
+    chooseShop: {
+        chooseShop: 'Choose shop',
+        searchPlaceholder: 'Search shop',
+        noShopFound: 'No shop found',
+    },
+    errorScreen: {
+        title: 'Oops!',
+        friendlySubtitle: 'Something went wrong. Please try again later.',
+        reset: 'Reset',
+    },
+    network: {
+        noConnection: 'No network connection',
+        noConnectionMessage: 'Please check your internet connection',
+        checkConnection: 'Check connection',
+        connectionRestored: 'Network connection restored',
+    },
 };
 
 export default en;
