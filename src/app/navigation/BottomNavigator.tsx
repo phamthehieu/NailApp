@@ -5,17 +5,17 @@ import { ChartLine , Monitor , CalendarCheck , UserRound } from 'lucide-react-na
 import { useAppTheme } from '@/shared/theme';
 import { Paths } from '@/app/navigation/paths';
 import type { RootStackParamList } from '@/app/navigation/types';
-import ManageScreen from '@/features/manage/ui/ManageScreen';
 import ReportScreen from '@/features/report/ui/ReportScreen';
 import SystemScreen from '@/features/system/ui/SystemScreen';
 import AccountScreen from '@/features/account/ui/AccountScreen';
+import BookingManageScreen from '@/features/manage/ui/BookingManageScreen';
 const Tab = createBottomTabNavigator<RootStackParamList>();
 
 const BottomNavigator = () => {
     const { theme: { colors } } = useAppTheme();
 
     const TAB_TITLES: Record<string, string> = {
-        [Paths.Manage]: 'Quản lý',
+        [Paths.BookingManage]: 'Quản lý',
         [Paths.Report]: 'Báo cáo',
         [Paths.System]: 'Hệ thống',
         [Paths.Account]: 'Tài khoản',
@@ -35,10 +35,10 @@ const BottomNavigator = () => {
             }}
         >
             <Tab.Screen
-                name={Paths.Manage}
-                component={ManageScreen}
+                name={Paths.BookingManage}
+                component={BookingManageScreen}
                 options={{
-                    tabBarLabel: TAB_TITLES[Paths.Manage],
+                    tabBarLabel: TAB_TITLES[Paths.BookingManage],
                     tabBarIcon: ({ color, size }: { color: string; size: number }) => (
                         <CalendarCheck  color={color} size={size} />
                     ),

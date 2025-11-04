@@ -42,6 +42,22 @@ const en: Translations = {
         checkConnection: 'Check connection',
         connectionRestored: 'Network connection restored',
     },
+    emptyStateComponent: {
+        generic: {
+          heading: 'Không tìm thấy dữ liệu',
+          content: 'Vui lòng thử lại sau',
+          button: 'Thử lại',
+        },
+      },
+    bookingManage: {
+        title: 'Booking Management',
+        searchPlaceholder: 'Search booking',
+        selectMonthAndYear: 'Select month and year',
+        month: 'Month',
+        year: 'Year',
+        cancel: 'Cancel',
+        done: 'Done',
+    }
 };
 
 export default en;

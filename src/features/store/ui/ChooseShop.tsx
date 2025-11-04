@@ -117,7 +117,7 @@ const ChooseShop = ({navigation}: RootScreenProps<Paths.ChooseShop>) => {
             <MHeader
                 label={t('chooseShop.chooseShop')}
                 onBack={() => navigation.goBack()}
-                showiconLeft={false}
+                showIconLeft={false}
                 bgColor={colors.yellow}
             />
             <KeyboardAvoidingView

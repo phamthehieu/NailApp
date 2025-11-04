@@ -36,7 +36,7 @@ const CheckinScreen = ({navigation}: RootScreenProps<Paths.Checkin>) => {
             <MHeader
                 label={t('checkin.checkin')}
                 onBack={() => navigation.goBack()}
-                showiconLeft={true}
+                showIconLeft={true}
                 bgColor={colors.yellow}
             />
             <KeyboardAvoidingView

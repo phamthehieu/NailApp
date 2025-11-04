@@ -47,6 +47,15 @@ const vi = {
       button: 'Thử lại',
     },
   },
+  bookingManage: {
+    title: 'Quản lý đặt lịch',
+    searchPlaceholder: 'Tìm kiếm đặt lịch',
+    selectMonthAndYear: 'Chọn tháng và năm',
+    month: 'Tháng',
+    year: 'Năm',
+    cancel: 'Hủy',
+    done: 'Xong',
+  }
 };
 
 export default vi;

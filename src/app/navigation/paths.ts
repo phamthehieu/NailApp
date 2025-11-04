@@ -6,6 +6,6 @@ export const enum Paths {
   Account = 'Account',
   System = 'System',
   Report = 'Report',
-  Manage = 'Manage',
   BottomNavigator = 'BottomNavigator',
+  BookingManage = 'BookingManage',
 }

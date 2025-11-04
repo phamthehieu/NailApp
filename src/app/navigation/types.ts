@@ -12,6 +12,6 @@ export type RootStackParamList = {
   Account: undefined;
   System: undefined;
   Report: undefined;
-  Manage: undefined;
   BottomNavigator: undefined;
+  BookingManage: undefined;
 };

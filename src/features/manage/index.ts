@@ -1,1 +1,1 @@
-export { default as ManageScreen } from './ui/ManageScreen';
+export { default as BookingManageScreen } from './ui/BookingManageScreen';
