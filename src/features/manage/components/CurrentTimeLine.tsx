@@ -2,14 +2,14 @@ import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, Text } from 'react-native';
 
 type CurrentTimeLineProps = {
-    scheduleWidth: number;
-    timeSlotHeight: number;
+    scheduleHeight: number; // Chiều cao của timeline (tổng chiều cao của tất cả users)
+    timeSlotWidth: number; // Chiều rộng của mỗi ô giờ
     hours: number;
     minutes: number;
     type: 'start' | 'end' | 'now';
 };
 
-const CurrentTimeLine = ({ scheduleWidth, timeSlotHeight, hours, minutes, type }: CurrentTimeLineProps) => {
+const CurrentTimeLine = ({ scheduleHeight, timeSlotWidth, hours, minutes, type }: CurrentTimeLineProps) => {
     const [position, setPosition] = useState(0);
     const [currentTime, setCurrentTime] = useState('');
 
@@ -22,11 +22,12 @@ const CurrentTimeLine = ({ scheduleWidth, timeSlotHeight, hours, minutes, type }
 
     useEffect(() => {
         updatePosition();
-    }, [hours, minutes, timeSlotHeight]);
+    }, [hours, minutes, timeSlotWidth]);
 
     const updatePosition = () => {
         const minutesPercentage = minutes / 60;
-        const currentPosition = (hours * timeSlotHeight) + (minutesPercentage * timeSlotHeight) - 10;
+        // Tính vị trí theo chiều ngang dựa trên giờ/phút
+        const currentPosition = (hours * timeSlotWidth) + (minutesPercentage * timeSlotWidth);
 
         setPosition(currentPosition);
 
@@ -41,7 +42,7 @@ const CurrentTimeLine = ({ scheduleWidth, timeSlotHeight, hours, minutes, type }
             style={[
                 styles.currentTimeContainer,
                 {
-                    top: position,
+                    left: position,
                 }
             ]}
         >
@@ -52,7 +53,7 @@ const CurrentTimeLine = ({ scheduleWidth, timeSlotHeight, hours, minutes, type }
                 style={[
                     styles.currentTimeLine,
                     {
-                        width: scheduleWidth - 60,
+                        height: scheduleHeight,
                         backgroundColor: type === 'start' ? 'green' : type === 'end' ? 'red' : 'blue',
                     }
                 ]}
@@ -65,17 +66,19 @@ const styles = StyleSheet.create({
     currentTimeContainer: {
         position: 'absolute',
         zIndex: 1000,
-        left: 0,
-        flexDirection: 'row',
-        alignItems: 'center',
+        top: 0,
+        flexDirection: 'column',
+        alignItems: 'flex-start',
     },
     timeBox: {
         backgroundColor: 'red',
+        marginLeft: -30,
         width: 60,
         height: 20,
         justifyContent: 'center',
         alignItems: 'center',
         borderRadius: 10,
+        marginBottom: 2,
     },
     timeText: {
         color: 'white',
@@ -83,7 +86,7 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
     },
     currentTimeLine: {
-        height: 2,
+        width: 2,
         backgroundColor: 'red',
     },
 });
