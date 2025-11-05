@@ -180,12 +180,13 @@ const LoginScreen = ({navigation}: RootScreenProps<Paths.Login>) => {
 
                     </View>
 
-                    <View
-                        style={styles.loginContainer}>
                         <Text
                             style={styles.loginText}>
                             {t('login.hello')}
                         </Text>
+
+                    <View
+                        style={styles.loginContainer}>
                         <LottieView
                             source={require('@assets/animations/Login.json')}
                             autoPlay

@@ -4,13 +4,12 @@ import { StyleSheet } from "react-native";
 export const $styles = (colors: Colors, isTablet: boolean, screenWidth: number) => {
     const basePadding = isTablet ? 32 : 10;
     const baseMargin = isTablet ? 24 : 12;
-    const baseMarginLeft = isTablet ? screenWidth * 0.15 : 25;
     const headerFontSize = isTablet ? 32 : 24;
     const loginTextFontSize = isTablet ? 16 : 12;
     const iconSize = isTablet ? 32 : 24;
 
-    const animationWidth = isTablet ? Math.min(screenWidth * 0.4, 400) : 272;
-    const animationHeight = isTablet ? (animationWidth * 200) / 272 : 200;
+    const animationWidth = isTablet ? Math.min(screenWidth * 2, 400) : 272;
+    const animationHeight = isTablet ? (animationWidth * 200) / 220 : 200;
     const animationMarginLeft = isTablet ? screenWidth * 0.15 : 26;
 
     const contentMaxWidth = isTablet ? 600 : undefined;
@@ -80,16 +79,17 @@ export const $styles = (colors: Colors, isTablet: boolean, screenWidth: number) 
         },
         loginContainer: {
             marginBottom: 1,
-            marginLeft: baseMarginLeft,
+            marginLeft: isTablet ? 0 : 25,
         },
         loginText: {
             color: colors.text,
             fontSize: loginTextFontSize,
+            marginLeft: isTablet ? 50 : 25,
         },
         loginAnimation: {
             width: animationWidth,
             height: animationHeight,
-            marginLeft: animationMarginLeft,
+            alignSelf: isTablet ? 'center' : 'flex-start',
         },
         loginFormContainer: {
             marginBottom: 16,
