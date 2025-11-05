@@ -55,7 +55,29 @@ const vi = {
     year: 'Năm',
     cancel: 'Hủy',
     done: 'Xong',
-  }
+  },
+  bottomNavigator: {
+    bookingManage: 'Quản lý',
+    report: 'Báo cáo',
+    system: 'Hệ thống',
+    account: 'Tài khoản',
+  },
+  calenderHeader: {
+    day: 'Ngày',
+    week: 'Tuần',
+    month: 'Tháng',
+    searchPlaceholder: 'Tìm kiếm...',
+    search: 'Tìm kiếm',
+    title: 'Chọn ngày',
+    confirm: 'Đồng ý',
+    cancel: 'Hủy',
+    selectWeek: 'Chọn tuần trong tháng',
+    selectMonth: 'Chọn tháng',
+    selectYear: 'Chọn năm',
+    selectDay: 'Chọn ngày',
+    today: 'Hôm nay',
+    year: 'Năm',
+  },
 };
 
 export default vi;

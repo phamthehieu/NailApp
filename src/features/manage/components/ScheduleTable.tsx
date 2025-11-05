@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect, useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import UserAvatar from './UserAvatar';
 import CurrentTimeLine from './CurrentTimeLine';
@@ -19,13 +19,20 @@ const ScheduleTable = ({ selectedDate: _selectedDate }: Props) => {
     const timeScrollRef = useRef<ScrollView>(null);
     const headerScrollRef = useRef<ScrollView>(null);
     const bodyScrollRef = useRef<ScrollView>(null);
-    const [tableWidth, setTableWidth] = useState(0);
     const [hoursStart, setHoursStart] = useState(8);
     const [minutesStart, setMinutesStart] = useState(15);
     const [hoursEnd, setHoursEnd] = useState(22);
     const [minutesEnd, setMinutesEnd] = useState(30);
-    const timeSlotWidth = 200; // Mỗi ô giờ rộng 200px (gấp đôi 100px)
-    const scheduleContentWidth = timeSlots.length * timeSlotWidth;
+    const timeSlotWidth = 200;
+    const minVisibleHour = 7;
+    const maxVisibleHour = 23;
+    const displayTimeSlots = useMemo(() => {
+        return timeSlots.filter(slot => {
+            const h = parseInt(slot.time.substring(0, 2));
+            return h >= minVisibleHour && h <= maxVisibleHour;
+        });
+    }, []);
+
     const isTablet = useIsTablet();
 
     const styles = $styles(colors, timeSlotWidth, isTablet);
@@ -35,22 +42,24 @@ const ScheduleTable = ({ selectedDate: _selectedDate }: Props) => {
         const blocks = getScheduleBlocksForHour(scheduleItems, userId, timeSlot);
 
         return blocks.map(({ item, index, heightInPixels }) => {
-            // Tính width dựa trên thời lượng của item
             const startHours = parseInt(item.startTime.substring(0, 2));
             const startMinutes = parseInt(item.startTime.substring(2, 4));
             const endHours = parseInt(item.endTime.substring(0, 2));
             const endMinutes = parseInt(item.endTime.substring(2, 4));
-            
+
             const startDecimal = startHours + startMinutes / 60;
             const endDecimal = endHours + endMinutes / 60;
             const duration = endDecimal - startDecimal;
-            const widthInPixels = duration * timeSlotWidth; // Mỗi giờ = 200px
-            
+            const widthInPixels = duration * timeSlotWidth;
+
             // Tính vị trí left dựa trên startTime
             const slotHour = parseInt(timeSlot.substring(0, 2));
             const slotMinutes = parseInt(timeSlot.substring(2, 4));
             const slotDecimal = slotHour + slotMinutes / 60;
             const leftPosition = (startDecimal - slotDecimal) * timeSlotWidth;
+
+            const showTitle = widthInPixels >= 28 && heightInPixels >= 18;
+            const showTime = widthInPixels >= 56 && heightInPixels >= 22;
 
             return (
                 <View
@@ -67,14 +76,16 @@ const ScheduleTable = ({ selectedDate: _selectedDate }: Props) => {
                         }
                     ]}
                 >
-                    <Text style={[
-                        styles.scheduleItemTitle,
-                        widthInPixels < 40 && styles.smallScheduleItemTitle
-                    ]}>
-                        {item.title}
-                    </Text>
-                    {widthInPixels >= 40 && (
-                        <Text style={styles.scheduleItemTime}>
+                    {showTitle && (
+                        <Text style={[
+                            styles.scheduleItemTitle,
+                            widthInPixels < 40 && styles.smallScheduleItemTitle
+                        ]} numberOfLines={1} ellipsizeMode="tail">
+                            {item.title}
+                        </Text>
+                    )}
+                    {showTime && (
+                        <Text style={styles.scheduleItemTime} numberOfLines={1} ellipsizeMode="clip">
                             {formatTime(item.startTime)} - {formatTime(item.endTime)}
                         </Text>
                     )}
@@ -136,7 +147,7 @@ const ScheduleTable = ({ selectedDate: _selectedDate }: Props) => {
                         pointerEvents="none"
                     >
                         <View style={styles.headerRow}>
-                            {timeSlots.map((slot) => (
+                            {displayTimeSlots.map((slot) => (
                                 <View key={slot.time} style={styles.timeHeaderCell}>
                                     <Text style={styles.timeText}>{slot.label}</Text>
                                 </View>
@@ -159,7 +170,7 @@ const ScheduleTable = ({ selectedDate: _selectedDate }: Props) => {
                     }}
                 >
                     <ScrollView 
-                        horizontal 
+                        horizontal
                         showsHorizontalScrollIndicator={false}
                         nestedScrollEnabled={true}
                         ref={bodyScrollRef}
@@ -174,19 +185,14 @@ const ScheduleTable = ({ selectedDate: _selectedDate }: Props) => {
                             }
                         }}
                     >
-                        <View
-                            style={styles.container}
-                            onLayout={(event) => {
-                                setTableWidth(event.nativeEvent.layout.width);
-                            }}
-                        >
+                        <View style={styles.container}>
                             <View style={styles.userRowsContainer}>
-                                <CurrentTimeLine scheduleHeight={users.length * 100} timeSlotWidth={timeSlotWidth} hours={hoursStart} minutes={minutesStart} type={'start'} />
+                                <CurrentTimeLine scheduleHeight={users.length * 100} timeSlotWidth={timeSlotWidth} hours={hoursStart} minutes={minutesStart} type={'start'} baseHourOffset={minVisibleHour} />
                                 {/* <CurrentTimeLine scheduleHeight={users.length * 100} timeSlotWidth={timeSlotWidth} hours={hoursNow} minutes={minutesNow} type={'now'} /> */}
-                                <CurrentTimeLine scheduleHeight={users.length * 100} timeSlotWidth={timeSlotWidth} hours={hoursEnd} minutes={minutesEnd} type={'end'} />
+                                <CurrentTimeLine scheduleHeight={users.length * 100} timeSlotWidth={timeSlotWidth} hours={hoursEnd} minutes={minutesEnd} type={'end'} baseHourOffset={minVisibleHour} />
                                 {users.map((user) => (
                                     <View key={user.id} style={styles.userRow}>
-                                        {timeSlots.map((slot) => {
+                                        {displayTimeSlots.map((slot) => {
                                             const slotHour = parseInt(slot.time.substring(0, 2));
                                             const slotMinutes = parseInt(slot.time.substring(2, 4));
                                             const working = isWorkingHours(slot.time, hoursStart, minutesStart, hoursEnd, minutesEnd);

@@ -57,7 +57,29 @@ const en: Translations = {
         year: 'Year',
         cancel: 'Cancel',
         done: 'Done',
-    }
+    },
+    bottomNavigator: {
+        bookingManage: 'Booking Management',
+        report: 'Report',
+        system: 'System',
+        account: 'Account',
+    },
+    calenderHeader: {
+        day: 'Day',
+        week: 'Week',
+        month: 'Month',
+        searchPlaceholder: 'Search...',
+        search: 'Search',
+        title: 'Select date',
+        confirm: 'Confirm',
+        cancel: 'Cancel',
+        selectWeek: 'Select week in month',
+        selectMonth: 'Select month',
+        selectYear: 'Select year',
+        selectDay: 'Select day',
+        today: 'Today',
+        year: 'Year',
+    },
 };
 
 export default en;

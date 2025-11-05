@@ -2,14 +2,15 @@ import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, Text } from 'react-native';
 
 type CurrentTimeLineProps = {
-    scheduleHeight: number; // Chiều cao của timeline (tổng chiều cao của tất cả users)
-    timeSlotWidth: number; // Chiều rộng của mỗi ô giờ
+    scheduleHeight: number;
+    timeSlotWidth: number;
     hours: number;
     minutes: number;
     type: 'start' | 'end' | 'now';
+    baseHourOffset?: number;
 };
 
-const CurrentTimeLine = ({ scheduleHeight, timeSlotWidth, hours, minutes, type }: CurrentTimeLineProps) => {
+const CurrentTimeLine = ({ scheduleHeight, timeSlotWidth, hours, minutes, type, baseHourOffset = 0 }: CurrentTimeLineProps) => {
     const [position, setPosition] = useState(0);
     const [currentTime, setCurrentTime] = useState('');
 
@@ -22,12 +23,12 @@ const CurrentTimeLine = ({ scheduleHeight, timeSlotWidth, hours, minutes, type }
 
     useEffect(() => {
         updatePosition();
-    }, [hours, minutes, timeSlotWidth]);
+    }, [hours, minutes, timeSlotWidth, baseHourOffset]);
 
     const updatePosition = () => {
         const minutesPercentage = minutes / 60;
-        // Tính vị trí theo chiều ngang dựa trên giờ/phút
-        const currentPosition = (hours * timeSlotWidth) + (minutesPercentage * timeSlotWidth);
+        const adjustedHours = hours - baseHourOffset;
+        const currentPosition = (adjustedHours * timeSlotWidth) + (minutesPercentage * timeSlotWidth);
 
         setPosition(currentPosition);
 

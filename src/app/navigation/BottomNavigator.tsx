@@ -9,16 +9,18 @@ import ReportScreen from '@/features/report/ui/ReportScreen';
 import SystemScreen from '@/features/system/ui/SystemScreen';
 import AccountScreen from '@/features/account/ui/AccountScreen';
 import BookingManageScreen from '@/features/manage/ui/BookingManageScreen';
+import { useTranslation } from 'react-i18next';
 const Tab = createBottomTabNavigator<RootStackParamList>();
 
 const BottomNavigator = () => {
     const { theme: { colors } } = useAppTheme();
+    const { t } = useTranslation();
 
     const TAB_TITLES: Record<string, string> = {
-        [Paths.BookingManage]: 'Quản lý',
-        [Paths.Report]: 'Báo cáo',
-        [Paths.System]: 'Hệ thống',
-        [Paths.Account]: 'Tài khoản',
+        [Paths.BookingManage]: t('bottomNavigator.bookingManage'),
+        [Paths.Report]: t('bottomNavigator.report'),
+        [Paths.System]: t('bottomNavigator.system'),
+        [Paths.Account]: t('bottomNavigator.account'),
     };
 
     return (

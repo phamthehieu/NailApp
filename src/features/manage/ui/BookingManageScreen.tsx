@@ -31,7 +31,6 @@ const BookingManageScreen = ({navigation}: RootScreenProps<Paths.BookingManage>)
         service: '',
         status: '',
     });
-    const scrollViewRef = useRef<ScrollView>(null);
     const styles = $styles(colors);
 
     return (
@@ -45,13 +44,13 @@ const BookingManageScreen = ({navigation}: RootScreenProps<Paths.BookingManage>)
                 showIconLeft={true}
                 iconLeft={<Grid3x3 size={24} color={colors.background} />}
                 bgColor={colors.yellow}
-                enableSearch={true}
-                searchPlaceholder={t('bookingManage.searchPlaceholder')}
-                onChangeSearchText={(text) => {console.log(text)}}
-                onSubmitSearch={(text) => {console.log(text)}}
-                showIconRight={true}
-                iconRight={<Funnel size={24} color={colors.background} />}
-                onPressIconRight={() => setShowAdvanced(true)}
+                // enableSearch={true}
+                // searchPlaceholder={t('bookingManage.searchPlaceholder')}
+                // onChangeSearchText={(text) => {console.log(text)}}
+                // onSubmitSearch={(text) => {console.log(text)}}
+                // showIconRight={true}
+                // iconRight={<Funnel size={24} color={colors.background} />}
+                // onPressIconRight={() => setShowAdvanced(true)}
             />
 
             <CalendarHeader selectedDate={selectedDate} onChange={setSelectedDate} />
