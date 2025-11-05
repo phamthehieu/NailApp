@@ -35,7 +35,7 @@ const BookingManageScreen = ({navigation}: RootScreenProps<Paths.BookingManage>)
     const styles = $styles(colors);
 
     return (
-        <SafeAreaView style={styles.container} edges={['top', 'left', 'right', 'bottom']}>
+        <SafeAreaView style={styles.container} edges={['top']}>
 
             <StatusBarComponent backgroundColor={colors.yellow} />
 

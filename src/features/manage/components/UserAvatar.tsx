@@ -1,3 +1,4 @@
+import { Colors, useAppTheme } from '@/shared/theme';
 import React from 'react';
 import { View, Text, Image, StyleSheet } from 'react-native';
 
@@ -12,6 +13,8 @@ type UserAvatarProps = {
 };
 
 const UserAvatar = ({ user }: UserAvatarProps) => {
+    const { theme: { colors } } = useAppTheme();
+    const styles = $styles(colors);
     return (
         <View style={styles.container}>
             <View style={styles.avatarContainer}>
@@ -26,7 +29,7 @@ const UserAvatar = ({ user }: UserAvatarProps) => {
     );
 };
 
-const styles = StyleSheet.create({
+const $styles = (colors: Colors) => StyleSheet.create({
     container: {
         alignItems: 'center',
         justifyContent: 'center'
@@ -36,7 +39,7 @@ const styles = StyleSheet.create({
         height: 40,
         borderRadius: 20,
         overflow: 'hidden',
-        backgroundColor: '#e1e1e1'
+        backgroundColor: colors.borderTable,
     },
     avatar: {
         width: '100%',
@@ -46,7 +49,7 @@ const styles = StyleSheet.create({
         marginTop: 4,
         fontSize: 12,
         fontWeight: '500',
-        color: '#333'
+        color: colors.text,
     }
 });
 

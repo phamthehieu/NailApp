@@ -10,6 +10,12 @@ export const colors = {
   primary: '#1D61E7',
   yellow: '#EFBF09',
   black: '#000000',
+  white: '#FFFFFF',
   headerBackground: '#FFFFFF',
+  borderTable: '#e0e0e0',
+  backgroundTable: '#f5f5f5',
+  bottomColor: "#e0e0e0",
+  backgroundDisabled: "#e0e0e0",
+
   ...sharedColors,
 } as const;

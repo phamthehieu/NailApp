@@ -7,36 +7,24 @@ import { timeSlots } from '../data/TimeSlots';
 import { getHours, getMinutes } from 'date-fns';
 import { scheduleItems } from '../data/scheduleItems';
 import { formatTime, isWorkingHours, getScheduleBlocksForHour } from '../api/schedule';
+import { Colors, useAppTheme } from '@/shared/theme';
 
 type Props = {
     selectedDate: Date;
 };
 
 const ScheduleTable = ({ selectedDate: _selectedDate }: Props) => {
+    const { theme: { colors } } = useAppTheme();
     const timeScrollRef = useRef<ScrollView>(null);
     const contentScrollRef = useRef<ScrollView>(null);
     const [tableWidth, setTableWidth] = useState(0);
     const [hoursStart, setHoursStart] = useState(8);
     const [minutesStart, setMinutesStart] = useState(15);
     const [hoursEnd, setHoursEnd] = useState(22);
-    const [hoursNow, setHoursNow] = useState(getHours(new Date()));
-    const [minutesNow, setMinutesNow] = useState(getMinutes(new Date()));
     const [minutesEnd, setMinutesEnd] = useState(30);
-    const totalWidth = 70 + (users.length * 120);
-    const scheduleContentWidth = users.length * 120;
+    const scheduleContentWidth = users.length * 180;
 
-    useEffect(() => {
-        const now = new Date();
-        const hours = now.getHours();
-        const scrollToPosition = hours * 100;
-
-        setTimeout(() => {
-            if (contentScrollRef.current) {
-                contentScrollRef.current.scrollTo({ y: scrollToPosition - 120, animated: true });
-            }
-        }, 500);
-    }, []);
-
+    const styles = $styles(colors);
 
 
     const renderScheduleItem = (userId: string, timeSlot: string) => {
@@ -113,10 +101,8 @@ const ScheduleTable = ({ selectedDate: _selectedDate }: Props) => {
                 </ScrollView>
             </View>
 
-            {/* Scrollable Content */}
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                 <View style={styles.scrollableContent}>
-                    {/* Fixed Header */}
                     <View style={styles.fixedHeader}>
                         <View style={styles.headerRow}>
                             {users.map((user) => (
@@ -133,7 +119,6 @@ const ScheduleTable = ({ selectedDate: _selectedDate }: Props) => {
                         contentContainerStyle={{ paddingTop: 80 }}
                         scrollEventThrottle={16}
                         onScroll={(event) => {
-                            // Sync vertical scroll with time column
                             if (timeScrollRef.current) {
                                 timeScrollRef.current.scrollTo({
                                     y: event.nativeEvent.contentOffset.y,
@@ -150,7 +135,7 @@ const ScheduleTable = ({ selectedDate: _selectedDate }: Props) => {
                         >
                             <View style={styles.timeRowsContainer}>
                                 <CurrentTimeLine scheduleWidth={scheduleContentWidth} timeSlotHeight={100} hours={hoursStart} minutes={minutesStart} type={'start'} />
-                                <CurrentTimeLine scheduleWidth={scheduleContentWidth} timeSlotHeight={100} hours={hoursNow} minutes={minutesNow} type={'now'} />
+                                {/* <CurrentTimeLine scheduleWidth={scheduleContentWidth} timeSlotHeight={100} hours={hoursNow} minutes={minutesNow} type={'now'} /> */}
                                 <CurrentTimeLine scheduleWidth={scheduleContentWidth} timeSlotHeight={100} hours={hoursEnd} minutes={minutesEnd} type={'end'} />
                                 {timeSlots.map((slot) => (
                                     <View key={slot.time} style={styles.timeRow}>
@@ -175,7 +160,7 @@ const ScheduleTable = ({ selectedDate: _selectedDate }: Props) => {
                                                             styles.partialOverlay,
                                                             {
                                                                 height: (minutesStart / 60) * 100,
-                                                                backgroundColor: '#e0e0e0',
+                                                                backgroundColor: colors.bottomColor,
                                                                 opacity: 0.8
                                                             }
                                                         ]} />
@@ -187,7 +172,7 @@ const ScheduleTable = ({ selectedDate: _selectedDate }: Props) => {
                                                             {
                                                                 top: (minutesEnd / 60) * 100,
                                                                 height: ((60 - minutesEnd) / 60) * 100,
-                                                                backgroundColor: '#e0e0e0',
+                                                                backgroundColor: colors.bottomColor,
                                                                 opacity: 0.8
                                                             }
                                                         ]} />
@@ -206,16 +191,16 @@ const ScheduleTable = ({ selectedDate: _selectedDate }: Props) => {
     );
 };
 
-const styles = StyleSheet.create({
+const $styles = (colors: Colors) => StyleSheet.create({
     mainContainer: {
         flex: 1,
         flexDirection: 'row',
     },
     fixedTimeColumn: {
         width: 70,
-        backgroundColor: '#f5f5f5',
+        backgroundColor: colors.background,
         borderRightWidth: 1,
-        borderColor: '#e0e0e0',
+        borderColor: colors.borderTable,
         zIndex: 1000,
     },
     timeColumnHeader: {
@@ -223,8 +208,8 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         borderBottomWidth: 1,
-        borderColor: '#e0e0e0',
-        backgroundColor: '#f5f5f5',
+        borderColor: colors.borderTable,
+        backgroundColor: colors.backgroundTable,
     },
     timeColumnContent: {
         position: 'relative',
@@ -234,8 +219,8 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         borderBottomWidth: 1,
-        borderColor: '#e0e0e0',
-        backgroundColor: '#f5f5f5',
+        borderColor: colors.borderTable,
+        backgroundColor: colors.backgroundTable,
     },
     scrollableContent: {
         flex: 1,
@@ -247,21 +232,21 @@ const styles = StyleSheet.create({
         left: 0,
         right: 0,
         zIndex: 1000,
-        backgroundColor: '#f5f5f5',
+        backgroundColor: colors.backgroundTable,
         borderBottomWidth: 1,
-        borderColor: '#e0e0e0',
+        borderColor: colors.borderTable,
     },
     container: {
         borderLeftWidth: 1,
         borderTopWidth: 1,
-        borderColor: '#e0e0e0'
+        borderColor: colors.borderTable,
     },
     headerRow: {
         flexDirection: 'row',
         height: 80,
         borderBottomWidth: 1,
-        borderColor: '#e0e0e0',
-        backgroundColor: '#f5f5f5',
+        borderColor: colors.borderTable,
+        backgroundColor: colors.backgroundTable,
         zIndex: 100,
     },
     timeRowsContainer: {
@@ -271,37 +256,37 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         height: 100,
         borderBottomWidth: 1,
-        borderColor: '#e0e0e0'
+        borderColor: colors.borderTable,
     },
     timeCell: {
         width: 70,
         justifyContent: 'center',
         alignItems: 'center',
         borderRightWidth: 1,
-        borderColor: '#e0e0e0',
-        backgroundColor: '#f5f5f5'
+        borderColor: colors.borderTable,
+        backgroundColor: colors.backgroundTable,
     },
     timeText: {
         fontSize: 16,
-        color: '#757575'
+        color: colors.text,
     },
     userCell: {
-        width: 120,
+        width: 180,
         justifyContent: 'center',
         alignItems: 'center',
         borderRightWidth: 1,
-        borderColor: '#e0e0e0',
-        backgroundColor: '#f5f5f5'
+        borderColor: colors.borderTable,
+        backgroundColor: colors.backgroundTable,
     },
     scheduleCell: {
-        width: 120,
+        width: 180,
         borderRightWidth: 1,
-        borderColor: '#e0e0e0',
-        backgroundColor: '#f9f9f9',
+        borderColor: colors.borderTable,
+        backgroundColor: colors.backgroundTable,
         position: 'relative',
     },
     nonWorkingHoursCell: {
-        backgroundColor: '#e0e0e0',
+        backgroundColor: colors.backgroundDisabled,
         opacity: 0.8
     },
     partialOverlay: {
@@ -317,7 +302,7 @@ const styles = StyleSheet.create({
         right: 0,
         height: 1,
         borderBottomWidth: 1,
-        borderBottomColor: '#e0e0e0',
+        borderBottomColor: colors.borderTable,
         borderStyle: 'dashed',
         opacity: 0.5
     },
@@ -338,7 +323,7 @@ const styles = StyleSheet.create({
     },
     scheduleItemTime: {
         fontSize: 11,
-        color: '#666',
+        color: colors.black,
         marginTop: 4
     },
     smallScheduleItemTitle: {
