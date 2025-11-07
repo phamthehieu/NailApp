@@ -25,6 +25,8 @@ const CalendarHeader = ({ selectedDate, onChange }: Props) => {
     const [tempMonth, setTempMonth] = useState<number>(selectedDate.getMonth());
     const [tempYear, setTempYear] = useState<number>(selectedDate.getFullYear());
     const [tempWeekIndex, setTempWeekIndex] = useState<number>(0);
+    const [tempStartDate, setTempStartDate] = useState<Date | null>(null);
+    const [rangeMode, setRangeMode] = useState<boolean>(false);
 
     const viewModeOptions = useMemo(() => (
         [
@@ -108,16 +110,31 @@ const CalendarHeader = ({ selectedDate, onChange }: Props) => {
     };
 
     const openPicker = () => {
-        // khởi tạo state tạm theo ngày hiện tại
         setTempMonth(selectedDate.getMonth());
         setTempYear(selectedDate.getFullYear());
+        // đặt index tuần hợp lệ (không vượt quá hôm nay)
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const baseDate = new Date(Math.min(selectedDate.getTime(), today.getTime()));
+        const weeks = getWeeksOfMonth(baseDate.getFullYear(), baseDate.getMonth());
+        let idx = weeks.findIndex(w => baseDate >= w.start && baseDate <= w.end);
+        if (idx === -1) {
+            // chọn tuần gần nhất không ở tương lai
+            for (let i = weeks.length - 1; i >= 0; i -= 1) {
+                if (weeks[i].start <= today) { idx = i; break; }
+            }
+        }
+        setTempWeekIndex(Math.max(0, idx));
+        const chosen = weeks[Math.max(0, idx)];
+        setTempStartDate(chosen ? new Date(chosen.start) : null);
+        setRangeMode(false);
         setIsPickerVisible(true);
     };
 
     const getStartOfWeek = (date: Date) => {
         const d = new Date(date);
-        const day = d.getDay(); // 0=Sun ... 6=Sat
-        const diff = day === 0 ? -6 : 1 - day; // start on Monday
+        const day = d.getDay();
+        const diff = day === 0 ? -6 : 1 - day;
         d.setDate(d.getDate() + diff);
         d.setHours(0, 0, 0, 0);
         return d;
@@ -140,7 +157,6 @@ const CalendarHeader = ({ selectedDate, onChange }: Props) => {
     const getWeeksOfMonth = (year: number, monthIndex: number) => {
         const firstOfMonth = new Date(year, monthIndex, 1);
         const lastOfMonth = new Date(year, monthIndex + 1, 0);
-        // bắt đầu từ thứ 2 của tuần chứa ngày 1
         let start = getStartOfWeek(firstOfMonth);
         const weeks: { start: Date; end: Date; label: string }[] = [];
         let idx = 1;
@@ -156,6 +172,19 @@ const CalendarHeader = ({ selectedDate, onChange }: Props) => {
             start.setDate(start.getDate() + 7);
         }
         return weeks;
+    };
+
+    const getMonthMatrix = (year: number, monthIndex: number) => {
+        const firstDayOfMonth = new Date(year, monthIndex, 1);
+        const start = getStartOfWeek(firstDayOfMonth);
+        const days: Date[] = [];
+        for (let i = 0; i < 42; i += 1) {
+            const d = new Date(start);
+            d.setDate(start.getDate() + i);
+            d.setHours(0, 0, 0, 0);
+            days.push(d);
+        }
+        return days;
     };
 
     return (
@@ -245,7 +274,7 @@ const CalendarHeader = ({ selectedDate, onChange }: Props) => {
                     title={t('calenderHeader.title')}
                     confirmText={t('calenderHeader.confirm')}
                     cancelText={t('calenderHeader.cancel')}
-                    allowFutureDates={true}
+                    allowFutureDates={false}
                     allowPastDates={true}
                 />
             )}
@@ -260,46 +289,120 @@ const CalendarHeader = ({ selectedDate, onChange }: Props) => {
                     <View style={styles.modalBackdrop}>
                         <View style={styles.modalContainer}>
                             <Text style={styles.modalTitle}>{t('calenderHeader.selectWeek')}</Text>
-
-                            {/* Tháng và Tuần xếp ngang */}
-                            <View style={styles.pickersRow}>
-                                <View style={styles.pickerColumn}>
-                                    <Text style={styles.columnTitle}>{t('calenderHeader.month')}</Text>
-                                    <ScrollView>
-                                        {Array.from({ length: 12 }).map((_, m) => {
-                                            const selected = m === tempMonth;
-                                            return (
-                                                <TouchableOpacity
-                                                    key={`wm-${m}`}
-                                                    style={[styles.optionItem, selected && styles.optionSelected]}
-                                                    onPress={() => setTempMonth(m)}
-                                                    activeOpacity={0.7}
-                                                >
-                                                    <Text style={[styles.optionText, selected && styles.optionTextSelected]}>{t('calenderHeader.month')} {m + 1}</Text>
-                                                </TouchableOpacity>
-                                            );
-                                        })}
-                                    </ScrollView>
-                                </View>
-                                <View style={styles.pickerColumn}>
-                                    <Text style={styles.columnTitle}>{t('calenderHeader.week')}</Text>
-                                    <ScrollView>
-                                        {getWeeksOfMonth(selectedDate.getFullYear(), tempMonth).map((w, i) => {
-                                            const selected = i === tempWeekIndex;
-                                            return (
-                                                <TouchableOpacity
-                                                    key={`${w.label}-${i}`}
-                                                    style={[styles.optionItem, selected && styles.optionSelected]}
-                                                    onPress={() => setTempWeekIndex(i)}
-                                                    activeOpacity={0.7}
-                                                >
-                                                    <Text style={[styles.optionText, selected && styles.optionTextSelected]}>{w.label}</Text>
-                                                </TouchableOpacity>
-                                            );
-                                        })}
-                                    </ScrollView>
-                                </View>
+                            <View style={styles.segmentContainer}>
+                                <TouchableOpacity
+                                    style={[styles.segmentButton, !rangeMode && styles.segmentActive]}
+                                    onPress={() => setRangeMode(false)}
+                                    activeOpacity={0.7}
+                                >
+                                    <Text style={[styles.segmentText, !rangeMode && styles.segmentTextActive]}>{t('calenderHeader.week') || 'Tuần'}</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                    style={[styles.segmentButton, rangeMode && styles.segmentActive]}
+                                    onPress={() => setRangeMode(true)}
+                                    activeOpacity={0.7}
+                                >
+                                    <Text style={[styles.segmentText, rangeMode && styles.segmentTextActive]}>{t('calenderHeader.range') || 'Phạm vi'}</Text>
+                                </TouchableOpacity>
                             </View>
+
+                            <View style={styles.weekHeaderRow}>
+                                <TouchableOpacity
+                                    style={styles.iconButton}
+                                    onPress={() => {
+                                        const d = new Date(tempYear, tempMonth, 1);
+                                        d.setMonth(d.getMonth() - 1);
+                                        setTempYear(d.getFullYear());
+                                        setTempMonth(d.getMonth());
+                                        setTempWeekIndex(0);
+                                    }}
+                                >
+                                    <ChevronLeft size={iconSize} color={colors.text} />
+                                </TouchableOpacity>
+                                <Text style={styles.monthYearText}>
+                                    {new Intl.DateTimeFormat('vi-VN', { month: 'long', year: 'numeric' }).format(new Date(tempYear, tempMonth, 1))}
+                                </Text>
+                                <TouchableOpacity
+                                    style={styles.iconButton}
+                                    onPress={() => {
+                                        const d = new Date(tempYear, tempMonth, 1);
+                                        d.setMonth(d.getMonth() + 1);
+                                        setTempYear(d.getFullYear());
+                                        setTempMonth(d.getMonth());
+                                        setTempWeekIndex(0);
+                                    }}
+                                >
+                                    <ChevronRight size={iconSize} color={colors.text} />
+                                </TouchableOpacity>
+                            </View>
+
+                            <View style={styles.weekdayRow}>
+                                {['T2','T3','T4','T5','T6','T7','CN'].map((d) => (
+                                    <Text key={d} style={styles.weekdayText}>{d}</Text>
+                                ))}
+                            </View>
+
+                            <View style={styles.monthGrid}>
+                                {(() => {
+                                    const matrix = getMonthMatrix(tempYear, tempMonth);
+                                    const weeks = getWeeksOfMonth(tempYear, tempMonth);
+                                    const chosen = weeks[Math.max(0, Math.min(tempWeekIndex, weeks.length - 1))];
+                                    const today = new Date();
+                                    today.setHours(0, 0, 0, 0);
+                                    return matrix.map((d, idx) => {
+                                        const inMonth = d.getMonth() === tempMonth;
+                                        const isInChosenWeek = chosen && d >= chosen.start && d <= chosen.end;
+                                        const isFuture = d > today;
+                                        const isTodayCell = d.getTime() === today.getTime();
+                                        const isInRangeSelected = rangeMode && !!(tempStartDate && chosen && d >= tempStartDate && d <= chosen.end);
+                                        return (
+                                            <TouchableOpacity
+                                                key={`d-${idx}`}
+                                                style={[
+                                                    styles.dayCell,
+                                                    !inMonth && styles.outMonthDay,
+                                                    isInRangeSelected && styles.rangeSelected,
+                                                    !rangeMode && isInChosenWeek && styles.dayCellSelected,
+                                                    isTodayCell && !isInChosenWeek && styles.todayOutline,
+                                                    isTodayCell && isInChosenWeek && styles.todayInWeek,
+                                                    isFuture && styles.disabledDay,
+                                                ]}
+                                                activeOpacity={isFuture ? 1 : 0.8}
+                                                disabled={isFuture}
+                                                onPress={() => {
+                                                    const curWeeks = getWeeksOfMonth(tempYear, tempMonth);
+                                                    const currentChosen = curWeeks[Math.max(0, Math.min(tempWeekIndex, curWeeks.length - 1))];
+                                                    const wIdx = curWeeks.findIndex(w => d >= w.start && d <= w.end);
+                                                    if (!rangeMode) {
+                                                        // Chế độ chọn tuần: chạm ngày nào cũng nhảy sang tuần của ngày đó
+                                                        setTempWeekIndex(Math.max(0, wIdx));
+                                                        const newChosen = curWeeks[Math.max(0, wIdx)];
+                                                        setTempStartDate(newChosen ? new Date(newChosen.start) : null);
+                                                        return;
+                                                    }
+                                                    // Chế độ phạm vi: logic cũ
+                                                    if (currentChosen) {
+                                                        if (d < currentChosen.start) {
+                                                            setTempStartDate(new Date(d));
+                                                            return;
+                                                        }
+                                                        if (d >= currentChosen.start && d <= currentChosen.end) {
+                                                            setTempStartDate(new Date(currentChosen.start));
+                                                            return;
+                                                        }
+                                                    }
+                                                    setTempWeekIndex(Math.max(0, wIdx));
+                                                    const newChosen = curWeeks[Math.max(0, wIdx)];
+                                                    setTempStartDate(newChosen ? new Date(newChosen.start) : null);
+                                                }}
+                                            >
+                                                <Text style={styles.dayNumber}>{d.getDate()}</Text>
+                                            </TouchableOpacity>
+                                        );
+                                    });
+                                })()}
+                            </View>
+
                             <View style={styles.modalActions}>
                                 <TouchableOpacity style={[styles.actionButton, styles.cancelButton]} onPress={() => setIsPickerVisible(false)}>
                                     <Text style={styles.actionText}>{t('calenderHeader.cancel')}</Text>
@@ -307,9 +410,22 @@ const CalendarHeader = ({ selectedDate, onChange }: Props) => {
                                 <TouchableOpacity
                                     style={[styles.actionButton, styles.okButton]}
                                     onPress={() => {
-                                        const weeks = getWeeksOfMonth(selectedDate.getFullYear(), tempMonth);
-                                        const chosen = weeks[Math.max(0, Math.min(tempWeekIndex, weeks.length - 1))];
-                                        onChange(new Date(chosen.start));
+                                        const weeks = getWeeksOfMonth(tempYear, tempMonth);
+                                        const today = new Date();
+                                        today.setHours(0, 0, 0, 0);
+                                        // khóa tuần tương lai
+                                        let maxIdx = weeks.length - 1;
+                                        for (let i = weeks.length - 1; i >= 0; i -= 1) {
+                                            if (weeks[i].start <= today) { maxIdx = i; break; }
+                                        }
+                                        const usedIdx = Math.min(tempWeekIndex, Math.max(0, maxIdx));
+                                        const chosen = weeks[usedIdx];
+                                        if (!rangeMode) {
+                                            onChange(new Date(chosen.start));
+                                        } else {
+                                            const startDate = tempStartDate && tempStartDate <= chosen.end ? tempStartDate : chosen.start;
+                                            onChange(new Date(startDate));
+                                        }
                                         setIsPickerVisible(false);
                                     }}
                                 >
@@ -542,11 +658,36 @@ const $styles = (colors: Colors, isSmall: boolean) => {
             marginBottom: isSmall ? 10 : 12,
             textAlign: 'center',
         },
+        segmentContainer: {
+            flexDirection: 'row',
+            alignSelf: 'center',
+            borderWidth: 1,
+            borderColor: colors.border,
+            borderRadius: 8,
+            overflow: 'hidden',
+            marginBottom: isSmall ? 8 : 10,
+        },
+        segmentButton: {
+            paddingVertical: isSmall ? 6 : 8,
+            paddingHorizontal: isSmall ? 10 : 12,
+            backgroundColor: colors.card,
+        },
+        segmentActive: {
+            backgroundColor: colors.yellow,
+        },
+        segmentText: {
+            color: colors.text,
+            fontSize: isSmall ? 12 : 13,
+            fontWeight: '600',
+        },
+        segmentTextActive: {
+            color: colors.text,
+        },
         pickersRow: {
             flexDirection: 'row',
             gap: isSmall ? 8 : 12,
         },
-        pickerColumn: {
+        pickerColumn: { 
             flex: 1,
             borderWidth: 1,
             borderColor: colors.border,
@@ -606,6 +747,60 @@ const $styles = (colors: Colors, isSmall: boolean) => {
         },
         okText: {
             color: colors.text,
+        },
+        disabledDay: {
+            opacity: 0.35,
+        },
+        // Tuần - calendar grid styles
+        weekHeaderRow: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: isSmall ? 6 : 8,
+        },
+        weekdayRow: {
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            paddingHorizontal: isSmall ? 6 : 8,
+            marginBottom: isSmall ? 4 : 6,
+        },
+        weekdayText: {
+            width: `${100 / 7}%`,
+            textAlign: 'center',
+            color: colors.text,
+            fontSize: isSmall ? 11 : 12,
+            fontWeight: '600',
+            opacity: 0.8,
+        },
+        monthGrid: {
+            flexDirection: 'row',
+            flexWrap: 'wrap',
+        },
+        dayCell: {
+            width: `${100 / 7}%`,
+            aspectRatio: 1,
+            alignItems: 'center',
+            justifyContent: 'center',
+            borderRadius: 6,
+            marginVertical: 2,
+        },
+        dayCellSelected: {
+            backgroundColor: colors.yellow,
+        },
+        rangeSelected: {
+            backgroundColor: colors.yellow,
+        },
+        todayInWeek: {
+            borderWidth: 1,
+            borderColor: colors.text,
+        },
+        outMonthDay: {
+            opacity: 0.4,
+        },
+        dayNumber: {
+            color: colors.text,
+            fontSize: isSmall ? 12 : 14,
+            fontWeight: '600',
         },
     });
 };

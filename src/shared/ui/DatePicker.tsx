@@ -55,11 +55,23 @@ const DateTimePicker: React.FC<DateTimePickerProps> = memo(({
 
   const getMaximumDate = useCallback((): Date | undefined => {
     if (maximumDate) return maximumDate;
-    if (!allowFutureDates) return new Date();
+    if (!allowFutureDates) {
+      const now = new Date();
+      const endOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+      return endOfToday;
+    }
     return undefined;
   }, [maximumDate, allowFutureDates]);
 
-  const initialDate = useMemo(() => value ?? new Date(), [value]);
+  const resolvedMin = getMinimumDate();
+  const resolvedMax = getMaximumDate();
+  const clampDate = useCallback((d: Date): Date => {
+    if (resolvedMin && d < resolvedMin) return resolvedMin;
+    if (resolvedMax && d > resolvedMax) return resolvedMax;
+    return d;
+  }, [resolvedMin, resolvedMax]);
+
+  const initialDate = useMemo(() => clampDate(value ?? new Date()), [value, clampDate]);
   const resolvedMode = useMemo(() => {
     if (Platform.OS === 'android' && mode === 'datetime') return 'date';
     return mode;
@@ -113,8 +125,8 @@ const DateTimePicker: React.FC<DateTimePickerProps> = memo(({
                 value={tempDate}
                 mode={resolvedMode as any}
                 display="spinner"
-                minimumDate={getMinimumDate()}
-                maximumDate={getMaximumDate()}
+                minimumDate={resolvedMin}
+                maximumDate={resolvedMax}
                 onChange={handlePickerChange}
                 style={styles.picker}
               />
@@ -124,11 +136,11 @@ const DateTimePicker: React.FC<DateTimePickerProps> = memo(({
       ) : (
         visible && (
           <RNDateTimePicker
-            value={value}
+            value={initialDate}
             mode={resolvedMode as any}
             display="default"
-            minimumDate={getMinimumDate()}
-            maximumDate={getMaximumDate()}
+            minimumDate={resolvedMin}
+            maximumDate={resolvedMax}
             onChange={handlePickerChange}
           />
         )

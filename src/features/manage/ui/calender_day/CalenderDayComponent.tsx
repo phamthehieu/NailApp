@@ -1,12 +1,11 @@
-import React, { useRef, useState, useEffect, useMemo } from 'react';
+import React, { useRef, useState, useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import UserAvatar from './UserAvatar';
 import CurrentTimeLine from './CurrentTimeLine';
-import { users } from '../data/users';
-import { timeSlots } from '../data/TimeSlots';
-import { getHours, getMinutes } from 'date-fns';
-import { scheduleItems } from '../data/scheduleItems';
-import { formatTime, isWorkingHours, getScheduleBlocksForHour } from '../api/schedule';
+import { users } from '../../data/users';
+import { timeSlots } from '../../data/TimeSlots';
+import { scheduleItems } from '../../data/scheduleItems';
+import { isWorkingHours, getScheduleBlocksForHour } from '../../api/schedule';
 import { Colors, useAppTheme } from '@/shared/theme';
 import { useIsTablet } from '@/shared/lib/useIsTablet';
 
@@ -14,7 +13,7 @@ type Props = {
     selectedDate: Date;
 };
 
-const ScheduleTable = ({ selectedDate: _selectedDate }: Props) => {
+const CalenderDayComponent = ({ selectedDate: _selectedDate }: Props) => {
     const { theme: { colors } } = useAppTheme();
     const timeScrollRef = useRef<ScrollView>(null);
     const headerScrollRef = useRef<ScrollView>(null);
@@ -52,7 +51,6 @@ const ScheduleTable = ({ selectedDate: _selectedDate }: Props) => {
             const duration = endDecimal - startDecimal;
             const widthInPixels = duration * timeSlotWidth;
 
-            // Tính vị trí left dựa trên startTime
             const slotHour = parseInt(timeSlot.substring(0, 2));
             const slotMinutes = parseInt(timeSlot.substring(2, 4));
             const slotDecimal = slotHour + slotMinutes / 60;
@@ -169,7 +167,7 @@ const ScheduleTable = ({ selectedDate: _selectedDate }: Props) => {
                         }
                     }}
                 >
-                    <ScrollView 
+                    <ScrollView
                         horizontal
                         showsHorizontalScrollIndicator={false}
                         nestedScrollEnabled={true}
@@ -385,4 +383,4 @@ const $styles = (colors: Colors, timeSlotWidth: number, isTablet: boolean) => St
     }
 });
 
-export default ScheduleTable;
+export default CalenderDayComponent;

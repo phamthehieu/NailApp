@@ -2,19 +2,17 @@ import { Paths } from '@/app/navigation/paths';
 import { RootScreenProps } from '@/app/navigation/types';
 import { Colors, useAppTheme } from '@/shared/theme';
 import StatusBarComponent from '@/shared/ui/StatusBar';
-import { Text } from '@/shared/ui/Text';
-import { ScrollView, Dimensions, KeyboardAvoidingView, Platform, StyleSheet, Modal, View, TouchableOpacity, TextInput } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useIsTablet } from '@/shared/lib/useIsTablet';
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import Loader from '@/shared/ui/Loader';
 import MHeader from '@/shared/ui/MHeader';
-import { Funnel, Grid3x3 } from 'lucide-react-native';
+import { Grid3x3 } from 'lucide-react-native';
 import { DrawerActions } from '@react-navigation/native';
 import ModalFliterComponent from '../components/ModalFliterComponent';
-import CalendarHeader from '../components/CalenderHeader';
-import ScheduleTable from '../components/ScheduleTable';
+import CalendarHeader from './calender_day/CalenderHeader';
+import CalenderDayComponent from './calender_day/CalenderDayComponent';
 
 const BookingManageScreen = ({navigation}: RootScreenProps<Paths.BookingManage>) => {
     const { t } = useTranslation();
@@ -57,7 +55,7 @@ const BookingManageScreen = ({navigation}: RootScreenProps<Paths.BookingManage>)
 
             <View style={styles.content}>
 
-                <ScheduleTable selectedDate={selectedDate} />
+                <CalenderDayComponent selectedDate={selectedDate} />
 
             </View>
 

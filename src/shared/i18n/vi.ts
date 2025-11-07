@@ -77,6 +77,7 @@ const vi = {
     selectDay: 'Chọn ngày',
     today: 'Hôm nay',
     year: 'Năm',
+    range: 'Phạm vi',
   },
 };
 

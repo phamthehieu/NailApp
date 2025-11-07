@@ -79,6 +79,7 @@ const en: Translations = {
         selectDay: 'Select day',
         today: 'Today',
         year: 'Year',
+        range: 'Range',
     },
 };
 
