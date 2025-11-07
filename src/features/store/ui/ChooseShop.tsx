@@ -103,11 +103,12 @@ const ChooseShop = ({navigation}: RootScreenProps<Paths.ChooseShop>) => {
     ];
 
     const onChooseShop = (shop: any) => {
-        setLoading(true);
-        setTimeout(() => {
-            setLoading(false);
-            navigation.navigate(Paths.BottomNavigator);
-        }, 3000);
+        navigation.navigate(Paths.BottomNavigator);
+        // setLoading(true);
+        // setTimeout(() => {
+        //     setLoading(false);
+        //     navigation.navigate(Paths.BottomNavigator);
+        // }, 3000);
 
     }
 

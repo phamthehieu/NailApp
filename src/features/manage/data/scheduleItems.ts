@@ -6,6 +6,7 @@ export type ScheduleItem = {
   title: string;
   color: string;
   borderColor: string;
+  date?: Date;
 };
 
 export const scheduleItems: ScheduleItem[] = [
@@ -153,4 +154,87 @@ export const scheduleItems: ScheduleItem[] = [
     color: '#E1F5FE',
     borderColor: '#4FC3F7',
   }
+];
+
+export const scheduleItemsWeek: ScheduleItem[] = [
+  {
+    id: '1',
+    userId: '1',
+    startTime: '0900',
+    endTime: '0930',
+    title: 'Chăm sóc móng',
+    color: '#E1F5FE',
+    borderColor: '#4FC3F7',
+    date: new Date('2025-10-07'),
+  },
+  {
+    id: '1',
+    userId: '1',
+    startTime: '1200',
+    endTime: '1430',
+    title: 'Chăm sóc móng',
+    color: '#E1F5FE',
+    borderColor: '#4FC3F7',
+    date: new Date('2025-10-07'),
+  },
+  {
+    id: '1',
+    userId: '1',
+    startTime: '1300',
+    endTime: '1430',
+    title: 'Làm móng tay',
+    color: '#E8F5E9',
+    borderColor: '#66BB6A',
+    date: new Date('2025-10-08'),
+  },
+  {
+    id: '1',
+    userId: '1',
+    startTime: '1900',
+    endTime: '2200',
+    title: 'Làm móng tay',
+    color: '#E8F5E9',
+    borderColor: '#66BB6A',
+    date: new Date('2025-10-08'),
+  },
+  {
+    id: '1',
+    userId: '1',
+    startTime: '1100',
+    endTime: '1200',
+    title: 'Đánh giá sản phẩm',
+    color: '#FFF3E0',
+    borderColor: '#FFB74D',
+    date: new Date('2025-10-09'),
+  },
+  {
+    id: '1',
+    userId: '1',
+    startTime: '1400',
+    endTime: '1600',
+    title: 'Tư vấn',
+    color: '#F3E5F5',
+    borderColor: '#AB47BC',
+    date: new Date('2025-10-10'),
+  },
+  {
+    id: '1',
+    userId: '1',
+    startTime: '1000',
+    endTime: '1030',
+    title: 'Sửa móng tay',
+    color: '#E1F5FE',
+    borderColor: '#4FC3F7',
+    date: new Date('2025-10-11'),
+  },
+  {
+    id: '1',
+    userId: '1',
+    startTime: '0830',
+    endTime: '1030',
+    title: 'Sửa móng tay',
+    color: '#E1F5FE',
+    borderColor: '#4FC3F7',
+    date: new Date('2025-10-12'),
+  },
 ];

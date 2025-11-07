@@ -1,19 +1,24 @@
 import React, { useRef, useState, useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
-import UserAvatar from './UserAvatar';
-import CurrentTimeLine from './CurrentTimeLine';
+import { Dropdown } from 'react-native-element-dropdown';
 import { users } from '../../data/users';
 import { timeSlots } from '../../data/TimeSlots';
-import { scheduleItems } from '../../data/scheduleItems';
+import { scheduleItemsWeek } from '../../data/scheduleItems';
 import { isWorkingHours, getScheduleBlocksForHour } from '../../api/schedule';
 import { Colors, useAppTheme } from '@/shared/theme';
 import { useIsTablet } from '@/shared/lib/useIsTablet';
 
 type Props = {
     selectedDate: Date;
+    dateRange?: { start: Date; end: Date } | null;
 };
 
-const CalenderDayComponent = ({ selectedDate: _selectedDate }: Props) => {
+type DayInfo = {
+    date: Date;
+    label: string;
+};
+
+const CalenderWeedComponent = ({ selectedDate, dateRange }: Props) => {
     const { theme: { colors } } = useAppTheme();
     const timeScrollRef = useRef<ScrollView>(null);
     const headerScrollRef = useRef<ScrollView>(null);
@@ -22,9 +27,10 @@ const CalenderDayComponent = ({ selectedDate: _selectedDate }: Props) => {
     const [minutesStart, setMinutesStart] = useState(15);
     const [hoursEnd, setHoursEnd] = useState(22);
     const [minutesEnd, setMinutesEnd] = useState(30);
+    const [selectedUserId, setSelectedUserId] = useState<string>(users[0]?.id || '');
     const timeSlotWidth = 200;
-    const minVisibleHour = 7;
-    const maxVisibleHour = 23;
+    const minVisibleHour = 8;
+    const maxVisibleHour = 22;
     const displayTimeSlots = useMemo(() => {
         return timeSlots.filter(slot => {
             const h = parseInt(slot.time.substring(0, 2));
@@ -36,9 +42,89 @@ const CalenderDayComponent = ({ selectedDate: _selectedDate }: Props) => {
 
     const styles = $styles(colors, timeSlotWidth, isTablet);
 
+    const userDropdownData = useMemo(() => {
+        return users.map(user => ({
+            label: user.name,
+            value: user.id
+        }));
+    }, []);
 
-    const renderScheduleItem = (userId: string, timeSlot: string) => {
-        const blocks = getScheduleBlocksForHour(scheduleItems, userId, timeSlot);
+    const getStartOfWeek = (date: Date) => {
+        const d = new Date(date);
+        const day = d.getDay();
+        const diff = day === 0 ? -6 : 1 - day;
+        d.setDate(d.getDate() + diff);
+        d.setHours(0, 0, 0, 0);
+        return d;
+    };
+
+    const formatDayLabel = (date: Date) => {
+        const days = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
+        const dayName = days[date.getDay()];
+        const day = date.getDate();
+        const month = date.getMonth() + 1;
+        const year = date.getFullYear();
+        return `${dayName}, ${day}/${month}/${year}`;
+    };
+
+    const selectedDays = useMemo(() => {
+        const days: DayInfo[] = [];
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        if (dateRange) {
+            const start = new Date(dateRange.start);
+            start.setHours(0, 0, 0, 0);
+            const end = new Date(dateRange.end);
+            end.setHours(0, 0, 0, 0);
+
+            const currentDay = new Date(start);
+            while (currentDay <= end) {
+                if (currentDay <= today) {
+                    days.push({
+                        date: new Date(currentDay),
+                        label: formatDayLabel(currentDay)
+                    });
+                }
+                currentDay.setDate(currentDay.getDate() + 1);
+            }
+        } else {
+            const startOfCurrentWeek = getStartOfWeek(selectedDate);
+
+            for (let i = 0; i < 7; i++) {
+                const currentDay = new Date(startOfCurrentWeek);
+                currentDay.setDate(startOfCurrentWeek.getDate() + i);
+                currentDay.setHours(0, 0, 0, 0);
+
+                if (currentDay <= today) {
+                    days.push({
+                        date: new Date(currentDay),
+                        label: formatDayLabel(currentDay)
+                    });
+                }
+            }
+        }
+
+        return days;
+    }, [selectedDate, dateRange]);
+
+
+    const isSameDay = (date1: Date, date2: Date): boolean => {
+        if (!date1 || !date2) return false;
+        return (
+            date1.getFullYear() === date2.getFullYear() &&
+            date1.getMonth() === date2.getMonth() &&
+            date1.getDate() === date2.getDate()
+        );
+    };
+
+    const renderScheduleItem = (userId: string, timeSlot: string, day: Date) => {
+        // Lọc scheduleItemsWeek theo ngày
+        const itemsForDay = scheduleItemsWeek.filter(item => 
+            item.date && isSameDay(item.date, day)
+        );
+        
+        const blocks = getScheduleBlocksForHour(itemsForDay, userId, timeSlot);
 
         return blocks.map(({ item, index, heightInPixels }) => {
             const startHours = parseInt(item.startTime.substring(0, 2));
@@ -61,7 +147,7 @@ const CalenderDayComponent = ({ selectedDate: _selectedDate }: Props) => {
 
             return (
                 <View
-                    key={`${item.id}-${index}`}
+                    key={`${userId}-${item.id}-${index}-${timeSlot}`}
                     style={[
                         styles.scheduleItem,
                         {
@@ -114,7 +200,23 @@ const CalenderDayComponent = ({ selectedDate: _selectedDate }: Props) => {
         <View style={styles.mainContainer}>
             <View style={styles.fixedUserColumn}>
                 <View style={styles.userColumnHeader}>
-                    <Text style={styles.userText}></Text>
+                    <Dropdown
+                        data={userDropdownData}
+                        labelField="label"
+                        valueField="value"
+                        value={selectedUserId}
+                        onChange={(item) => {
+                            setSelectedUserId(item.value);
+                        }}
+                        style={styles.dropdown}
+                        containerStyle={styles.dropdownContainer}
+                        itemContainerStyle={styles.dropdownItemContainer}
+                        selectedTextStyle={styles.dropdownSelectedText}
+                        placeholderStyle={styles.dropdownPlaceholder}
+                        activeColor={colors.backgroundDisabled}
+                        itemTextStyle={{ color: colors.text }}
+                        showsVerticalScrollIndicator={false}
+                    />
                 </View>
                 <ScrollView
                     ref={timeScrollRef}
@@ -124,9 +226,9 @@ const CalenderDayComponent = ({ selectedDate: _selectedDate }: Props) => {
                     pointerEvents="none"
                 >
                     <View style={styles.userColumnContent}>
-                        {users.map((user) => (
-                            <View key={user.id} style={styles.userColumnRow}>
-                                <UserAvatar user={user} />
+                        {selectedDays.map((day, index) => (
+                            <View key={`day-${index}`} style={styles.userColumnRow}>
+                                <Text style={styles.weekLabel}>{day.label}</Text>
                             </View>
                         ))}
                     </View>
@@ -135,8 +237,8 @@ const CalenderDayComponent = ({ selectedDate: _selectedDate }: Props) => {
 
             <View style={styles.scrollableContent}>
                 <View style={styles.fixedHeader}>
-                    <ScrollView 
-                        horizontal 
+                    <ScrollView
+                        horizontal
                         showsHorizontalScrollIndicator={false}
                         ref={headerScrollRef}
                         scrollEventThrottle={16}
@@ -183,11 +285,11 @@ const CalenderDayComponent = ({ selectedDate: _selectedDate }: Props) => {
                     >
                         <View style={styles.container}>
                             <View style={styles.userRowsContainer}>
-                                <CurrentTimeLine scheduleHeight={users.length * 100} timeSlotWidth={timeSlotWidth} hours={hoursStart} minutes={minutesStart} type={'start'} baseHourOffset={minVisibleHour} />
-                                {/* <CurrentTimeLine scheduleHeight={users.length * 100} timeSlotWidth={timeSlotWidth} hours={hoursNow} minutes={minutesNow} type={'now'} /> */}
-                                <CurrentTimeLine scheduleHeight={users.length * 100} timeSlotWidth={timeSlotWidth} hours={hoursEnd} minutes={minutesEnd} type={'end'} baseHourOffset={minVisibleHour} />
-                                {users.map((user) => (
-                                    <View key={user.id} style={styles.userRow}>
+                                {/* <CurrentTimeLine scheduleHeight={selectedDays.length * 100} timeSlotWidth={timeSlotWidth} hours={hoursStart} minutes={minutesStart} type={'start'} baseHourOffset={minVisibleHour} /> */}
+                                {/* <CurrentTimeLine scheduleHeight={selectedDays.length * 100} timeSlotWidth={timeSlotWidth} hours={hoursNow} minutes={minutesNow} type={'now'} /> */}
+                                {/* <CurrentTimeLine scheduleHeight={selectedDays.length * 100} timeSlotWidth={timeSlotWidth} hours={hoursEnd} minutes={minutesEnd} type={'end'} baseHourOffset={minVisibleHour} /> */}
+                                {selectedDays.map((day, dayIndex) => (
+                                    <View key={`day-row-${dayIndex}`} style={styles.userRow}>
                                         {displayTimeSlots.map((slot) => {
                                             const slotHour = parseInt(slot.time.substring(0, 2));
                                             const slotMinutes = parseInt(slot.time.substring(2, 4));
@@ -195,14 +297,14 @@ const CalenderDayComponent = ({ selectedDate: _selectedDate }: Props) => {
 
                                             return (
                                                 <View
-                                                    key={`${slot.time}-${user.id}`}
+                                                    key={`${slot.time}-day-${dayIndex}`}
                                                     style={[
                                                         styles.scheduleCell,
                                                         !working && styles.nonWorkingHoursCell
                                                     ]}
                                                 >
                                                     {renderQuarterHourLines()}
-                                                    {renderScheduleItem(user.id, slot.time)}
+                                                    {users.flatMap((user) => renderScheduleItem(user.id, slot.time, day.date))}
 
                                                     {slotHour === hoursStart && slotMinutes === 0 && minutesStart > 0 && (
                                                         <View style={[
@@ -246,7 +348,7 @@ const $styles = (colors: Colors, timeSlotWidth: number, isTablet: boolean) => St
         flexDirection: 'row',
     },
     fixedUserColumn: {
-        width: isTablet ? 180 : 80,
+        width: isTablet ? 180 : 120,
         backgroundColor: colors.background,
         borderRightWidth: 1,
         borderColor: colors.borderTable,
@@ -259,6 +361,39 @@ const $styles = (colors: Colors, timeSlotWidth: number, isTablet: boolean) => St
         borderBottomWidth: 1,
         borderColor: colors.borderTable,
         backgroundColor: colors.backgroundTable,
+        paddingHorizontal: 8,
+    },
+    dropdown: {
+        width: '100%',
+        height: 40,
+        backgroundColor: colors.background,
+        borderRadius: 8,
+        paddingHorizontal: 12,
+        borderWidth: 1,
+        borderColor: colors.borderTable,
+        color: colors.text,
+    },
+    dropdownContainer: {
+        borderRadius: 8,
+        borderWidth: 1,
+        borderColor: colors.borderTable,
+        backgroundColor: colors.background,
+        marginTop: 4,
+        color: colors.text,
+    },
+    dropdownItemContainer: {
+        paddingVertical: 8,
+        paddingHorizontal: 12,
+        color: colors.text,
+    },
+    dropdownSelectedText: {
+        fontSize: 14,
+        color: colors.text,
+        fontWeight: '500',
+    },
+    dropdownPlaceholder: {
+        fontSize: 14,
+        color: colors.text,
     },
     userColumnContent: {
         position: 'relative',
@@ -323,6 +458,12 @@ const $styles = (colors: Colors, timeSlotWidth: number, isTablet: boolean) => St
         fontSize: 16,
         color: colors.text,
     },
+    weekLabel: {
+        fontSize: 14,
+        color: colors.text,
+        fontWeight: '500',
+        textAlign: 'center',
+    },
     scheduleCell: {
         width: timeSlotWidth,
         borderRightWidth: 1,
@@ -381,4 +522,4 @@ const $styles = (colors: Colors, timeSlotWidth: number, isTablet: boolean) => St
     }
 });
 
-export default CalenderDayComponent;
+export default CalenderWeedComponent;
