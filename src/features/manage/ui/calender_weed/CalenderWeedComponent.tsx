@@ -7,6 +7,7 @@ import { scheduleItemsWeek } from '../../data/scheduleItems';
 import { isWorkingHours, getScheduleBlocksForHour } from '../../api/schedule';
 import { Colors, useAppTheme } from '@/shared/theme';
 import { useIsTablet } from '@/shared/lib/useIsTablet';
+import CurrentTimeLine from '../calender_day/CurrentTimeLine';
 
 type Props = {
     selectedDate: Date;
@@ -285,9 +286,9 @@ const CalenderWeedComponent = ({ selectedDate, dateRange }: Props) => {
                     >
                         <View style={styles.container}>
                             <View style={styles.userRowsContainer}>
-                                {/* <CurrentTimeLine scheduleHeight={selectedDays.length * 100} timeSlotWidth={timeSlotWidth} hours={hoursStart} minutes={minutesStart} type={'start'} baseHourOffset={minVisibleHour} /> */}
+                                <CurrentTimeLine scheduleHeight={selectedDays.length * 100} timeSlotWidth={timeSlotWidth} hours={hoursStart} minutes={minutesStart} type={'start'} baseHourOffset={minVisibleHour} />
                                 {/* <CurrentTimeLine scheduleHeight={selectedDays.length * 100} timeSlotWidth={timeSlotWidth} hours={hoursNow} minutes={minutesNow} type={'now'} /> */}
-                                {/* <CurrentTimeLine scheduleHeight={selectedDays.length * 100} timeSlotWidth={timeSlotWidth} hours={hoursEnd} minutes={minutesEnd} type={'end'} baseHourOffset={minVisibleHour} /> */}
+                                <CurrentTimeLine scheduleHeight={selectedDays.length * 100} timeSlotWidth={timeSlotWidth} hours={hoursEnd} minutes={minutesEnd} type={'end'} baseHourOffset={minVisibleHour} />
                                 {selectedDays.map((day, dayIndex) => (
                                     <View key={`day-row-${dayIndex}`} style={styles.userRow}>
                                         {displayTimeSlots.map((slot) => {

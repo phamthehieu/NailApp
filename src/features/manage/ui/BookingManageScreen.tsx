@@ -11,10 +11,11 @@ import MHeader from '@/shared/ui/MHeader';
 import { Grid3x3 } from 'lucide-react-native';
 import { DrawerActions } from '@react-navigation/native';
 import ModalFliterComponent from '../components/ModalFliterComponent';
-import CalendarHeader from './calender_day/CalenderHeader';
+import CalendarHeader from './CalenderHeader';
 import CalenderDayComponent from './calender_day/CalenderDayComponent';
 import CalenderWeedComponent from './calender_weed/CalenderWeedComponent';
 import CalenderMonthComponent from './calender_month/CalenderMonthComponent';
+import CalenderTabComponent from './CalenderTabComponent';
 
 const BookingManageScreen = ({navigation}: RootScreenProps<Paths.BookingManage>) => {
     const { t } = useTranslation();
@@ -117,8 +118,8 @@ const BookingManageScreen = ({navigation}: RootScreenProps<Paths.BookingManage>)
             <MHeader
                 label={t('bookingManage.title')}
                 onBack={() => navigation.dispatch(DrawerActions.openDrawer())}
-                showIconLeft={true}
-                iconLeft={<Grid3x3 size={24} color={colors.background} />}
+                // showIconLeft={true}
+                // iconLeft={<Grid3x3 size={24} color={colors.background} />}
                 bgColor={colors.yellow}
                 // enableSearch={true}
                 // searchPlaceholder={t('bookingManage.searchPlaceholder')}
@@ -128,6 +129,8 @@ const BookingManageScreen = ({navigation}: RootScreenProps<Paths.BookingManage>)
                 // iconRight={<Funnel size={24} color={colors.background} />}
                 // onPressIconRight={() => setShowAdvanced(true)}
             />
+
+            <CalenderTabComponent/>
 
             <CalendarHeader
                 selectedDate={anchorDate}
