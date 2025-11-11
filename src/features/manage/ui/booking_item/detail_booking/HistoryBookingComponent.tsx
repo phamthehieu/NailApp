@@ -4,7 +4,7 @@ import { User, Phone, Calendar } from "lucide-react-native";
 import { Colors, useAppTheme } from "@/shared/theme";
 import { useTranslation } from "react-i18next";
 import { Text } from "@/shared/ui/Text";
-import { scheduleItemsList } from "../../data/scheduleItems";
+import { scheduleItemsList } from "@/features/manage/data/scheduleItems";
 
 interface HistoryBookingComponentProps {
     bookingId?: number | string;

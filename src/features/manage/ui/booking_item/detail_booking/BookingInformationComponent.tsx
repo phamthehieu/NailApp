@@ -4,7 +4,7 @@ import { User, Phone, Calendar, Clock, Info } from "lucide-react-native";
 import { Colors, useAppTheme } from "@/shared/theme";
 import { useTranslation } from "react-i18next";
 import { Text } from "@/shared/ui/Text";
-import { scheduleItemsList } from "../../data/scheduleItems";
+import { scheduleItemsList } from "@/features/manage/data/scheduleItems";
 
 interface BookingInformationComponentProps {
     bookingId?: number | string;
@@ -44,7 +44,7 @@ const BookingInformationComponent = ({ bookingId }: BookingInformationComponentP
     }
 
     return (
-        <ScrollView 
+        <ScrollView
             style={styles.container}
             contentContainerStyle={styles.scrollContent}
             showsVerticalScrollIndicator={false}

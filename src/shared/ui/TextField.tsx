@@ -31,6 +31,10 @@ export interface TextFieldProps extends Omit<TextInputProps, 'ref'> {
      */
     status?: 'error' | 'disabled'
     /**
+     * Hiển thị dấu sao đỏ bắt buộc sau label
+     */
+    required?: boolean
+    /**
      * Văn bản nhãn để hiển thị nếu không sử dụng `labelTx`.
      */
     label?: TextProps['text']
@@ -89,31 +93,18 @@ export interface TextFieldProps extends Omit<TextInputProps, 'ref'> {
      * Style overrides for the input wrapper
      */
     inputWrapperStyle?: StyleProp<ViewStyle>
-    /**
-     * An optional component to render on the right side of the input.
-     * Example: `RightAccessory={(props) => <Icon icon="ladybug" containerStyle={props.style} color={props.editable ? colors.textDim : colors.text} />}`
-     * Note: It is a good idea to memoize this.
-     */
+
     RightAccessory?: ComponentType<TextFieldAccessoryProps>
-    /**
-     * An optional component to render on the left side of the input.
-     * Example: `LeftAccessory={(props) => <Icon icon="ladybug" containerStyle={props.style} color={props.editable ? colors.textDim : colors.text} />}`
-     * Note: It is a good idea to memoize this.
-     */
+
     LeftAccessory?: ComponentType<TextFieldAccessoryProps>
 }
 
-/**
- * A component that allows for the entering and editing of text.
- * @see [Documentation and Examples]{@link https://docs.infinite.red/ignite-cli/boilerplate/app/components/TextField/}
- * @param {TextFieldProps} props - The props for the `TextField` component.
- * @returns {JSX.Element} The rendered `TextField` component.
- */
 export const TextField = forwardRef(function TextField(props: TextFieldProps, ref: Ref<TextInput>) {
     const {
         labelTx,
         label,
         labelTxOptions,
+        required,
         placeholderTx,
         placeholder,
         placeholderTxOptions,
@@ -194,14 +185,21 @@ export const TextField = forwardRef(function TextField(props: TextFieldProps, re
             accessibilityState={{ disabled }}
         >
             {!!(label || labelTx) && (
-                <Text
-                    preset="formLabel"
-                    text={label}
-                    tx={labelTx}
-                    txOptions={labelTxOptions}
-                    {...LabelTextProps}
-                    style={themed($labelStyles)}
-                />
+                <View style={$styles.row}>
+                    <Text
+                        preset="formLabel"
+                        text={label}
+                        tx={labelTx}
+                        txOptions={labelTxOptions}
+                        {...LabelTextProps}
+                        style={themed($labelStyles)}
+                    />
+                    {!!required && (
+                        <Text style={[themed($labelStyles), { marginLeft: 6, color: colors.error }]}>
+                        (*)
+                        </Text>
+                    )}
+                </View>
             )}
 
             <View style={themed($inputWrapperStyles)}>
@@ -266,7 +264,7 @@ const $labelStyle: ThemedStyle<TextStyle> = ({ spacing }) => ({
 const $inputWrapperStyle: ThemedStyle<ViewStyle> = ({ colors }) => ({
     alignItems: 'flex-start',
     borderWidth: 1,
-    borderRadius: 4,
+    borderRadius: 12,
     backgroundColor: colors.card,
     borderColor: colors.border,
     overflow: 'hidden',
@@ -278,7 +276,7 @@ const $inputStyle: ThemedStyle<TextStyle> = ({ colors, typography, spacing }) =>
     fontFamily: typography.primary.normal,
     color: colors.text,
     fontSize: 16,
-    height: 24,
+    height: 28,
     // https://github.com/facebook/react-native/issues/21720#issuecomment-532642093
     paddingVertical: 0,
     paddingHorizontal: 0,
@@ -292,14 +290,14 @@ const $helperStyle: ThemedStyle<TextStyle> = ({ spacing }) => ({
 
 const $rightAccessoryStyle: ThemedStyle<ViewStyle> = ({ spacing }) => ({
     marginEnd: spacing.xs + 10,
-    height: 40,
+    height: 48,
     justifyContent: 'center',
     alignItems: 'center',
 });
 
 const $leftAccessoryStyle: ThemedStyle<ViewStyle> = ({ spacing }) => ({
     marginStart: spacing.xs,
-    height: 40,
+    height: 48,
     justifyContent: 'center',
     alignItems: 'center',
 });

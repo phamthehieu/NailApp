@@ -129,6 +129,12 @@ const vi = {
     serviceHistory: 'Lịch sử sử dụng dịch vụ',
     noHistory: 'Chưa có lịch sử sử dụng dịch vụ',
   },
+  addNewBooking: {
+    title: 'Đặt lịch',
+    next: 'Tiếp tục',
+    back: 'Quay lại',
+    done: 'Hoàn tất',
+  },
 };
 
 export default vi;

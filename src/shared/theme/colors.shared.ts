@@ -24,6 +24,8 @@ export const sharedColors = {
   info900: '#1E3A8A',
   info950: '#172554',
 
+  
+  error50: '#FEE4E2',
   error100: '#FEF2F2',
   error500: '#EF4444',
   error600: '#DC2626',

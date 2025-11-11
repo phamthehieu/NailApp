@@ -8,7 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { Animated, StyleSheet, View } from 'react-native';
 import StatusBarComponent from '@/shared/ui/StatusBar';
 import { ArrowLeft } from 'lucide-react-native';
-import { scheduleItemsList } from '../../data/scheduleItems';
+import { scheduleItemsList } from '../../../data/scheduleItems';
 import TabComponent from '@/shared/ui/TabComponent';
 import BookingInformationComponent from './BookingInformationComponent';
 import HistoryBookingComponent from './HistoryBookingComponent';

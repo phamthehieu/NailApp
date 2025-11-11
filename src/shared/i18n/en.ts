@@ -130,6 +130,12 @@ const en: Translations = {
   historyBooking: {
     serviceHistory: 'Service usage history',
     noHistory: 'No service history available',
+  },  
+  addNewBooking: {
+    title: 'Add new booking',
+    next: 'Next',
+    back: 'Back',
+    done: 'Finish',
   },
 };
 

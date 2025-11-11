@@ -194,6 +194,7 @@ const BookingManageScreen = ({ navigation }: RootScreenProps<Paths.BookingManage
                 tabs={[{ label: t('calenderDashboard.calenderTab.schedule'), value: 1 }, { label: t('calenderDashboard.calenderTab.list'), value: 2 }]}
                 showBookButton={true}
                 maxWidth={400}
+                onBookPress={() => navigation.navigate(Paths.AddNewBooking)}
             />
 
             <View style={styles.tabsWrapper}>

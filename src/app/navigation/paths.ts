@@ -9,4 +9,5 @@ export const enum Paths {
   BottomNavigator = 'BottomNavigator',
   BookingManage = 'BookingManage',
   DetailBookingItem = 'DetailBookingItem',
+  AddNewBooking = 'AddNewBooking',
 }
