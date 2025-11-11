@@ -1,10 +1,10 @@
 import React, { useRef, useState, useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { Dropdown } from 'react-native-element-dropdown';
-import { users } from '../../data/users';
-import { timeSlots } from '../../data/TimeSlots';
-import { scheduleItemsWeek } from '../../data/scheduleItems';
-import { isWorkingHours, getScheduleBlocksForHour } from '../../api/schedule';
+import { users } from '../../../data/users';
+import { timeSlots } from '../../../data/TimeSlots';
+import { scheduleItemsWeek } from '../../../data/scheduleItems';
+import { isWorkingHours, getScheduleBlocksForHour } from '../../../api/schedule';
 import { Colors, useAppTheme } from '@/shared/theme';
 import { useIsTablet } from '@/shared/lib/useIsTablet';
 import CurrentTimeLine from '../calender_day/CurrentTimeLine';

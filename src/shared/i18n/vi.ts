@@ -95,7 +95,40 @@ const vi = {
       week: 'Tuần',
       dayName: "Thứ {dayName}",
     },
-  }
+  },
+  bookingList: {
+    noBookingFound: 'Không tìm thấy đặt lịch',
+  },
+  detailBookingItem: {
+    title: 'Thông tin đặt lịch',
+    tab: {
+      schedule: 'Lịch đặt',
+      history: 'Lịch sử',
+    },
+    cancelBooking: 'Hủy lịch',
+    editBooking: 'Sửa lịch',
+    deleteBooking: {
+      title: 'Xác nhận hủy đặt lịch',
+      message: 'Bạn có chắc chắn muốn hủy đặt lịch này không?',
+      okText: 'Xác nhận',
+      cancelText: 'Huỷ',
+    },
+  },
+  bookingInformation: {
+    customerInfo: 'Thông tin khách hàng',
+    bookingInfo: 'Thông tin đặt lịch',
+    customerName: 'Tên khách hàng',
+    phone: 'Số điện thoại',
+    bookingDate: 'Ngày đặt lịch',
+    bookingTime: 'Giờ đặt lịch',
+    service: 'Dịch vụ',
+    staff: 'Nhân viên thực hiện',
+    noData: 'Không có dữ liệu',
+  },
+  historyBooking: {
+    serviceHistory: 'Lịch sử sử dụng dịch vụ',
+    noHistory: 'Chưa có lịch sử sử dụng dịch vụ',
+  },
 };
 
 export default vi;

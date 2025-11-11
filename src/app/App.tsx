@@ -10,6 +10,7 @@ import { ThemeProvider } from '@shared/theme/context';
 import { NetworkStatusBanner } from '@shared/ui/NetworkStatusBanner';
 import { loadDateFnsLocale } from '@shared/lib/formatDate';
 import * as storage from '@store/index';
+import { AlertProvider } from './providers/AlertProvider';
 
 export const NAVIGATION_PERSISTENCE_KEY = 'NAVIGATION_STATE';
 
@@ -35,15 +36,17 @@ export function App() {
 
   return (
     <SafeAreaProvider initialMetrics={initialWindowMetrics}>
-        <KeyboardProvider>
-          <ThemeProvider>
+      <KeyboardProvider>
+        <ThemeProvider>
+          <AlertProvider>
             <AppNavigator
               initialState={initialNavigationState}
               onStateChange={onNavigationStateChange}
             />
             <NetworkStatusBanner />
-          </ThemeProvider>
-        </KeyboardProvider>
+          </AlertProvider>
+        </ThemeProvider>
+      </KeyboardProvider>
     </SafeAreaProvider>
   );
 }

@@ -16,6 +16,10 @@ export const colors = {
   backgroundTable: '#1E1E21',
   bottomColor: "#4c566b",
   backgroundDisabled: "#4c566b",
+  blue: '#358FFC',
+  purple: '#AB47BC',
+  green: '#10B981',
+  red: '#EF4444',
   ...sharedColors,
 } as const;
 

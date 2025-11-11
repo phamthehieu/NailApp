@@ -8,4 +8,5 @@ export const enum Paths {
   Report = 'Report',
   BottomNavigator = 'BottomNavigator',
   BookingManage = 'BookingManage',
+  DetailBookingItem = 'DetailBookingItem',
 }

@@ -97,7 +97,40 @@ const en: Translations = {
             week: 'Week',
             dayName: "Thứ {dayName}",
         },
-    }
+    },
+    bookingList: {
+        noBookingFound: 'No booking found',
+    },
+  detailBookingItem: {
+    title: 'Booking details',
+    tab: {
+      schedule: 'Booking schedule',
+      history: 'Booking history',
+    },
+    cancelBooking: 'Cancel booking',
+    editBooking: 'Edit booking',
+    deleteBooking: {
+      title: 'Confirm cancel booking',
+      message: 'Are you sure you want to cancel this booking?',
+      okText: 'Confirm',
+      cancelText: 'Cancel',
+    },
+  },
+  bookingInformation: {
+    customerInfo: 'Customer information',
+    bookingInfo: 'Booking information',
+    customerName: 'Customer name',
+    phone: 'Phone number',
+    bookingDate: 'Booking date',
+    bookingTime: 'Booking time',
+    service: 'Service',
+    staff: 'Staff performing',
+    noData: 'No data available',
+  },
+  historyBooking: {
+    serviceHistory: 'Service usage history',
+    noHistory: 'No service history available',
+  },
 };
 
 export default en;

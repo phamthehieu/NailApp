@@ -18,6 +18,7 @@ import { SystemScreen } from '@/features/system';
 import { ReportScreen } from '@/features/report';
 import { BookingManageScreen } from '@/features/manage';
 import BottomNavigator from './BottomNavigator';
+import DetailBookingItemScreen from '@/features/manage/ui/booking_item/DetailBookingItemScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -44,7 +45,7 @@ const AppStack = () => {
             <Stack.Screen name={Paths.Report} component={ReportScreen} />
 
             <Stack.Screen name={Paths.BookingManage} component={BookingManageScreen} />
-
+            <Stack.Screen name={Paths.DetailBookingItem} component={DetailBookingItemScreen} />
         </Stack.Navigator >
     );
 };

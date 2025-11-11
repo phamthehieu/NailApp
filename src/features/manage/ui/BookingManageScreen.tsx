@@ -2,30 +2,32 @@ import { Paths } from '@/app/navigation/paths';
 import { RootScreenProps } from '@/app/navigation/types';
 import { Colors, useAppTheme } from '@/shared/theme';
 import StatusBarComponent from '@/shared/ui/StatusBar';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, Animated } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import Loader from '@/shared/ui/Loader';
 import MHeader from '@/shared/ui/MHeader';
-import { Grid3x3 } from 'lucide-react-native';
+import { Funnel } from 'lucide-react-native';
 import { DrawerActions } from '@react-navigation/native';
 import ModalFliterComponent from '../components/ModalFliterComponent';
-import CalendarHeader from './CalenderHeader';
-import CalenderDayComponent from './calender_day/CalenderDayComponent';
-import CalenderWeedComponent from './calender_weed/CalenderWeedComponent';
-import CalenderMonthComponent from './calender_month/CalenderMonthComponent';
-import CalenderTabComponent from './CalenderTabComponent';
+import CalendarHeader from '../components/CalenderHeader';
+import { CalenderDayComponent, CalenderWeedComponent, CalenderMonthComponent } from './schedule';
+import TabComponent from '@/shared/ui/TabComponent';
+import BookingListComponent from './list/BookingListComponent';
 
-const BookingManageScreen = ({navigation}: RootScreenProps<Paths.BookingManage>) => {
+type TabType = { label: string; value: number }
+
+const BookingManageScreen = ({ navigation }: RootScreenProps<Paths.BookingManage>) => {
     const { t } = useTranslation();
-    const {theme: { colors }} = useAppTheme();
+    const { theme: { colors } } = useAppTheme();
 
     const [viewMode, setViewMode] = useState<'Ngày' | 'Tuần' | 'Tháng'>('Ngày');
     const [anchorDate, setAnchorDate] = useState<Date>(new Date());
     const [activeRange, setActiveRange] = useState<{ start: Date; end: Date } | null>(null);
     const [loading, setLoading] = useState(false);
     const [showAdvanced, setShowAdvanced] = useState(false);
+    const [activeTab, setActiveTab] = useState<TabType>({ label: t('calenderDashboard.calenderTab.schedule'), value: 1 });
     const [form, setForm] = useState({
         fromDate: '',
         toDate: '',
@@ -36,6 +38,12 @@ const BookingManageScreen = ({navigation}: RootScreenProps<Paths.BookingManage>)
         status: '',
     });
     const styles = $styles(colors);
+
+    // Animation values
+    const tab1Opacity = useRef(new Animated.Value(1)).current;
+    const tab1TranslateX = useRef(new Animated.Value(0)).current;
+    const tab2Opacity = useRef(new Animated.Value(0)).current;
+    const tab2TranslateX = useRef(new Animated.Value(50)).current;
 
     const getStartOfWeek = (date: Date) => {
         const d = new Date(date);
@@ -73,8 +81,6 @@ const BookingManageScreen = ({navigation}: RootScreenProps<Paths.BookingManage>)
             setActiveRange(null);
             return;
         }
-        console.log('start', range.start);
-        console.log('end', range.end);
         setActiveRange({ start: range.start, end: range.end });
     };
 
@@ -97,6 +103,59 @@ const BookingManageScreen = ({navigation}: RootScreenProps<Paths.BookingManage>)
         }
     }, [viewMode, anchorDate, activeRange]);
 
+    // Animation khi chuyển tab
+    useEffect(() => {
+        if (activeTab.value === 1) {
+            // Tab 1 (Calendar) hiển thị
+            Animated.parallel([
+                Animated.timing(tab1Opacity, {
+                    toValue: 1,
+                    duration: 300,
+                    useNativeDriver: true,
+                }),
+                Animated.timing(tab1TranslateX, {
+                    toValue: 0,
+                    duration: 300,
+                    useNativeDriver: true,
+                }),
+                Animated.timing(tab2Opacity, {
+                    toValue: 0,
+                    duration: 300,
+                    useNativeDriver: true,
+                }),
+                Animated.timing(tab2TranslateX, {
+                    toValue: 50,
+                    duration: 300,
+                    useNativeDriver: true,
+                }),
+            ]).start();
+        } else {
+            // Tab 2 (List) hiển thị
+            Animated.parallel([
+                Animated.timing(tab1Opacity, {
+                    toValue: 0,
+                    duration: 300,
+                    useNativeDriver: true,
+                }),
+                Animated.timing(tab1TranslateX, {
+                    toValue: -50,
+                    duration: 300,
+                    useNativeDriver: true,
+                }),
+                Animated.timing(tab2Opacity, {
+                    toValue: 1,
+                    duration: 300,
+                    useNativeDriver: true,
+                }),
+                Animated.timing(tab2TranslateX, {
+                    toValue: 0,
+                    duration: 300,
+                    useNativeDriver: true,
+                }),
+            ]).start();
+        }
+    }, [activeTab.value]);
+
     const renderCalenderComponent = () => {
         if (viewMode === 'Ngày') {
             return <CalenderDayComponent selectedDate={anchorDate} />;
@@ -109,7 +168,6 @@ const BookingManageScreen = ({navigation}: RootScreenProps<Paths.BookingManage>)
         }
         return null;
     };
-
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
 
@@ -125,28 +183,60 @@ const BookingManageScreen = ({navigation}: RootScreenProps<Paths.BookingManage>)
                 // searchPlaceholder={t('bookingManage.searchPlaceholder')}
                 // onChangeSearchText={(text) => {console.log(text)}}
                 // onSubmitSearch={(text) => {console.log(text)}}
-                // showIconRight={true}
-                // iconRight={<Funnel size={24} color={colors.background} />}
-                // onPressIconRight={() => setShowAdvanced(true)}
+                showIconRight={activeTab.value === 2 && true}
+                iconRight={activeTab.value === 2 ? <Funnel size={24} color={colors.background} /> : undefined}
+                onPressIconRight={activeTab.value === 2 ? () => setShowAdvanced(true) : undefined}
             />
 
-            <CalenderTabComponent/>
-
-            <CalendarHeader
-                selectedDate={anchorDate}
-                onChange={handleDateChange}
-                onChangeRange={handleRangeChange}
-                viewMode={viewMode}
-                onViewModeChange={(mode) => {
-                    setViewMode(mode);
-                    setActiveRange(null);
-                }}
+            <TabComponent
+                activeTab={activeTab}
+                onTabChange={(tab) => setActiveTab(tab)}
+                tabs={[{ label: t('calenderDashboard.calenderTab.schedule'), value: 1 }, { label: t('calenderDashboard.calenderTab.list'), value: 2 }]}
+                showBookButton={true}
+                maxWidth={400}
             />
 
-            <View style={styles.content}>
+            <View style={styles.tabsWrapper}>
+                <Animated.View
+                    style={[
+                        styles.tabContainer,
+                        {
+                            opacity: tab2Opacity,
+                            transform: [{ translateX: tab2TranslateX }],
+                        },
+                    ]}
+                    pointerEvents={activeTab.value === 2 ? 'auto' : 'none'}
+                >
+                    <View style={styles.content}>
+                        <BookingListComponent navigation={navigation} />
+                    </View>
+                </Animated.View>
 
-                {renderCalenderComponent()}
+                <Animated.View
+                    style={[
+                        styles.tabContainer,
+                        {
+                            opacity: tab1Opacity,
+                            transform: [{ translateX: tab1TranslateX }],
+                        },
+                    ]}
+                    pointerEvents={activeTab.value === 1 ? 'auto' : 'none'}
+                >
+                    <CalendarHeader
+                        selectedDate={anchorDate}
+                        onChange={handleDateChange}
+                        onChangeRange={handleRangeChange}
+                        viewMode={viewMode}
+                        onViewModeChange={(mode) => {
+                            setViewMode(mode);
+                            setActiveRange(null);
+                        }}
+                    />
 
+                    <View style={styles.content}>
+                        {renderCalenderComponent()}
+                    </View>
+                </Animated.View>
             </View>
 
             <ModalFliterComponent showAdvanced={showAdvanced} setShowAdvanced={setShowAdvanced} form={form} setForm={setForm} />
@@ -173,6 +263,18 @@ const $styles = (colors: Colors) => {
         content: {
             flex: 1,
             paddingHorizontal: 1,
+        },
+        tabsWrapper: {
+            flex: 1,
+            position: 'relative',
+        },
+        tabContainer: {
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            width: '100%',
         }
     });
 };

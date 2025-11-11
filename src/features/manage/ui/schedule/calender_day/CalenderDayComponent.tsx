@@ -2,10 +2,10 @@ import React, { useRef, useState, useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import UserAvatar from './UserAvatar';
 import CurrentTimeLine from './CurrentTimeLine';
-import { users } from '../../data/users';
-import { timeSlots } from '../../data/TimeSlots';
-import { scheduleItems } from '../../data/scheduleItems';
-import { isWorkingHours, getScheduleBlocksForHour } from '../../api/schedule';
+import { users } from '../../../data/users';
+import { timeSlots } from '../../../data/TimeSlots';
+import { scheduleItems } from '../../../data/scheduleItems';
+import { isWorkingHours, getScheduleBlocksForHour } from '../../../api/schedule';
 import { Colors, useAppTheme } from '@/shared/theme';
 import { useIsTablet } from '@/shared/lib/useIsTablet';
 

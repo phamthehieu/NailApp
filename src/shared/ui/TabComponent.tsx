@@ -1,7 +1,7 @@
 import { View, Text, Pressable, StyleSheet, LayoutChangeEvent } from "react-native"
 import { Plus } from "lucide-react-native"
 import { Colors, useAppTheme } from "@/shared/theme"
-import React, { useState, useEffect, useMemo } from "react"
+import React, { useState, useEffect } from "react"
 import Animated, {
     runOnJS,
     useAnimatedStyle,
@@ -10,29 +10,34 @@ import Animated, {
 } from "react-native-reanimated"
 import { useTranslation } from "react-i18next"
 
-type TabType = "Lịch trình" | "Danh sách"
+type TabType = { label: string; value: number }
 
-interface CalenderTabComponentProps {
+interface TabComponentProps {
     activeTab?: TabType
     onTabChange?: (tab: TabType) => void
     onBookPress?: () => void
+    tabs?: TabType[]
+    showBookButton?: boolean
+    maxWidth?: number
 }
 
-const CalenderTabComponent = ({
-    activeTab = "Danh sách",
+const TabComponent = ({
+    activeTab,
     onTabChange,
     onBookPress,
-}: CalenderTabComponentProps) => {
+    tabs,
+    showBookButton = false,
+    maxWidth,
+}: TabComponentProps) => {
+    if (!tabs) return null
 
     const { theme: { colors } } = useAppTheme()
     const { t } = useTranslation()
 
     const styles = $styles(colors)
 
-    const tabs = useMemo(() => [t('calenderDashboard.calenderTab.schedule'), t('calenderDashboard.calenderTab.list')], [t]) as TabType[]
-
     const [dimensions, setDimensions] = useState({ height: 20, width: 100 })
-    const selectedTabIndex = tabs.indexOf(activeTab) >= 0 ? tabs.indexOf(activeTab) : 0
+    const selectedTabIndex = tabs.findIndex(tab => tab.value === activeTab?.value) >= 0 ? tabs.findIndex(tab => tab.value === activeTab?.value) : 0
 
     const buttonWidth = dimensions.width / tabs.length
     const padding = 10
@@ -41,7 +46,7 @@ const CalenderTabComponent = ({
 
     useEffect(() => {
         if (dimensions.width > 0) {
-            const newIndex = tabs.indexOf(activeTab) >= 0 ? tabs.indexOf(activeTab) : 0
+            const newIndex = tabs.findIndex(tab => tab.value === activeTab?.value) >= 0 ? tabs.findIndex(tab => tab.value === activeTab?.value) : 0
             tabPositionX.value = withTiming(buttonWidth * newIndex)
         }
     }, [activeTab, buttonWidth, dimensions.width])
@@ -49,7 +54,7 @@ const CalenderTabComponent = ({
     const onTabbarLayout = (e: LayoutChangeEvent) => {
         const { width, height } = e.nativeEvent.layout
         setDimensions({ width, height })
-        const index = tabs.indexOf(activeTab) >= 0 ? tabs.indexOf(activeTab) : 0
+        const index = tabs.findIndex(tab => tab.value === activeTab?.value) >= 0 ? tabs.findIndex(tab => tab.value === activeTab?.value) : 0
         tabPositionX.value = (width / tabs.length) * index
     }
 
@@ -72,7 +77,7 @@ const CalenderTabComponent = ({
     return (
         <View style={styles.container}>
             <View style={styles.contentContainer}>
-                <View style={styles.segmentedControl}>
+                <View style={[styles.segmentedControl, { maxWidth }]}>
                     <Animated.View
                         style={[
                             animatedStyle,
@@ -89,7 +94,7 @@ const CalenderTabComponent = ({
 
                             return (
                                 <Pressable
-                                    key={tab}
+                                    key={tab.value}
                                     accessibilityRole="tab"
                                     onPress={() => onTabPress(index)}
                                     style={styles.tab}
@@ -100,7 +105,7 @@ const CalenderTabComponent = ({
                                             isActive ? styles.tabTextActive : styles.tabTextInactive
                                         ]}
                                     >
-                                        {tab}
+                                        {tab.label}
                                     </Text>
                                 </Pressable>
                             )
@@ -108,13 +113,15 @@ const CalenderTabComponent = ({
                     </View>
                 </View>
 
+                {showBookButton && (
                 <Pressable
                     style={styles.bookButton}
                     onPress={onBookPress}
                 >
                     <Plus size={18} color={colors.white} />
-                    <Text style={styles.bookButtonText}>{t('calenderDashboard.calenderTab.book')}</Text>
-                </Pressable>
+                        <Text style={styles.bookButtonText}>{t('calenderDashboard.calenderTab.book')}</Text>
+                    </Pressable>
+                )}
             </View>
         </View>
     )
@@ -137,7 +144,6 @@ const $styles = (colors: Colors) => StyleSheet.create({
         borderRadius: 12,
         justifyContent: 'center',
         position: 'relative',
-        maxWidth: 400,
         borderWidth: 1,
         borderColor: colors.border,
     },
@@ -182,4 +188,4 @@ const $styles = (colors: Colors) => StyleSheet.create({
     },
 })
 
-export default CalenderTabComponent;
+export default TabComponent;

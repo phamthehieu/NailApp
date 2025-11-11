@@ -22,6 +22,10 @@ interface IProps {
     searchPlaceholder?: string;
     onChangeSearchText?: (text: string) => void;
     onSubmitSearch?: (text: string) => void;
+    // Status badge
+    status?: string;
+    statusColor?: string;
+    statusBgColor?: string;
 }
 
 export default function MHeader({
@@ -38,6 +42,9 @@ export default function MHeader({
     searchPlaceholder = 'Search...',
     onChangeSearchText,
     onSubmitSearch,
+    status,
+    statusColor,
+    statusBgColor,
 }: IProps) {
     ;
     const { theme: { colors }} = useAppTheme();
@@ -49,6 +56,11 @@ export default function MHeader({
     const rightIconsCount = (enableSearch ? 1 : 0) + (showIconRight ? 1 : 0);
     const searchContainerWidth = (rightIconsCount === 2 && showIconLeft) ? '60%' : (rightIconsCount === 2 && !showIconLeft) ? '70%' : rightIconsCount === 1 ? '80%' : '90%';
     const rightIconsWidthPx = rightIconsCount * 40;
+    
+    // Tính toán padding cho label để tránh bị che bởi status badge và icon
+    const statusBadgeWidth = status ? 120 : 0;
+    const iconLeftPadding = showIconLeft ? 48 : 16;
+    const iconRightPadding = status ? statusBadgeWidth + 16 : (showIconRight || enableSearch ? rightIconsWidthPx + 16 : 16);
 
     React.useEffect(() => {
         Animated.timing(searchAnim, {
@@ -93,11 +105,14 @@ export default function MHeader({
 
                         <Animated.Text
                             numberOfLines={1}
+                            ellipsizeMode="tail"
                             style={[
                                 styles.label,
                                 { color: colors.background },
                                 {
                                     position: 'absolute',
+                                    left: iconLeftPadding,
+                                    right: iconRightPadding,
                                     opacity: searchAnim.interpolate({ inputRange: [0, 1], outputRange: [1, 0] }),
                                     transform: [{ translateY: searchAnim.interpolate({ inputRange: [0, 1], outputRange: [0, -6] }) }]
                                 }
@@ -108,8 +123,23 @@ export default function MHeader({
                     </>
                 )}
 
-                {(showIconRight || enableSearch) && (
-                    <View style={[styles.iconRight, { width: Math.max(widthIconRight, enableSearch && showIconRight ? 80 : widthIconRight) }]}> 
+                {(showIconRight || enableSearch || status) && (
+                    <View style={[styles.iconRight, { 
+                        width: status ? Math.max(120, widthIconRight) : Math.max(widthIconRight, enableSearch && showIconRight ? 80 : widthIconRight),
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                    }]}> 
+                        {status && (
+                            <View style={[styles.statusBadge, { 
+                                backgroundColor: statusBgColor || colors.yellow, 
+                                borderColor: statusColor || colors.yellow,
+                                borderWidth: 1,
+                            }]}>
+                                <Text style={[styles.statusText, { color: statusColor || colors.yellow }]}>
+                                    {status}
+                                </Text>
+                            </View>
+                        )}
                         {enableSearch && (
                             <Animated.View style={{ transform: [{ scale: iconScale }] }}>
                                 <TouchableOpacity
@@ -173,6 +203,7 @@ const styles = StyleSheet.create({
     label: {
         fontSize: 22,
         fontWeight: 'bold',
+        textAlign: 'center',
     },
     searchInputContainer: {
         width: '70%',
@@ -188,5 +219,18 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
+    },
+    statusBadge: {
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 8,
+        marginRight: 0,
+        minWidth: 100,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    statusText: {
+        fontSize: 13,
+        fontWeight: '600',
     },
 });

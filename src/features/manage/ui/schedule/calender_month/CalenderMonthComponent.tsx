@@ -1,7 +1,7 @@
 import React, { useMemo, useRef } from 'react';
 import { View, Text, StyleSheet, ScrollView, useWindowDimensions } from 'react-native';
-import { scheduleItemsWeek } from '../../data/scheduleItems';
-import { users } from '../../data/users';
+import { scheduleItemsWeek } from '../../../data/scheduleItems';
+import { users } from '../../../data/users';
 import { Colors, useAppTheme } from '@/shared/theme';
 import { useIsTablet } from '@/shared/lib/useIsTablet';
 

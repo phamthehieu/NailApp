@@ -14,4 +14,5 @@ export type RootStackParamList = {
   Report: undefined;
   BottomNavigator: undefined;
   BookingManage: undefined;
+  DetailBookingItem: { bookingId: number | string };
 };
