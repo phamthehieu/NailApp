@@ -66,7 +66,7 @@ const BookingListComponent = ({ navigation }: BookingListComponentProps) => {
     };
 
     const handleEdit = (item: any) => {
-        console.log("Edit booking:", item.key);
+        navigation.navigate(Paths.EditBooking, { bookingId: item.id });
     };
 
     const handleDelete = (item: any) => {

@@ -6,9 +6,11 @@ import { Text } from "@/shared/ui/Text";
 import { Colors, useAppTheme } from "@/shared/theme";
 import { TextField } from "@/shared/ui/TextField";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useTranslation } from "react-i18next";
 
 type CustomerInformationProps = {
     showDob?: boolean;
+    value?: CustomerState;
     onChange?: (state: CustomerState) => void;
 };
 
@@ -35,12 +37,13 @@ function customerReducer(state: CustomerState, action: CustomerAction): Customer
     }
 }
 
-const CustomerInformationComponent = ({ showDob = true, onChange }: CustomerInformationProps) => {
+const CustomerInformationComponent = ({ showDob = true, value, onChange }: CustomerInformationProps) => {
     const { theme: { colors } } = useAppTheme();
     const { width } = useWindowDimensions();
     const isWide = width >= 700;
     const styles = $styles(colors, isWide);
     const insets = useSafeAreaInsets();
+    const { t } = useTranslation();
 
     const scrollRef = useRef<ScrollView>(null);
     const phoneRef = useRef<TextInput>(null);
@@ -53,13 +56,15 @@ const CustomerInformationComponent = ({ showDob = true, onChange }: CustomerInfo
         note: 0,
     });
 
-    const [customer, dispatchCustomer] = useReducer(customerReducer, {
+    const initialState = value || {
         name: "",
         phone: "",
         email: "",
         note: "",
         dob: new Date(),
-    });
+    };
+
+    const [customer, dispatchCustomer] = useReducer(customerReducer, initialState);
     const { name, phone, email, note, dob } = customer;
     const setName = useCallback((value: string) => {
         dispatchCustomer({ type: "SET_FIELD", field: "name", value });
@@ -79,6 +84,24 @@ const CustomerInformationComponent = ({ showDob = true, onChange }: CustomerInfo
 
     const [showSuggest, setShowSuggest] = useState(false);
     const [keyboardHeight, setKeyboardHeight] = useState(0);
+    const previousValueRef = useRef<CustomerState | undefined>(value);
+
+    useEffect(() => {
+        if (value) {
+            const prevValue = previousValueRef.current;
+            const hasChanged = !prevValue ||
+                prevValue.name !== value.name ||
+                prevValue.phone !== value.phone ||
+                prevValue.email !== value.email ||
+                prevValue.note !== value.note ||
+                prevValue.dob.getTime() !== value.dob.getTime();
+
+            if (hasChanged) {
+                dispatchCustomer({ type: "RESET", payload: value });
+                previousValueRef.current = value;
+            }
+        }
+    }, [value]);
 
     useEffect(() => {
         onChange?.(customer);
@@ -195,13 +218,13 @@ const CustomerInformationComponent = ({ showDob = true, onChange }: CustomerInfo
                     >
 
                         <TextField
-                            label="Tên khách hàng (Nickname)"
+                            label={t('bookingInformation.customerName')}
                             required={true}
-                            placeholder="Nhập tên khách hàng (Nickname)"
+                            placeholder={t('bookingInformation.customerNamePlaceholder')}
                             value={name}
-                            onChangeText={(t) => {
-                                setName(t);
-                                setShowSuggest(!!t);
+                            onChangeText={(text) => {
+                                setName(text);
+                                setShowSuggest(!!text);
                             }}
                             keyboardType="default"
                             returnKeyType="next"
@@ -239,9 +262,9 @@ const CustomerInformationComponent = ({ showDob = true, onChange }: CustomerInfo
                         >
                             <TextField
                                 ref={phoneRef}
-                                label="Số điện thoại"
+                                label={t('bookingInformation.phone')}
                                 required={true}
-                                placeholder="Nhập số điện thoại"
+                                placeholder={t('bookingInformation.phonePlaceholder')}
                                 value={phone}
                                 onChangeText={setPhone}
                                 keyboardType="numeric"
@@ -259,8 +282,8 @@ const CustomerInformationComponent = ({ showDob = true, onChange }: CustomerInfo
                         >
                             <TextField
                                 ref={emailRef}
-                                label="Email"
-                                placeholder="Nhập email"
+                                label={t('bookingInformation.email')}
+                                placeholder={t('bookingInformation.emailPlaceholder')}
                                 value={email}
                                 onChangeText={setEmail}
                                 keyboardType="email-address"
@@ -274,8 +297,8 @@ const CustomerInformationComponent = ({ showDob = true, onChange }: CustomerInfo
                             <>
                                 <View style={styles.colSmall}>
                                     <View style={styles.labelRow}>
-                                        <Text text="Ngày sinh" style={styles.labelText} />
-                                        <Text text="(*)" style={styles.requiredMark} />
+                                        <Text text={t('bookingInformation.dobDay')} style={styles.labelText} />
+                                        <Text text={t('bookingInformation.requiredMark')} style={styles.requiredMark} />
                                     </View>
                                     <Dropdown
                                         data={dayOptions}
@@ -296,8 +319,8 @@ const CustomerInformationComponent = ({ showDob = true, onChange }: CustomerInfo
                                 </View>
                                 <View style={styles.colSmall}>
                                     <View style={styles.labelRow}>
-                                        <Text text="Tháng sinh" style={styles.labelText} />
-                                        <Text text="(*)" style={styles.requiredMark} />
+                                        <Text text={t('bookingInformation.dobMonth')} style={styles.labelText} />
+                                        <Text text={t('bookingInformation.requiredMark')} style={styles.requiredMark} />
                                     </View>
                                     <Dropdown
                                         data={monthOptions}
@@ -318,7 +341,7 @@ const CustomerInformationComponent = ({ showDob = true, onChange }: CustomerInfo
                                 </View>
                                 <View style={styles.colSmall}>
                                     <View style={styles.labelRow}>
-                                        <Text text="Năm sinh" style={styles.labelText} />
+                                        <Text text={t('bookingInformation.dobYear')} style={styles.labelText} />
                                     </View>
                                     <Dropdown
                                         data={yearOptions}
@@ -345,8 +368,8 @@ const CustomerInformationComponent = ({ showDob = true, onChange }: CustomerInfo
                         <View style={styles.dobRow}>
                             <View style={styles.colDob}>
                                 <View style={styles.labelRow}>
-                                    <Text text="Ngày sinh" style={styles.labelText} />
-                                    <Text text="(*)" style={styles.requiredMark} />
+                                    <Text text={t('bookingInformation.dobDay')} style={styles.labelText} />
+                                    <Text text={t('bookingInformation.requiredMark')} style={styles.requiredMark} />
                                 </View>
                                 <Dropdown
                                     data={dayOptions}
@@ -367,8 +390,8 @@ const CustomerInformationComponent = ({ showDob = true, onChange }: CustomerInfo
                             </View>
                             <View style={styles.colDob}>
                                 <View style={styles.labelRow}>
-                                    <Text text="Tháng sinh" style={styles.labelText} />
-                                    <Text text="(*)" style={styles.requiredMark} />
+                                    <Text text={t('bookingInformation.dobMonth')} style={styles.labelText} />
+                                    <Text text={t('bookingInformation.requiredMark')} style={styles.requiredMark} />
                                 </View>
                                 <Dropdown
                                     data={monthOptions}
@@ -389,7 +412,7 @@ const CustomerInformationComponent = ({ showDob = true, onChange }: CustomerInfo
                             </View>
                             <View style={styles.colDob}>
                                 <View style={styles.labelRow}>
-                                    <Text text="Năm sinh" style={styles.labelText} />
+                                    <Text text={t('bookingInformation.dobYear')} style={styles.labelText} />
                                 </View>
                                 <Dropdown
                                     data={yearOptions}
@@ -417,8 +440,8 @@ const CustomerInformationComponent = ({ showDob = true, onChange }: CustomerInfo
                         }}
                     >
                         <TextField
-                            label="Ghi chú"
-                            placeholder="Nhập ghi chú"
+                            label={t('bookingInformation.note')}
+                            placeholder={t('bookingInformation.notePlaceholder')}
                             value={note}
                             onChangeText={setNote}
                             keyboardType="default"

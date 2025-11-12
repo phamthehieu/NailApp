@@ -10,4 +10,5 @@ export const enum Paths {
   BookingManage = 'BookingManage',
   DetailBookingItem = 'DetailBookingItem',
   AddNewBooking = 'AddNewBooking',
+  EditBooking = 'EditBooking',
 }

@@ -1,28 +1,67 @@
-import { Keyboard, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Switch, View, useWindowDimensions } from "react-native";
-import { useCallback, useMemo, useRef, useState } from "react";
-import { Calendar, ChevronDown, Clock, Plus, Trash2 } from "lucide-react-native";
+import { Keyboard, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from "react-native";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Calendar, Clock } from "lucide-react-native";
 import { Colors, useAppTheme } from "@/shared/theme";
 import { TextField } from "@/shared/ui/TextField";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Text } from "@/shared/ui/Text";
-import { Dropdown } from "react-native-element-dropdown";
+import DateTimePicker from "@/shared/ui/DatePicker";
+import { useTranslation } from "react-i18next";
+import ServiceListComponent, { ServiceItem } from "./components/ServiceListComponent";
+import PeriodicSettingsComponent, { PeriodicSettings } from "./components/PeriodicSettingsComponent";
 
+export interface BookingInformationData {
+    bookingDate: Date | null;
+    bookingTime: Date | null;
+    services: ServiceItem[];
+    note: string;
+    isPeriodic: boolean;
+    periodicSettings?: {
+        repeatBy: string;
+        repeatValue: string;
+        endDate: string;
+    };
+}
 
-const BookingInformationComponent = () => {
+interface BookingInformationComponentProps {
+    value?: BookingInformationData;
+    onChange?: (data: BookingInformationData) => void;
+}
+
+const BookingInformationComponent = ({ value, onChange }: BookingInformationComponentProps) => {
     const { theme: { colors } } = useAppTheme();
     const { width } = useWindowDimensions();
     const isWide = width >= 700;
     const styles = $styles(colors, isWide);
     const insets = useSafeAreaInsets();
+    const { t } = useTranslation();
 
-    const [serviceItems, setServiceItems] = useState<Array<{ id: number, name: string, duration: string, staff: string, anyEmployee: boolean }>>([]);
-    const [note, setNote] = useState("");
+    const initialValue = value || {
+        bookingDate: null,
+        bookingTime: null,
+        services: [],
+        note: "",
+        isPeriodic: false,
+        periodicSettings: undefined,
+    };
+
+    const [serviceItems, setServiceItems] = useState<ServiceItem[]>(initialValue.services);
+    const [note, setNote] = useState(initialValue.note);
     const scrollRef = useRef<ScrollView>(null);
     const inputPositionsRef = useRef<Record<"note", number>>({
         note: 0,
     });
     const [keyboardHeight, setKeyboardHeight] = useState(0);
-    const [isPeriodic, setIsPeriodic] = useState(false);
+    const [isPeriodic, setIsPeriodic] = useState(initialValue.isPeriodic);
+    const [periodicSettings, setPeriodicSettings] = useState<PeriodicSettings>({
+        repeatBy: initialValue.periodicSettings?.repeatBy || "",
+        repeatValue: initialValue.periodicSettings?.repeatValue || "",
+        endDate: initialValue.periodicSettings?.endDate || "",
+    });
+    const [selectedDate, setSelectedDate] = useState<Date | null>(initialValue.bookingDate);
+    const [selectedTime, setSelectedTime] = useState<Date | null>(initialValue.bookingTime);
+    const [showDatePicker, setShowDatePicker] = useState(false);
+    const [showTimePicker, setShowTimePicker] = useState(false);
+    const previousValueRef = useRef<BookingInformationData | undefined>(value);
 
     useMemo(() => {
         const showSub = Keyboard.addListener("keyboardDidShow", (e) => {
@@ -36,31 +75,8 @@ const BookingInformationComponent = () => {
     }, []);
 
 
-    const serviceOptions = [
-        { label: "Gỡ sơn gel", value: "remove_gel" },
-        { label: "Chăm sóc móng", value: "nail_care" },
-        { label: "Sơn gel", value: "gel_polish" },
-        { label: "Đắp bột", value: "acrylic" },
-    ];
 
-    const employeeOptions = [
-        { label: "Nhân viên bất kỳ", value: "any" },
-        { label: "An", value: "an" },
-        { label: "Bình", value: "binh" },
-        { label: "Chi", value: "chi" },
-    ];
 
-    const addService = useCallback(() => {
-        setServiceItems((prev) => [...prev, { id: Date.now(), name: "", duration: "", staff: "", anyEmployee: false }]);
-    }, []);
-
-    const updateService = useCallback((id: number, patch: Partial<{ name: string, duration: string, staff: string, anyEmployee: boolean }>) => {
-        setServiceItems((prev) => prev.map((s) => (s.id === id ? { ...s, ...patch } : s)));
-    }, []);
-
-    const removeService = useCallback((id: number) => {
-        setServiceItems((prev) => prev.filter((s) => s.id !== id));
-    }, []);
 
     const safeScrollToInput = useCallback((key: "note") => {
         const y = inputPositionsRef.current[key] ?? 0;
@@ -73,6 +89,95 @@ const BookingInformationComponent = () => {
             });
         }, delay);
     }, [insets.top, keyboardHeight]);
+
+    const formatDate = useCallback((date: Date | null): string => {
+        if (!date) return "";
+        const day = date.getDate();
+        const month = date.getMonth() + 1;
+        const year = date.getFullYear();
+        return `${day.toString().padStart(2, '0')}/${month.toString().padStart(2, '0')}/${year}`;
+    }, []);
+
+    const formatTime = useCallback((date: Date | null): string => {
+        if (!date) return "";
+        const hours = date.getHours();
+        const minutes = date.getMinutes();
+        return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+    }, []);
+
+    const handleDateChange = useCallback((date: Date) => {
+        setSelectedDate(date);
+        setShowDatePicker(false);
+    }, []);
+
+    const handleTimeChange = useCallback((date: Date) => {
+        const baseDate = selectedDate || new Date();
+        const timeOnly = new Date(
+            baseDate.getFullYear(),
+            baseDate.getMonth(),
+            baseDate.getDate(),
+            date.getHours(),
+            date.getMinutes(),
+            0,
+            0
+        );
+        setSelectedTime(timeOnly);
+        setShowTimePicker(false);
+    }, [selectedDate]);
+
+    useEffect(() => {
+        if (value) {
+            const prevValue = previousValueRef.current;
+            const hasChanged = !prevValue ||
+                prevValue.bookingDate !== value.bookingDate ||
+                prevValue.bookingTime !== value.bookingTime ||
+                prevValue.note !== value.note ||
+                prevValue.isPeriodic !== value.isPeriodic ||
+                JSON.stringify(prevValue.services) !== JSON.stringify(value.services) ||
+                JSON.stringify(prevValue.periodicSettings) !== JSON.stringify(value.periodicSettings);
+
+            if (hasChanged) {
+                setServiceItems(value.services);
+                setNote(value.note);
+                setIsPeriodic(value.isPeriodic);
+                setSelectedDate(value.bookingDate);
+                setSelectedTime(value.bookingTime);
+                if (value.periodicSettings) {
+                    setPeriodicSettings({
+                        repeatBy: value.periodicSettings.repeatBy,
+                        repeatValue: value.periodicSettings.repeatValue,
+                        endDate: value.periodicSettings.endDate,
+                    });
+                } else {
+                    setPeriodicSettings({
+                        repeatBy: "",
+                        repeatValue: "",
+                        endDate: "",
+                    });
+                }
+                previousValueRef.current = value;
+            }
+        }
+    }, [value]);
+
+    const bookingData: BookingInformationData = useMemo(() => {
+        return {
+            bookingDate: selectedDate,
+            bookingTime: selectedTime,
+            services: serviceItems,
+            note: note,
+            isPeriodic: isPeriodic,
+            periodicSettings: isPeriodic && periodicSettings.repeatBy && periodicSettings.repeatValue && periodicSettings.endDate ? {
+                repeatBy: periodicSettings.repeatBy,
+                repeatValue: periodicSettings.repeatValue,
+                endDate: periodicSettings.endDate,
+            } : undefined,
+        };
+    }, [selectedDate, selectedTime, serviceItems, note, isPeriodic, periodicSettings]);
+
+    useEffect(() => {
+        onChange?.(bookingData);
+    }, [bookingData, onChange]);
 
     return (
         <KeyboardAvoidingView
@@ -94,15 +199,16 @@ const BookingInformationComponent = () => {
 
                     <View style={styles.row}>
                         <Pressable
-                            onPress={() => console.log("date")}
+                            onPress={() => setShowDatePicker(true)}
                             style={[styles.datePicker, styles.half]}
                         >
                             <TextField
-                                label="Ngày đặt lịch"
+                                label={t('bookingInformation.bookingDate')}
                                 required={true}
                                 readOnly
                                 editable={false}
-                                placeholder="Chọn ngày"
+                                placeholder={t('bookingInformation.bookingDatePlaceholder')}
+                                value={formatDate(selectedDate)}
                                 style={{ height: 48 }}
                                 RightAccessory={() => (
                                     <View style={styles.accessory}>
@@ -113,15 +219,16 @@ const BookingInformationComponent = () => {
                         </Pressable>
 
                         <Pressable
-                            onPress={() => console.log("date")}
+                            onPress={() => setShowTimePicker(true)}
                             style={[styles.datePicker, styles.half]}
                         >
                             <TextField
-                                label="Giờ đặt lịch"
+                                label={t('bookingInformation.bookingTime')}
                                 required={true}
                                 readOnly
                                 editable={false}
-                                placeholder="Chọn giờ"
+                                placeholder={t('bookingInformation.bookingTimePlaceholder')}
+                                value={formatTime(selectedTime)}
                                 style={{ height: 48 }}
                                 RightAccessory={() => (
                                     <View style={styles.accessory}>
@@ -132,99 +239,10 @@ const BookingInformationComponent = () => {
                         </Pressable>
                     </View>
 
-                    <View style={styles.row}>
-
-                        <Pressable
-                            style={styles.bookButton}
-                            onPress={addService}
-                        >
-                            <Plus size={18} color={colors.white} />
-                            <Text text="Thêm dịch vụ" style={styles.bookButtonText} />
-                        </Pressable>
-
-                    </View>
-
-                    {serviceItems.map((item, index) => (
-                        <View key={item.id} style={styles.serviceRow}>
-                            <View style={styles.field}>
-                                <View style={styles.labelRow}>
-                                    <Text text={`Dịch vụ ${index + 1}`} />
-                                    <Text text="(*)" style={styles.requiredMark} />
-                                </View>
-                                <Dropdown
-                                    data={serviceOptions}
-                                    labelField="label"
-                                    valueField="value"
-                                    value={item.name}
-                                    onChange={({ value }) => updateService(item.id, { name: value as string })}
-                                    style={styles.dropdown}
-                                    showsVerticalScrollIndicator={false}
-                                    containerStyle={styles.dropdownContainer}
-                                    itemContainerStyle={styles.dropdownItem}
-                                    selectedTextStyle={styles.dropdownSelectedText}
-                                    itemTextStyle={{ color: colors.text }}
-                                    placeholderStyle={styles.dropdownSelectedText}
-                                    placeholder="Chọn dịch vụ"
-                                    renderRightIcon={() => <ChevronDown size={16} color={colors.placeholderTextColor} />}
-                                    maxHeight={220}
-                                    activeColor={colors.backgroundDisabled}
-                                />
-                            </View>
-                            <View style={styles.field}>
-                                <View style={styles.labelRow}>
-                                    <Text text="Thời gian thực hiện" />
-                                </View>
-                                <TextField
-                                    placeholder="Nhập thời gian"
-                                    keyboardType="number-pad"
-                                    value={item.duration}
-                                    onChangeText={(t) => updateService(item.id, { duration: t })}
-                                />
-                            </View>
-                            <View style={styles.field}>
-                                <View style={styles.labelRow}>
-                                    <Text text="Nhân viên" />
-                                    <Text text="(*)" style={styles.requiredMark} />
-                                </View>
-                                <Dropdown
-                                    data={employeeOptions}
-                                    labelField="label"
-                                    valueField="value"
-                                    value={item.staff}
-                                    onChange={({ value }) => updateService(item.id, { staff: value as string })}
-                                    style={[styles.dropdown, item.anyEmployee && { opacity: 0.6 }]}
-                                    showsVerticalScrollIndicator={false}
-                                    containerStyle={styles.dropdownContainer}
-                                    itemContainerStyle={styles.dropdownItem}
-                                    selectedTextStyle={styles.dropdownSelectedText}
-                                    itemTextStyle={{ color: colors.text }}
-                                    placeholderStyle={styles.dropdownSelectedText}
-                                    placeholder="Chọn nhân viên"
-                                    renderRightIcon={() => <ChevronDown size={16} color={colors.placeholderTextColor} />}
-                                    maxHeight={220}
-                                    activeColor={colors.backgroundDisabled}
-                                    disable={item.anyEmployee}
-                                />
-                            </View>
-
-                            <View style={styles.actions}>
-                                <View style={styles.anyWrap}>
-                                    <Switch
-                                        value={item.anyEmployee}
-                                        onValueChange={(val) => updateService(item.id, { anyEmployee: val, staff: val ? 'any' : item.staff })}
-                                        thumbColor={item.anyEmployee ? colors.yellow : colors.primary}
-                                        trackColor={{ true: colors.yellow + "55", false: colors.border }}
-                                    />
-                                    <Text text="Nhân viên bất kỳ" />
-                                </View>
-
-                                <Pressable onPress={() => removeService(item.id)} style={styles.deleteBtn}>
-                                    <Trash2 size={16} color={colors.error} />
-                                    <Text text="Xóa" style={styles.deleteText} />
-                                </Pressable>
-                            </View>
-                        </View>
-                    ))}
+                    <ServiceListComponent
+                        services={serviceItems}
+                        onChange={setServiceItems}
+                    />
 
                     <View
                         style={styles.noteField}
@@ -233,8 +251,8 @@ const BookingInformationComponent = () => {
                         }}
                     >
                         <TextField
-                            label="Ghi chú"
-                            placeholder="Nhập ghi chú"
+                            label={t('bookingInformation.note')}
+                            placeholder={t('bookingInformation.notePlaceholder')}
                             value={note}
                             onChangeText={setNote}
                             keyboardType="default"
@@ -245,65 +263,34 @@ const BookingInformationComponent = () => {
                         />
                     </View>
 
-                    <Pressable style={[styles.row]} onPress={() => setIsPeriodic(!isPeriodic)}>
-
-                        <Switch
-                            value={isPeriodic}
-                            onValueChange={setIsPeriodic}
-                            thumbColor={isPeriodic ? colors.yellow : colors.primary}
-                            trackColor={{ true: colors.yellow + "55", false: colors.border }}
-                        />
-
-                        <Text text="Đặt lịch định kỳ" style={styles.periodicText} />
-
-                    </Pressable>
-
-                    {isPeriodic && (
-
-                        <View style={styles.row}>
-                            <Pressable
-                                onPress={() => console.log("date")}
-                                style={[styles.datePicker, styles.half]}
-                            >
-                                <TextField
-                                    label="Ngày đặt lịch"
-                                    required={true}
-                                    readOnly
-                                    editable={false}
-                                    placeholder="Chọn ngày"
-                                    style={{ height: 48 }}
-                                    RightAccessory={() => (
-                                        <View style={styles.accessory}>
-                                            <Calendar size={18} color={colors.text} />
-                                        </View>
-                                    )}
-                                />
-                            </Pressable>
-
-                            <Pressable
-                                onPress={() => console.log("date")}
-                                style={[styles.datePicker, styles.half]}
-                            >
-                                <TextField
-                                    label="Giờ đặt lịch"
-                                    required={true}
-                                    readOnly
-                                    editable={false}
-                                    placeholder="Chọn giờ"
-                                    style={{ height: 48 }}
-                                    RightAccessory={() => (
-                                        <View style={styles.accessory}>
-                                            <Clock size={18} color={colors.text} />
-                                        </View>
-                                    )}
-                                />
-                            </Pressable>
-                        </View>
-
-                    )}
+                    <PeriodicSettingsComponent
+                        isPeriodic={isPeriodic}
+                        onPeriodicChange={setIsPeriodic}
+                        settings={periodicSettings}
+                        onSettingsChange={setPeriodicSettings}
+                    />
 
                 </View>
             </ScrollView>
+
+            <DateTimePicker
+                visible={showDatePicker}
+                value={selectedDate || new Date()}
+                mode="date"
+                onChange={handleDateChange}
+                onClose={() => setShowDatePicker(false)}
+                title={t('bookingInformation.bookingDatePickerTitle')}
+                allowPastDates={false}
+            />
+
+            <DateTimePicker
+                visible={showTimePicker}
+                value={selectedTime || new Date()}
+                mode="time"
+                onChange={handleTimeChange}
+                onClose={() => setShowTimePicker(false)}
+                title={t('bookingInformation.bookingTimePickerTitle')}
+            />
         </KeyboardAvoidingView>
     )
 }
@@ -339,102 +326,9 @@ const $styles = (colors: Colors, isWide: boolean) => StyleSheet.create({
         padding: 10,
         borderRadius: 10,
     },
-    bookButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: colors.yellow,
-        paddingVertical: 10,
-        paddingHorizontal: 16,
-        borderRadius: 12,
-        marginHorizontal: 12,
-    },
-    bookButtonText: {
-        color: colors.white,
-        fontSize: 14,
-        fontWeight: '600',
-    },
-    serviceRow: {
-        flexDirection: 'row',
-        alignItems: 'flex-end',
-        gap: 6,
-        flexWrap: 'wrap',
-        borderWidth: 1,
-        borderColor: colors.border,
-        borderRadius: 12,
-        padding: 6,
-        marginHorizontal: 12,
-    },
-    field: {
-        paddingHorizontal: 6,
-        width: isWide ? '32.5%' : '48%',
-        minWidth: isWide ? '32.5%' : '48%',
-        flexGrow: 1,
-        marginVertical: 6,
-    },
-    actions: {
-        flexDirection: 'row',
-        alignItems: 'flex-end',
-        justifyContent: 'space-between',
-        width: '100%',
-        paddingHorizontal: 6,
-        marginTop: 6,
-    },
-    anyWrap: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 8,
-    },
-    deleteBtn: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 6,
-        paddingVertical: 8,
-        paddingHorizontal: 12,
-        backgroundColor: colors.error50,
-        borderRadius: 10,
-    },
-    deleteText: {
-        color: colors.error,
-    },
-    dropdown: {
-        height: 48,
-        borderWidth: 1,
-        borderColor: colors.border,
-        backgroundColor: colors.card,
-        borderRadius: 12,
-        paddingHorizontal: 12,
-    },
-    dropdownContainer: {
-        backgroundColor: colors.card,
-        borderWidth: 1,
-        borderColor: colors.border,
-        borderRadius: 12,
-    },
-    dropdownItem: {
-        borderBottomWidth: 0,
-    },
-    dropdownSelectedText: {
-        color: colors.text,
-        fontSize: 14,
-    },
-    labelRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: 6,
-    },
-    requiredMark: {
-        fontSize: 14,
-        color: colors.error,
-        marginLeft: 4,
-    },
     noteField: {
         marginHorizontal: 12,
         marginTop: 12,
-    },
-    periodicText: {
-        fontSize: 16,
-        color: colors.text,
-        marginLeft: 8,
     },
 });
 

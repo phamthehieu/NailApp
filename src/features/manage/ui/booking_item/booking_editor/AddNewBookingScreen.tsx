@@ -10,8 +10,8 @@ import { Paths } from "@/app/navigation/paths";
 import StatusBarComponent from "@/shared/ui/StatusBar";
 import MHeader from "@/shared/ui/MHeader";
 import { Button } from "@/shared/ui/Button";
-import CustomerInformationComponent from "./CustomerInformationComponent";
-import BookingInformationComponent from "./BookingInformationComponent";
+import CustomerInformationComponent, { CustomerState } from "./CustomerInformationComponent";
+import BookingInformationComponent, { BookingInformationData } from "./BookingInformationComponent";
 
 const AddNewBookingScreen = ({ navigation }: RootScreenProps<Paths.AddNewBooking>) => {
     const { theme: { colors } } = useAppTheme();
@@ -24,6 +24,23 @@ const AddNewBookingScreen = ({ navigation }: RootScreenProps<Paths.AddNewBooking
     ]), [t]);
 
     const [activeStep, setActiveStep] = useState(0);
+
+    const [customerData, setCustomerData] = useState<CustomerState>({
+        name: "",
+        phone: "",
+        email: "",
+        note: "",
+        dob: new Date(),
+    });
+
+    const [bookingData, setBookingData] = useState<BookingInformationData>({
+        bookingDate: null,
+        bookingTime: null,
+        services: [],
+        note: "",
+        isPeriodic: false,
+        periodicSettings: undefined,
+    });
 
     return (
         <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
@@ -42,42 +59,42 @@ const AddNewBookingScreen = ({ navigation }: RootScreenProps<Paths.AddNewBooking
                 <View style={styles.stepperContainer}>
 
                     {steps.map((step, index) => {
-                    const IconComponent = step.icon;
-                    const isActive = index === activeStep;
-                    const isCompleted = index < activeStep;
+                        const IconComponent = step.icon;
+                        const isActive = index === activeStep;
+                        const isCompleted = index < activeStep;
 
-                    return (
-                        <React.Fragment key={step.label}>
-                            <Pressable
-                                style={styles.stepItem}
-                                onPress={() => setActiveStep(index)}
-                            >
-                                <View style={[
-                                    styles.stepCircle,
-                                    (isActive || isCompleted) ? styles.stepCircleActive : styles.stepCircleInactive,
-                                ]}>
-                                    <IconComponent
-                                        size={16}
-                                        color={(isActive || isCompleted) ? colors.background : colors.border}
-                                    />
-                                </View>
-                                <Text
-                                    style={[
-                                        styles.stepLabel,
-                                        isActive ? styles.stepLabelActive : styles.stepLabelInactive,
-                                    ]}
+                        return (
+                            <React.Fragment key={step.label}>
+                                <Pressable
+                                    style={styles.stepItem}
+                                    onPress={() => setActiveStep(index)}
                                 >
-                                    {step.label}
-                                </Text>
-                            </Pressable>
-                            {index !== steps.length - 1 && (
-                                <View style={[
-                                    styles.stepDivider,
-                                    isCompleted ? styles.stepDividerActive : styles.stepDividerInactive,
-                                ]} />
-                            )}
-                        </React.Fragment>
-                    );
+                                    <View style={[
+                                        styles.stepCircle,
+                                        (isActive || isCompleted) ? styles.stepCircleActive : styles.stepCircleInactive,
+                                    ]}>
+                                        <IconComponent
+                                            size={16}
+                                            color={(isActive || isCompleted) ? colors.background : colors.border}
+                                        />
+                                    </View>
+                                    <Text
+                                        style={[
+                                            styles.stepLabel,
+                                            isActive ? styles.stepLabelActive : styles.stepLabelInactive,
+                                        ]}
+                                    >
+                                        {step.label}
+                                    </Text>
+                                </Pressable>
+                                {index !== steps.length - 1 && (
+                                    <View style={[
+                                        styles.stepDivider,
+                                        isCompleted ? styles.stepDividerActive : styles.stepDividerInactive,
+                                    ]} />
+                                )}
+                            </React.Fragment>
+                        );
                     })}
 
                 </View>
@@ -87,10 +104,15 @@ const AddNewBookingScreen = ({ navigation }: RootScreenProps<Paths.AddNewBooking
             <View style={styles.content}>
 
                 {activeStep === 0 ? (
-                    
-                    <CustomerInformationComponent />
+                    <CustomerInformationComponent
+                        value={customerData}
+                        onChange={setCustomerData}
+                    />
                 ) : (
-                    <BookingInformationComponent />
+                    <BookingInformationComponent
+                        value={bookingData}
+                        onChange={setBookingData}
+                    />
                 )}
 
             </View>
