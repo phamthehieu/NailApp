@@ -1,11 +1,12 @@
 import React, { useMemo, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, useWindowDimensions } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, useWindowDimensions } from 'react-native';
 import { ChevronLeft, ChevronRight, Search, Calendar as CalendarIcon, ChevronDown, X } from "lucide-react-native";
 import { Colors, useAppTheme } from '@/shared/theme';
 import { useTranslation } from 'react-i18next';
 import { TextField } from '@/shared/ui/TextField';
 import { Dropdown } from 'react-native-element-dropdown';
 import { CalendarDayPickerModal, CalendarWeekPickerModal, CalendarMonthPickerModal } from '@/shared/ui/CalendarPickers';
+import { TextFieldLabel } from '@/shared/ui/Text';
 
 type Props = {
     selectedDate: Date;
@@ -133,6 +134,16 @@ const CalendarHeader = ({ selectedDate, onChange, onChangeRange, viewMode: propV
         return d;
     };
 
+    const renderItem = (item: any) => {
+        return (
+            <View style={styles.dropdownItemContainer}>
+                <TextFieldLabel allowFontScaling={false} style={styles.dropdownSelectedText}>
+                    {item.label}
+                </TextFieldLabel>
+            </View>
+        );
+    };
+
     return (
         <>
             <View style={styles.container}>
@@ -176,7 +187,7 @@ const CalendarHeader = ({ selectedDate, onChange, onChangeRange, viewMode: propV
                                 <ChevronLeft size={iconSize} color={colors.text} />
                             </TouchableOpacity>
                             <TouchableOpacity onPress={openPicker} style={styles.dateButton} activeOpacity={0.8}>
-                                <Text style={styles.dateButtonText}>{formatSelectedLabel(selectedDate)}</Text>
+                                <TextFieldLabel style={styles.dateButtonText}>{formatSelectedLabel(selectedDate)}</TextFieldLabel>
                                 <CalendarIcon size={isSmall ? 14 : 16} color={colors.text} />
                             </TouchableOpacity>
                             <TouchableOpacity onPress={goNext} style={styles.iconButton}>
@@ -208,9 +219,12 @@ const CalendarHeader = ({ selectedDate, onChange, onChangeRange, viewMode: propV
                                 itemTextStyle={{ color: colors.text }}
                                 containerStyle={{ backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }}
                                 activeColor={colors.background}
+                                showsVerticalScrollIndicator={false}
                                 renderRightIcon={() => (
                                     <ChevronDown size={isSmall ? 12 : 14} color={colors.text} />
                                 )}
+                                selectedTextProps={{ allowFontScaling: false }}
+                                renderItem={renderItem}
                             />
                         </>
                     )}
@@ -354,6 +368,16 @@ const $styles = (colors: Colors, isSmall: boolean) => {
             color: colors.text,
             fontSize: isSmall ? 12 : 13,
             fontWeight: '600',
+        },
+        dropdownItemContainer: {
+            paddingVertical: 8,
+            paddingHorizontal: 12,
+            color: colors.text,
+        },
+        dropdownSelectedText: {
+            fontSize: 14,
+            color: colors.text,
+            fontWeight: '500',
         },
     });
 };

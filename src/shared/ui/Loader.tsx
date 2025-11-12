@@ -1,8 +1,8 @@
 import { useAppTheme } from '@/shared/theme';
 import LottieView from 'lottie-react-native';
 import React from 'react';
-import { ActivityIndicator, Dimensions, StyleSheet, Text, View } from 'react-native';
-
+import { ActivityIndicator, Dimensions, StyleSheet, View } from 'react-native';
+import { TextFieldLabel } from './Text';
 interface IProps {
     loading: boolean;
     title?: string;
@@ -27,7 +27,7 @@ export default function Loader({ loading, title, color }: IProps) {
                             style={styles.loadingAnimation}
                         />
                         {!!title && (
-                            <Text
+                            <TextFieldLabel
                                 style={{
                                     paddingHorizontal: 16,
                                     textAlign: 'center',
@@ -36,7 +36,7 @@ export default function Loader({ loading, title, color }: IProps) {
                                     marginBottom: 16,
                                 }}>
                                 {title}
-                            </Text>
+                            </TextFieldLabel>
                         )}
                     </View>
                 </View>

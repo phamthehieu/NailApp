@@ -1,5 +1,5 @@
 import React, { useRef, useState, useMemo } from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, StyleSheet, ScrollView, Pressable } from 'react-native';
 import UserAvatar from './UserAvatar';
 import CurrentTimeLine from './CurrentTimeLine';
 import { users } from '../../../data/users';
@@ -8,12 +8,14 @@ import { scheduleItems } from '../../../data/scheduleItems';
 import { isWorkingHours, getScheduleBlocksForHour } from '../../../api/schedule';
 import { Colors, useAppTheme } from '@/shared/theme';
 import { useIsTablet } from '@/shared/lib/useIsTablet';
+import { TextFieldLabel } from '@/shared/ui/Text';
 
 type Props = {
     selectedDate: Date;
+    onPressScheduleItem: (item: any) => void;
 };
 
-const CalenderDayComponent = ({ selectedDate: _selectedDate }: Props) => {
+const CalenderDayComponent = ({ selectedDate: _selectedDate, onPressScheduleItem }: Props) => {
     const { theme: { colors } } = useAppTheme();
     const timeScrollRef = useRef<ScrollView>(null);
     const headerScrollRef = useRef<ScrollView>(null);
@@ -60,7 +62,10 @@ const CalenderDayComponent = ({ selectedDate: _selectedDate }: Props) => {
             const showTime = widthInPixels >= 56 && heightInPixels >= 22;
 
             return (
-                <View
+                <Pressable
+                    onPress={() => {
+                        onPressScheduleItem(item);
+                    }}
                     key={`${item.id}-${index}`}
                     style={[
                         styles.scheduleItem,
@@ -75,19 +80,19 @@ const CalenderDayComponent = ({ selectedDate: _selectedDate }: Props) => {
                     ]}
                 >
                     {showTitle && (
-                        <Text style={[
+                        <TextFieldLabel style={[
                             styles.scheduleItemTitle,
                             widthInPixels < 40 && styles.smallScheduleItemTitle
                         ]} numberOfLines={1} ellipsizeMode="tail">
                             {item.title}
-                        </Text>
+                        </TextFieldLabel>
                     )}
                     {showTime && (
-                        <Text style={styles.scheduleItemTime} numberOfLines={1} ellipsizeMode="clip">
+                        <TextFieldLabel style={styles.scheduleItemTime} numberOfLines={1} ellipsizeMode="clip">
                             {formatTime(item.startTime)} - {formatTime(item.endTime)}
-                        </Text>
+                        </TextFieldLabel>
                     )}
-                </View>
+                </Pressable>
             );
         });
     };
@@ -114,7 +119,7 @@ const CalenderDayComponent = ({ selectedDate: _selectedDate }: Props) => {
         <View style={styles.mainContainer}>
             <View style={styles.fixedUserColumn}>
                 <View style={styles.userColumnHeader}>
-                    <Text style={styles.userText}></Text>
+                    <TextFieldLabel style={styles.userText}></TextFieldLabel>
                 </View>
                 <ScrollView
                     ref={timeScrollRef}
@@ -146,7 +151,7 @@ const CalenderDayComponent = ({ selectedDate: _selectedDate }: Props) => {
                         <View style={styles.headerRow}>
                             {displayTimeSlots.map((slot) => (
                                 <View key={slot.time} style={styles.timeHeaderCell}>
-                                    <Text style={styles.timeText}>{slot.label}</Text>
+                                    <TextFieldLabel style={styles.timeText}>{slot.label}</TextFieldLabel>
                                 </View>
                             ))}
                         </View>

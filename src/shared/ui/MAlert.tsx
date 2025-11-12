@@ -2,13 +2,13 @@ import React from 'react';
 import {
     Modal,
     View,
-    Text,
     Pressable,
     StyleSheet,
     TouchableWithoutFeedback,
 } from 'react-native';
 import { CheckCheck, Trash2, Info, AlertCircle, MessageSquareWarning } from "lucide-react-native";
 import { useAppTheme } from '@/shared/theme';
+import { TextFieldLabel } from './Text';
 
 interface MAlertProps {
     visible: boolean;
@@ -107,15 +107,15 @@ const MAlert: React.FC<MAlertProps> = ({
                         {renderIcon()}
 
                         <View style={styles.header}>
-                            <Text style={[styles.title, { color: colors.text }]}>
+                            <TextFieldLabel style={[styles.title, { color: colors.text }]}>
                                 {title}
-                            </Text>
+                            </TextFieldLabel>
                         </View>
 
                         <View style={styles.body}>
-                            <Text style={[styles.message, { color: colors.text }]}>
+                            <TextFieldLabel style={[styles.message, { color: colors.text }]}>
                                 {message}
-                            </Text>
+                            </TextFieldLabel>
                         </View>
 
                         <View style={styles.footer}>
@@ -129,9 +129,9 @@ const MAlert: React.FC<MAlertProps> = ({
                                     ]}
                                     onPress={onCancel}
                                 >
-                                    <Text style={[styles.buttonText, { color: colors.text }]}>
+                                    <TextFieldLabel style={[styles.buttonText, { color: colors.text }]}>
                                         {cancelText}
-                                    </Text>
+                                    </TextFieldLabel>
                                 </Pressable>
                             )}
 
@@ -144,9 +144,9 @@ const MAlert: React.FC<MAlertProps> = ({
                                     ]}
                                     onPress={onConfirm}
                                 >
-                                    <Text style={[styles.buttonText, styles.okButtonText, { color: colors.white }]}>
+                                    <TextFieldLabel style={[styles.buttonText, styles.okButtonText, { color: colors.white }]}>
                                         {okText}
-                                    </Text>
+                                    </TextFieldLabel>
                                 </Pressable>
                             )}
                         </View>

@@ -8,7 +8,7 @@ import { useIsTablet } from '@/shared/lib/useIsTablet';
 import { useTranslation } from 'react-i18next';
 import { useRef, useState } from 'react';
 import MHeader from '@/shared/ui/MHeader';
-import { Text } from '@/shared/ui/Text';
+import { TextFieldLabel } from '@/shared/ui/Text';
 import { TextField } from '@/shared/ui/TextField';
 import LottieView from 'lottie-react-native';
 import { Button } from '@/shared/ui/Button';
@@ -36,7 +36,7 @@ const CheckinScreen = ({navigation}: RootScreenProps<Paths.Checkin>) => {
             <MHeader
                 label={t('checkin.checkin')}
                 onBack={() => navigation.goBack()}
-                showIconLeft={true}
+                showIconLeft={false}
                 bgColor={colors.yellow}
             />
             <KeyboardAvoidingView
@@ -52,7 +52,7 @@ const CheckinScreen = ({navigation}: RootScreenProps<Paths.Checkin>) => {
                             loop
                             style={styles.checkinAnimation}
                         />
-                    <Text style={styles.centerText}>{t('checkin.sologanhapsoDT')}</Text>
+                    <TextFieldLabel style={styles.centerText}>{t('checkin.sologanhapsoDT')}</TextFieldLabel>
                 </View>
 
                 <View style={styles.phoneContainer}>

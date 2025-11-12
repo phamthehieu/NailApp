@@ -50,7 +50,7 @@ export interface TextProps extends RNTextProps {
 }
 
 
-export const Text = forwardRef(function Text(props: TextProps, ref: ForwardedRef<RNText>) {
+export const TextFieldLabel = forwardRef(function TextFieldLabel(props: TextProps, ref: ForwardedRef<RNText>) {
     const { weight, size, tx, txOptions, text, children, style: $styleOverride, ...rest } = props;
     const { themed } = useAppTheme()
 
@@ -67,7 +67,7 @@ export const Text = forwardRef(function Text(props: TextProps, ref: ForwardedRef
     ];
 
     return (
-        <RNText {...rest} style={$styles} ref={ref}>
+        <RNText {...rest} style={$styles} ref={ref} allowFontScaling={false}>
             {content}
         </RNText>
     )

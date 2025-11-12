@@ -101,7 +101,6 @@ const DetailBookingItem = ({ navigation, route }: RootScreenProps<Paths.DetailBo
                 }),
             ]).start();
         } else {
-            // Tab 2 (List) hiển thị
             Animated.parallel([
                 Animated.timing(tab1Opacity, {
                     toValue: 0,
@@ -185,6 +184,13 @@ const DetailBookingItem = ({ navigation, route }: RootScreenProps<Paths.DetailBo
                     onPress={handleCancelBooking}
                     style={[styles.button, styles.cancelButton]}
                     textStyle={styles.cancelButtonText}
+                />
+                <Button
+                    text={t('detailBookingItem.editBooking')}
+                    preset="filled"
+                    onPress={handleEditBooking}
+                    style={[styles.button, styles.editButton]}
+                    textStyle={styles.editButtonText}
                 />
                 <Button
                     text={t('detailBookingItem.editBooking')}

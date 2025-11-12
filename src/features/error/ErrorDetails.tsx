@@ -4,7 +4,7 @@ import { ScrollView, TextStyle, View, ViewStyle } from 'react-native';
 import { useAppTheme } from '@shared/theme';
 import type { ThemedStyle } from '@shared/theme/types';
 import { Screen } from '@/shared/ui/Screen';
-import { Text } from '@/shared/ui/Text';
+import { TextFieldLabel } from '@/shared/ui/Text';
 import { Button } from '@/shared/ui/Button';
 
 export interface ErrorDetailsProps {
@@ -22,16 +22,16 @@ export function ErrorDetails(props: ErrorDetailsProps) {
       contentContainerStyle={themed($contentContainer)}
     >
       <View style={$topSection}>
-        <Text style={themed($heading)} preset="subheading" tx="errorScreen:title" />
-        <Text tx="errorScreen:friendlySubtitle" />
+        <TextFieldLabel style={themed($heading)} preset="subheading" tx="errorScreen:title" />
+        <TextFieldLabel tx="errorScreen:friendlySubtitle" />
       </View>
 
       <ScrollView
         style={themed($errorSection)}
         contentContainerStyle={themed($errorSectionContentContainer)}
       >
-        <Text style={themed($errorContent)} weight="bold" text={`${props.error}`.trim()} />
-        <Text
+        <TextFieldLabel style={themed($errorContent)} weight="bold" text={`${props.error}`.trim()} />
+        <TextFieldLabel
           selectable
           style={themed($errorBacktrace)}
           text={`${props.errorInfo?.componentStack ?? ''}`.trim()}

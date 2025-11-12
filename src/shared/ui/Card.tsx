@@ -13,7 +13,7 @@ import { useAppTheme } from '../theme/context';
 import { $styles } from '../theme/styles';
 import type { ThemedStyle, ThemedStyleArray } from '../theme/types';
 
-import { Text, TextProps } from './Text';
+import { TextFieldLabel, TextProps } from './Text';
 
 type Presets = 'default' | 'reversed';
 
@@ -206,7 +206,7 @@ export function Card(props: CardProps) {
                 <HeaderContentWrapper>
                     {HeadingComponent ||
                         (isHeadingPresent && (
-                            <Text
+                            <TextFieldLabel
                                 weight="bold"
                                 text={heading}
                                 tx={headingTx}
@@ -218,7 +218,7 @@ export function Card(props: CardProps) {
 
                     {ContentComponent ||
                         (isContentPresent && (
-                            <Text
+                            <TextFieldLabel
                                 weight="normal"
                                 text={content}
                                 tx={contentTx}
@@ -231,7 +231,7 @@ export function Card(props: CardProps) {
 
                 {FooterComponent ||
                     (isFooterPresent && (
-                        <Text
+                        <TextFieldLabel
                             weight="normal"
                             size="xs"
                             text={footer}

@@ -1,7 +1,7 @@
 import { Colors, useAppTheme } from '@/shared/theme';
 import React from 'react';
-import { View, Text, Image, StyleSheet } from 'react-native';
-
+import { View, Image, StyleSheet } from 'react-native';
+import { TextFieldLabel } from '@/shared/ui/Text';
 type User = {
     id: string;
     name: string;
@@ -24,7 +24,7 @@ const UserAvatar = ({ user }: UserAvatarProps) => {
                     accessibilityLabel={`${user.name}'s profile picture`}
                 />
             </View>
-            <Text style={styles.name}>{user.name}</Text>
+            <TextFieldLabel style={styles.name}>{user.name}</TextFieldLabel>
         </View>
     );
 };

@@ -156,15 +156,19 @@ const BookingManageScreen = ({ navigation }: RootScreenProps<Paths.BookingManage
         }
     }, [activeTab.value]);
 
+    const handlePressScheduleItem = (item: any) => {
+        navigation.navigate(Paths.DetailBookingItem, { bookingId: item.id });
+    };
+
     const renderCalenderComponent = () => {
         if (viewMode === 'Ngày') {
-            return <CalenderDayComponent selectedDate={anchorDate} />;
+            return <CalenderDayComponent selectedDate={anchorDate} onPressScheduleItem={handlePressScheduleItem} />;
         }
         if (viewMode === 'Tuần') {
-            return <CalenderWeedComponent selectedDate={anchorDate} dateRange={activeRange} />;
+            return <CalenderWeedComponent selectedDate={anchorDate} dateRange={activeRange} onPressScheduleItem={handlePressScheduleItem} />;
         }
         if (viewMode === 'Tháng') {
-            return <CalenderMonthComponent selectedDate={anchorDate} />;
+            return <CalenderMonthComponent selectedDate={anchorDate} onPressScheduleItem={handlePressScheduleItem} />;
         }
         return null;
     };

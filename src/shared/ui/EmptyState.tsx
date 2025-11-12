@@ -5,7 +5,7 @@ import { useAppTheme } from '../theme/context';
 import type { ThemedStyle } from '../theme/types';
 
 import { Button, ButtonProps } from './Button';
-import { Text, TextProps } from './Text';
+import { TextFieldLabel, TextProps } from './Text';
 import { useTranslation } from 'react-i18next';
 
 const sadFace = require('@assets/icon/no_data.png');
@@ -197,7 +197,7 @@ export function EmptyState(props: EmptyStateProps) {
             )}
 
             {isHeadingPresent && (
-                <Text
+                <TextFieldLabel
                     preset="subheading"
                     text={heading}
                     tx={headingTx}
@@ -208,7 +208,7 @@ export function EmptyState(props: EmptyStateProps) {
             )}
 
             {isContentPresent && (
-                <Text
+                <TextFieldLabel
                     text={content}
                     tx={contentTx}
                     txOptions={contentTxOptions}

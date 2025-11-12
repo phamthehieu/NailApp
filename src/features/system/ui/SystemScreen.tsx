@@ -2,7 +2,7 @@ import { Paths } from '@/app/navigation/paths';
 import { RootScreenProps } from '@/app/navigation/types';
 import { Colors, useAppTheme } from '@/shared/theme';
 import StatusBarComponent from '@/shared/ui/StatusBar';
-import { Text } from '@/shared/ui/Text';
+import { TextFieldLabel } from '@/shared/ui/Text';
 import { ScrollView, Dimensions, KeyboardAvoidingView, Platform, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useIsTablet } from '@/shared/lib/useIsTablet';
@@ -35,7 +35,7 @@ const SystemScreen = ({navigation}: RootScreenProps<Paths.System>) => {
                     nestedScrollEnabled={true}
                 >
 
-                    <Text>System Screen</Text>
+                    <TextFieldLabel>System Screen</TextFieldLabel>
 
                 </ScrollView>
             </KeyboardAvoidingView>

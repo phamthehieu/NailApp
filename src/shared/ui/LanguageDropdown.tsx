@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Platform, Image } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Platform, Image } from 'react-native';
 import { ChevronDown } from 'lucide-react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { useTranslation } from 'react-i18next';
 import { useLanguage } from '@shared/lib/useLanguage';
-
+import { TextFieldLabel } from './Text';
 const LanguageDropdown = () => {
     const { t } = useTranslation();
     const { currentLanguage, isInitialized, changeLanguage, getSupportedLanguages } = useLanguage();
@@ -96,12 +96,12 @@ const LanguageDropdown = () => {
                                 style={styles.dropdownFlagImage}
                                 resizeMode="contain"
                             />
-                            <Text style={[
+                            <TextFieldLabel style={[
                                 styles.dropdownItemText,
                                 currentLanguage === code && styles.selectedDropdownItemText
                             ]}>
                                 {getLanguageDisplayName(code)}
-                            </Text>
+                            </TextFieldLabel>
                         </TouchableOpacity>
                     ))}
                 </View>

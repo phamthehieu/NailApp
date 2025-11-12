@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { Pressable, StyleSheet, View, Text } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native";
 import { ArrowLeft, Info, UserRound } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -12,6 +12,7 @@ import MHeader from "@/shared/ui/MHeader";
 import { Button } from "@/shared/ui/Button";
 import CustomerInformationComponent, { CustomerState } from "./CustomerInformationComponent";
 import BookingInformationComponent, { BookingInformationData } from "./BookingInformationComponent";
+import { TextFieldLabel } from "@/shared/ui/Text";
 
 const AddNewBookingScreen = ({ navigation }: RootScreenProps<Paths.AddNewBooking>) => {
     const { theme: { colors } } = useAppTheme();
@@ -78,14 +79,14 @@ const AddNewBookingScreen = ({ navigation }: RootScreenProps<Paths.AddNewBooking
                                             color={(isActive || isCompleted) ? colors.background : colors.border}
                                         />
                                     </View>
-                                    <Text
+                                    <TextFieldLabel
                                         style={[
                                             styles.stepLabel,
                                             isActive ? styles.stepLabelActive : styles.stepLabelInactive,
                                         ]}
                                     >
                                         {step.label}
-                                    </Text>
+                                    </TextFieldLabel>
                                 </Pressable>
                                 {index !== steps.length - 1 && (
                                     <View style={[

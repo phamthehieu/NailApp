@@ -1,5 +1,5 @@
 import React, { useRef, useState, useMemo } from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, StyleSheet, ScrollView, Pressable } from 'react-native';
 import { Dropdown } from 'react-native-element-dropdown';
 import { users } from '../../../data/users';
 import { timeSlots } from '../../../data/TimeSlots';
@@ -8,10 +8,12 @@ import { isWorkingHours, getScheduleBlocksForHour } from '../../../api/schedule'
 import { Colors, useAppTheme } from '@/shared/theme';
 import { useIsTablet } from '@/shared/lib/useIsTablet';
 import CurrentTimeLine from '../calender_day/CurrentTimeLine';
+import { TextFieldLabel } from '@/shared/ui/Text';
 
 type Props = {
     selectedDate: Date;
     dateRange?: { start: Date; end: Date } | null;
+    onPressScheduleItem: (item: any) => void;
 };
 
 type DayInfo = {
@@ -19,7 +21,7 @@ type DayInfo = {
     label: string;
 };
 
-const CalenderWeedComponent = ({ selectedDate, dateRange }: Props) => {
+const CalenderWeedComponent = ({ selectedDate, dateRange, onPressScheduleItem }: Props) => {
     const { theme: { colors } } = useAppTheme();
     const timeScrollRef = useRef<ScrollView>(null);
     const headerScrollRef = useRef<ScrollView>(null);
@@ -147,7 +149,10 @@ const CalenderWeedComponent = ({ selectedDate, dateRange }: Props) => {
             const showTime = widthInPixels >= 56 && heightInPixels >= 22;
 
             return (
-                <View
+                <Pressable
+                    onPress={() => {
+                        onPressScheduleItem(item);
+                    }}
                     key={`${userId}-${item.id}-${index}-${timeSlot}`}
                     style={[
                         styles.scheduleItem,
@@ -162,19 +167,19 @@ const CalenderWeedComponent = ({ selectedDate, dateRange }: Props) => {
                     ]}
                 >
                     {showTitle && (
-                        <Text style={[
+                        <TextFieldLabel style={[
                             styles.scheduleItemTitle,
                             widthInPixels < 40 && styles.smallScheduleItemTitle
                         ]} numberOfLines={1} ellipsizeMode="tail">
                             {item.title}
-                        </Text>
+                        </TextFieldLabel>
                     )}
                     {showTime && (
-                        <Text style={styles.scheduleItemTime} numberOfLines={1} ellipsizeMode="clip">
+                        <TextFieldLabel style={styles.scheduleItemTime} numberOfLines={1} ellipsizeMode="clip">
                             {formatTime(item.startTime)} - {formatTime(item.endTime)}
-                        </Text>
+                        </TextFieldLabel>
                     )}
-                </View>
+                </Pressable>
             );
         });
     };
@@ -194,6 +199,16 @@ const CalenderWeedComponent = ({ selectedDate, dateRange }: Props) => {
                 <View style={[styles.quarterHourLine, { left: '50%' }]} />
                 <View style={[styles.quarterHourLine, { left: '75%' }]} />
             </>
+        );
+    };
+
+    const renderItem = (item: any) => {
+        return (
+            <View style={styles.dropdownItemContainer}>
+                <TextFieldLabel allowFontScaling={false} style={styles.dropdownSelectedText}>
+                    {item.label}
+                </TextFieldLabel>
+            </View>
         );
     };
 
@@ -217,6 +232,8 @@ const CalenderWeedComponent = ({ selectedDate, dateRange }: Props) => {
                         activeColor={colors.backgroundDisabled}
                         itemTextStyle={{ color: colors.text }}
                         showsVerticalScrollIndicator={false}
+                        selectedTextProps={{ allowFontScaling: false }}
+                        renderItem={renderItem}
                     />
                 </View>
                 <ScrollView
@@ -229,7 +246,7 @@ const CalenderWeedComponent = ({ selectedDate, dateRange }: Props) => {
                     <View style={styles.userColumnContent}>
                         {selectedDays.map((day, index) => (
                             <View key={`day-${index}`} style={styles.userColumnRow}>
-                                <Text style={styles.weekLabel}>{day.label}</Text>
+                                <TextFieldLabel style={styles.weekLabel}>{day.label}</TextFieldLabel>
                             </View>
                         ))}
                     </View>
@@ -249,7 +266,7 @@ const CalenderWeedComponent = ({ selectedDate, dateRange }: Props) => {
                         <View style={styles.headerRow}>
                             {displayTimeSlots.map((slot) => (
                                 <View key={slot.time} style={styles.timeHeaderCell}>
-                                    <Text style={styles.timeText}>{slot.label}</Text>
+                                    <TextFieldLabel style={styles.timeText}>{slot.label}</TextFieldLabel>
                                 </View>
                             ))}
                         </View>

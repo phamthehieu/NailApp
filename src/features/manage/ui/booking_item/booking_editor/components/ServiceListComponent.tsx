@@ -3,7 +3,7 @@ import { useCallback, useMemo } from "react";
 import { ChevronDown, Plus, Trash2 } from "lucide-react-native";
 import { Colors, useAppTheme } from "@/shared/theme";
 import { TextField } from "@/shared/ui/TextField";
-import { Text } from "@/shared/ui/Text";
+import { TextFieldLabel } from "@/shared/ui/Text";
 import { Dropdown } from "react-native-element-dropdown";
 import { useTranslation } from "react-i18next";
 
@@ -66,6 +66,15 @@ const ServiceListComponent = ({
         onChange(services.filter((s) => s.id !== id));
     }, [services, onChange]);
 
+    const renderItem = (item: any) => {
+        return (
+            <View style={styles.dropdownItemContainer}>
+                <TextFieldLabel allowFontScaling={false} style={styles.dropdownSelectedText}>
+                    {item.label}
+                </TextFieldLabel>
+            </View>
+        );
+    };
     return (
         <View>
             <View style={styles.row}>
@@ -74,7 +83,7 @@ const ServiceListComponent = ({
                     onPress={addService}
                 >
                     <Plus size={18} color={colors.white} />
-                    <Text text={t('bookingInformation.addService')} style={styles.bookButtonText} />
+                    <TextFieldLabel text={t('bookingInformation.addService')} style={styles.bookButtonText} />
                 </Pressable>
             </View>
 
@@ -82,8 +91,8 @@ const ServiceListComponent = ({
                 <View key={item.id} style={styles.serviceRow}>
                     <View style={styles.field}>
                         <View style={styles.labelRow}>
-                            <Text text={t('bookingInformation.serviceLabel', { index: index + 1 })} />
-                            <Text text={t('bookingInformation.requiredMark')} style={styles.requiredMark} />
+                            <TextFieldLabel text={t('bookingInformation.serviceLabel', { index: index + 1 })} />
+                            <TextFieldLabel text={t('bookingInformation.requiredMark')} style={styles.requiredMark} />
                         </View>
                         <Dropdown
                             data={serviceOptions}
@@ -102,11 +111,13 @@ const ServiceListComponent = ({
                             renderRightIcon={() => <ChevronDown size={16} color={colors.placeholderTextColor} />}
                             maxHeight={220}
                             activeColor={colors.backgroundDisabled}
+                            selectedTextProps={{ allowFontScaling: false }}
+                            renderItem={renderItem}
                         />
                     </View>
                     <View style={styles.field}>
                         <View style={styles.labelRow}>
-                            <Text text={t('bookingInformation.duration')} />
+                            <TextFieldLabel text={t('bookingInformation.duration')} />
                         </View>
                         <TextField
                             placeholder={t('bookingInformation.durationPlaceholder')}
@@ -117,8 +128,8 @@ const ServiceListComponent = ({
                     </View>
                     <View style={styles.field}>
                         <View style={styles.labelRow}>
-                            <Text text={t('bookingInformation.staff')} />
-                            <Text text={t('bookingInformation.requiredMark')} style={styles.requiredMark} />
+                            <TextFieldLabel text={t('bookingInformation.staff')} />
+                            <TextFieldLabel text={t('bookingInformation.requiredMark')} style={styles.requiredMark} />
                         </View>
                         <Dropdown
                             data={employeeOptions}
@@ -138,6 +149,8 @@ const ServiceListComponent = ({
                             maxHeight={220}
                             activeColor={colors.backgroundDisabled}
                             disable={item.anyEmployee}
+                            selectedTextProps={{ allowFontScaling: false }}
+                            renderItem={renderItem}
                         />
                     </View>
 
@@ -149,12 +162,12 @@ const ServiceListComponent = ({
                                 thumbColor={item.anyEmployee ? colors.yellow : colors.primary}
                                 trackColor={{ true: colors.yellow + "55", false: colors.border }}
                             />
-                            <Text text={t('bookingInformation.anyEmployee')} />
+                            <TextFieldLabel text={t('bookingInformation.anyEmployee')} />
                         </View>
 
                         <Pressable onPress={() => removeService(item.id)} style={styles.deleteBtn}>
                             <Trash2 size={16} color={colors.error} />
-                            <Text text={t('bookingInformation.delete')} style={styles.deleteText} />
+                            <TextFieldLabel text={t('bookingInformation.delete')} style={styles.deleteText} />
                         </Pressable>
                     </View>
                 </View>
@@ -256,6 +269,11 @@ const $styles = (colors: Colors, isWide: boolean) => StyleSheet.create({
         fontSize: 14,
         color: colors.error,
         marginLeft: 4,
+    },
+    dropdownItemContainer: {
+        paddingVertical: 8,
+        paddingHorizontal: 12,
+        color: colors.text,
     },
 });
 

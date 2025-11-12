@@ -1,7 +1,9 @@
 import React from 'react';
-import { StyleSheet, View, Text, TouchableOpacity, TextInput, Animated, Easing } from 'react-native';
+import { StyleSheet, View, TouchableOpacity, Animated, Easing } from 'react-native';
 import { ArrowLeft, Search, X } from "lucide-react-native";
 import { useAppTheme } from '../theme';
+import { TextFieldLabel } from './Text';
+import { TextField } from './TextField';
 
 interface IProps {
     label?: string;
@@ -88,7 +90,7 @@ export default function MHeader({
                                 { translateX: showIconLeft ? 0 : -rightIconsWidthPx / 2 }
                             ]
                         }]} pointerEvents={isSearching ? 'auto' : 'none'}>
-                            <TextInput
+                            <TextField
                                 value={searchText}
                                 onChangeText={(t) => {
                                     setSearchText(t);
@@ -104,6 +106,7 @@ export default function MHeader({
                         </Animated.View>
 
                         <Animated.Text
+                            allowFontScaling={false}
                             numberOfLines={1}
                             ellipsizeMode="tail"
                             style={[
@@ -135,9 +138,9 @@ export default function MHeader({
                                 borderColor: statusColor || colors.yellow,
                                 borderWidth: 1,
                             }]}>
-                                <Text style={[styles.statusText, { color: statusColor || colors.yellow }]}>
+                                <TextFieldLabel style={[styles.statusText, { color: statusColor || colors.yellow }]}>
                                     {status}
-                                </Text>
+                                </TextFieldLabel>
                             </View>
                         )}
                         {enableSearch && (

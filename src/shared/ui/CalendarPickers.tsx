@@ -1,8 +1,9 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Modal, View, Text, TouchableOpacity, ScrollView, StyleSheet, useWindowDimensions } from 'react-native';
+import { Modal, View, TouchableOpacity, ScrollView, StyleSheet, useWindowDimensions } from 'react-native';
 import { ChevronLeft, ChevronRight, ChevronDown } from 'lucide-react-native';
 import { useAppTheme } from '@/shared/theme';
 import { useTranslation } from 'react-i18next';
+import { TextFieldLabel } from '@/shared/ui/Text';
 
 export type CalendarRange = { start: Date; end: Date };
 
@@ -105,9 +106,9 @@ export const CalendarDayPickerModal: React.FC<CalendarDayPickerModalProps> = ({
                         <TouchableOpacity style={styles.iconButton} onPress={handlePrev} activeOpacity={0.7}>
                             <ChevronLeft size={iconSize} color={colors.text} />
                         </TouchableOpacity>
-                        <Text style={styles.monthYearText}>
+                        <TextFieldLabel style={styles.monthYearText}>
                             {new Intl.DateTimeFormat(localeToUse, { month: 'long', year: 'numeric' }).format(new Date(displayYear, displayMonth, 1))}
-                        </Text>
+                        </TextFieldLabel>
                         <TouchableOpacity style={styles.iconButton} onPress={handleNext} activeOpacity={0.7}>
                             <ChevronRight size={iconSize} color={colors.text} />
                         </TouchableOpacity>
@@ -115,7 +116,7 @@ export const CalendarDayPickerModal: React.FC<CalendarDayPickerModalProps> = ({
 
                     <View style={styles.weekdayRow}>
                         {WEEKDAY_LABELS.map((d) => (
-                            <Text key={d} style={styles.weekdayText}>{d}</Text>
+                            <TextFieldLabel key={d} style={styles.weekdayText}>{d}</TextFieldLabel>
                         ))}
                     </View>
 
@@ -142,9 +143,9 @@ export const CalendarDayPickerModal: React.FC<CalendarDayPickerModalProps> = ({
                                         setTempSelectedDate(startOfDay(new Date(d)));
                                     }}
                                 >
-                                    <Text style={[styles.dayNumber, selected && styles.dayNumberSelected]}>
+                                    <TextFieldLabel style={[styles.dayNumber, selected && styles.dayNumberSelected]}>
                                         {d.getDate()}
-                                    </Text>
+                                    </TextFieldLabel>
                                 </TouchableOpacity>
                             );
                         })}
@@ -152,10 +153,10 @@ export const CalendarDayPickerModal: React.FC<CalendarDayPickerModalProps> = ({
 
                     <View style={styles.modalActions}>
                         <TouchableOpacity style={[styles.actionButton, styles.cancelButton]} onPress={onClose}>
-                            <Text style={styles.actionText}>{t('calenderDashboard.calenderHeader.cancel')}</Text>
+                            <TextFieldLabel style={styles.actionText}>{t('calenderDashboard.calenderHeader.cancel')}</TextFieldLabel>
                         </TouchableOpacity>
                         <TouchableOpacity style={[styles.actionButton, styles.okButton]} onPress={handleConfirm}>
-                            <Text style={[styles.actionText, styles.okText]}>{t('calenderDashboard.calenderHeader.confirm')}</Text>
+                            <TextFieldLabel style={[styles.actionText, styles.okText]}>{t('calenderDashboard.calenderHeader.confirm')}</TextFieldLabel>
                         </TouchableOpacity>
                     </View>
                 </View>
@@ -373,25 +374,25 @@ export const CalendarWeekPickerModal: React.FC<CalendarWeekPickerModalProps> = (
         >
             <View style={styles.modalBackdrop}>
                 <View style={styles.modalContainer}>
-                    <Text style={styles.modalTitle}>{t('calenderDashboard.calenderHeader.selectWeek')}</Text>
+                    <TextFieldLabel style={styles.modalTitle}>{t('calenderDashboard.calenderHeader.selectWeek')}</TextFieldLabel>
                     <View style={styles.segmentContainer}>
                         <TouchableOpacity
                             style={[styles.segmentButton, !rangeMode && styles.segmentActive]}
                             onPress={handleSwitchToWeek}
                             activeOpacity={0.7}
                         >
-                            <Text style={[styles.segmentText, !rangeMode && styles.segmentTextActive]}>
+                            <TextFieldLabel style={[styles.segmentText, !rangeMode && styles.segmentTextActive]}>
                                 {t('calenderDashboard.calenderHeader.week')}
-                            </Text>
+                            </TextFieldLabel>
                         </TouchableOpacity>
                         <TouchableOpacity
                             style={[styles.segmentButton, rangeMode && styles.segmentActive]}
                             onPress={handleSwitchToRange}
                             activeOpacity={0.7}
                         >
-                            <Text style={[styles.segmentText, rangeMode && styles.segmentTextActive]}>
+                            <TextFieldLabel style={[styles.segmentText, rangeMode && styles.segmentTextActive]}>
                                 {t('calenderDashboard.calenderHeader.range')}
-                            </Text>
+                            </TextFieldLabel>
                         </TouchableOpacity>
                     </View>
 
@@ -399,9 +400,9 @@ export const CalendarWeekPickerModal: React.FC<CalendarWeekPickerModalProps> = (
                         <TouchableOpacity style={styles.iconButton} onPress={handlePrevMonth} activeOpacity={0.7}>
                             <ChevronLeft size={iconSize} color={colors.text} />
                         </TouchableOpacity>
-                        <Text style={styles.monthYearText}>
+                        <TextFieldLabel style={styles.monthYearText}>
                             {new Intl.DateTimeFormat(localeToUse, { month: 'long', year: 'numeric' }).format(new Date(displayYear, displayMonth, 1))}
-                        </Text>
+                        </TextFieldLabel>
                         <TouchableOpacity style={styles.iconButton} onPress={handleNextMonth} activeOpacity={0.7}>
                             <ChevronRight size={iconSize} color={colors.text} />
                         </TouchableOpacity>
@@ -409,7 +410,7 @@ export const CalendarWeekPickerModal: React.FC<CalendarWeekPickerModalProps> = (
 
                     <View style={styles.weekdayRow}>
                         {WEEKDAY_LABELS.map((d) => (
-                            <Text key={d} style={styles.weekdayText}>{d}</Text>
+                            <TextFieldLabel key={d} style={styles.weekdayText}>{d}</TextFieldLabel>
                         ))}
                     </View>
 
@@ -483,7 +484,7 @@ export const CalendarWeekPickerModal: React.FC<CalendarWeekPickerModalProps> = (
                                         setTempEndDate(null);
                                     }}
                                 >
-                                    <Text style={styles.dayNumber}>{d.getDate()}</Text>
+                                    <TextFieldLabel style={styles.dayNumber}>{d.getDate()}</TextFieldLabel>
                                 </TouchableOpacity>
                             );
                         })}
@@ -491,10 +492,10 @@ export const CalendarWeekPickerModal: React.FC<CalendarWeekPickerModalProps> = (
 
                     <View style={styles.modalActions}>
                         <TouchableOpacity style={[styles.actionButton, styles.cancelButton]} onPress={onClose}>
-                            <Text style={styles.actionText}>{t('calenderDashboard.calenderHeader.cancel')}</Text>
+                            <TextFieldLabel style={styles.actionText}>{t('calenderDashboard.calenderHeader.cancel')}</TextFieldLabel>
                         </TouchableOpacity>
                         <TouchableOpacity style={[styles.actionButton, styles.okButton]} onPress={handleConfirm}>
-                            <Text style={[styles.actionText, styles.okText]}>{t('calenderDashboard.calenderHeader.confirm')}</Text>
+                            <TextFieldLabel style={[styles.actionText, styles.okText]}>{t('calenderDashboard.calenderHeader.confirm')}</TextFieldLabel>
                         </TouchableOpacity>
                     </View>
                 </View>
@@ -564,11 +565,11 @@ export const CalendarMonthPickerModal: React.FC<CalendarMonthPickerModalProps> =
         >
             <View style={styles.modalBackdrop}>
                 <View style={styles.modalContainer}>
-                    <Text style={styles.modalTitle}>
+                    <TextFieldLabel style={styles.modalTitle}>
                         {mode === 'month'
                             ? t('calenderDashboard.calenderHeader.monthPicker')
                             : t('calenderDashboard.calenderHeader.yearPicker')}
-                    </Text>
+                    </TextFieldLabel>
 
                     {mode === 'month' ? (
                         <>
@@ -578,7 +579,7 @@ export const CalendarMonthPickerModal: React.FC<CalendarMonthPickerModalProps> =
                                     onPress={() => setMode('year')}
                                     activeOpacity={0.7}
                                 >
-                                    <Text style={styles.yearDropdownText}>{displayYear}</Text>
+                                    <TextFieldLabel style={styles.yearDropdownText}>{displayYear}</TextFieldLabel>
                                     <ChevronDown size={iconSize} color={colors.text} />
                                 </TouchableOpacity>
                                 <View style={styles.headerNavButtons}>
@@ -608,9 +609,9 @@ export const CalendarMonthPickerModal: React.FC<CalendarMonthPickerModalProps> =
                                             onPress={() => setDisplayMonth(index)}
                                             activeOpacity={0.7}
                                         >
-                                            <Text style={[styles.monthYearCellText, selected && styles.monthYearCellTextSelected]}>
+                                            <TextFieldLabel style={[styles.monthYearCellText, selected && styles.monthYearCellTextSelected]}>
                                                 {monthName}
-                                            </Text>
+                                            </TextFieldLabel>
                                         </TouchableOpacity>
                                     );
                                 })}
@@ -624,9 +625,9 @@ export const CalendarMonthPickerModal: React.FC<CalendarMonthPickerModalProps> =
                                     onPress={() => setMode('month')}
                                     activeOpacity={0.7}
                                 >
-                                    <Text style={styles.yearDropdownText}>
+                                    <TextFieldLabel style={styles.yearDropdownText}>
                                         {`${years[0]} - ${years[years.length - 1]}`}
-                                    </Text>
+                                    </TextFieldLabel>
                                     <ChevronDown size={iconSize} color={colors.text} />
                                 </TouchableOpacity>
                             </View>
@@ -644,9 +645,9 @@ export const CalendarMonthPickerModal: React.FC<CalendarMonthPickerModalProps> =
                                                 }}
                                                 activeOpacity={0.7}
                                             >
-                                                <Text style={[styles.monthYearCellText, selected && styles.monthYearCellTextSelected]}>
+                                                <TextFieldLabel style={[styles.monthYearCellText, selected && styles.monthYearCellTextSelected]}>
                                                     {year}
-                                                </Text>
+                                                </TextFieldLabel>
                                             </TouchableOpacity>
                                         );
                                     })}
@@ -657,10 +658,10 @@ export const CalendarMonthPickerModal: React.FC<CalendarMonthPickerModalProps> =
 
                     <View style={styles.modalActions}>
                         <TouchableOpacity style={[styles.actionButton, styles.cancelButton]} onPress={onClose}>
-                            <Text style={styles.actionText}>{t('calenderDashboard.calenderHeader.cancel')}</Text>
+                            <TextFieldLabel style={styles.actionText}>{t('calenderDashboard.calenderHeader.cancel')}</TextFieldLabel>
                         </TouchableOpacity>
                         <TouchableOpacity style={[styles.actionButton, styles.okButton]} onPress={handleConfirm}>
-                            <Text style={[styles.actionText, styles.okText]}>{t('calenderDashboard.calenderHeader.confirm')}</Text>
+                            <TextFieldLabel style={[styles.actionText, styles.okText]}>{t('calenderDashboard.calenderHeader.confirm')}</TextFieldLabel>
                         </TouchableOpacity>
                     </View>
                 </View>

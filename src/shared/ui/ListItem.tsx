@@ -13,7 +13,7 @@ import { $styles } from "../theme/styles"
 import type { ThemedStyle } from "../theme/types"
 
 import { Icon, IconTypes } from "./Icon"
-import { Text, TextProps } from "./Text"
+import { TextFieldLabel, TextProps } from "./Text"
 
 export interface ListItemProps extends TouchableOpacityProps {
     /**
@@ -161,9 +161,9 @@ export const ListItem = forwardRef<View, ListItemProps>(function ListItem(
                     Component={LeftComponent}
                 />
 
-                <Text {...TextProps} tx={tx} text={text} txOptions={txOptions} style={themed($textStyles)}>
+                <TextFieldLabel {...TextProps} tx={tx} text={text} txOptions={txOptions} style={themed($textStyles)}>
                     {children}
-                </Text>
+                </TextFieldLabel>
 
                 <ListItemAction
                     side="right"

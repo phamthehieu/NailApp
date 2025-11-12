@@ -1,5 +1,6 @@
+import { TextFieldLabel } from '@/shared/ui/Text';
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, Text } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 
 type CurrentTimeLineProps = {
     scheduleHeight: number;
@@ -48,7 +49,7 @@ const CurrentTimeLine = ({ scheduleHeight, timeSlotWidth, hours, minutes, type, 
             ]}
         >
             <View style={[styles.timeBox, { backgroundColor: type === 'start' ? 'green' : type === 'end' ? 'red' : 'blue' }]}>
-                <Text style={styles.timeText}>{currentTime}</Text>
+                <TextFieldLabel style={styles.timeText}>{currentTime}</TextFieldLabel>
             </View>
             <View
                 style={[

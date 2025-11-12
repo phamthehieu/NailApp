@@ -2,7 +2,7 @@ import { Keyboard, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleS
 import { useMemo, useRef, useState, useCallback, useReducer, useEffect } from "react";
 import { ChevronDown } from "lucide-react-native";
 import { Dropdown, IDropdownRef } from "react-native-element-dropdown";
-import { Text } from "@/shared/ui/Text";
+import { TextFieldLabel } from "@/shared/ui/Text";
 import { Colors, useAppTheme } from "@/shared/theme";
 import { TextField } from "@/shared/ui/TextField";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -192,6 +192,16 @@ const CustomerInformationComponent = ({ showDob = true, value, onChange }: Custo
         [selectedDay, selectedMonth, selectedYear],
     );
 
+    const renderItem = (item: any) => {
+        return (
+            <View style={styles.dropdownItemContainer}>
+                <TextFieldLabel allowFontScaling={false} style={styles.dropdownSelectedText}>
+                    {item.label}
+                </TextFieldLabel>
+            </View>
+        );
+    };
+
     return (
         <KeyboardAvoidingView
             style={styles.keyboardAvoidingView}
@@ -246,7 +256,7 @@ const CustomerInformationComponent = ({ showDob = true, value, onChange }: Custo
                                         }}
                                         style={({ pressed }) => [styles.suggestionItem, pressed && { opacity: 0.8 }]}
                                     >
-                                        <Text text={item} />
+                                        <TextFieldLabel text={item} />
                                     </Pressable>
                                 ))}
                             </View>
@@ -297,8 +307,8 @@ const CustomerInformationComponent = ({ showDob = true, value, onChange }: Custo
                             <>
                                 <View style={styles.colSmall}>
                                     <View style={styles.labelRow}>
-                                        <Text text={t('bookingInformation.dobDay')} style={styles.labelText} />
-                                        <Text text={t('bookingInformation.requiredMark')} style={styles.requiredMark} />
+                                        <TextFieldLabel text={t('bookingInformation.dobDay')} style={styles.labelText} />
+                                        <TextFieldLabel text={t('bookingInformation.requiredMark')} style={styles.requiredMark} />
                                     </View>
                                     <Dropdown
                                         data={dayOptions}
@@ -310,17 +320,20 @@ const CustomerInformationComponent = ({ showDob = true, value, onChange }: Custo
                                         containerStyle={styles.dropdownContainer}
                                         itemContainerStyle={styles.dropdownItem}
                                         selectedTextStyle={styles.dropdownSelectedText}
+                                        showsVerticalScrollIndicator={false}
                                         itemTextStyle={{ color: colors.text }}
                                         placeholderStyle={styles.dropdownSelectedText}
                                         renderRightIcon={() => <ChevronDown size={16} color={colors.placeholderTextColor} />}
                                         maxHeight={220}
                                         activeColor={colors.backgroundDisabled}
+                                        selectedTextProps={{ allowFontScaling: false }}
+                                        renderItem={renderItem}
                                     />
                                 </View>
                                 <View style={styles.colSmall}>
                                     <View style={styles.labelRow}>
-                                        <Text text={t('bookingInformation.dobMonth')} style={styles.labelText} />
-                                        <Text text={t('bookingInformation.requiredMark')} style={styles.requiredMark} />
+                                        <TextFieldLabel text={t('bookingInformation.dobMonth')} style={styles.labelText} />
+                                        <TextFieldLabel text={t('bookingInformation.requiredMark')} style={styles.requiredMark} />
                                     </View>
                                     <Dropdown
                                         data={monthOptions}
@@ -332,16 +345,19 @@ const CustomerInformationComponent = ({ showDob = true, value, onChange }: Custo
                                         containerStyle={styles.dropdownContainer}
                                         itemContainerStyle={styles.dropdownItem}
                                         selectedTextStyle={styles.dropdownSelectedText}
+                                        showsVerticalScrollIndicator={false}
                                         itemTextStyle={{ color: colors.text }}
                                         placeholderStyle={styles.dropdownSelectedText}
                                         renderRightIcon={() => <ChevronDown size={16} color={colors.placeholderTextColor} />}
                                         maxHeight={220}
                                         activeColor={colors.backgroundDisabled}
+                                        selectedTextProps={{ allowFontScaling: false }}
+                                        renderItem={renderItem}
                                     />
                                 </View>
                                 <View style={styles.colSmall}>
                                     <View style={styles.labelRow}>
-                                        <Text text={t('bookingInformation.dobYear')} style={styles.labelText} />
+                                        <TextFieldLabel text={t('bookingInformation.dobYear')} style={styles.labelText} />
                                     </View>
                                     <Dropdown
                                         data={yearOptions}
@@ -353,11 +369,14 @@ const CustomerInformationComponent = ({ showDob = true, value, onChange }: Custo
                                         containerStyle={styles.dropdownContainer}
                                         itemContainerStyle={styles.dropdownItem}
                                         selectedTextStyle={styles.dropdownSelectedText}
+                                        showsVerticalScrollIndicator={false}
                                         itemTextStyle={{ color: colors.text }}
                                         placeholderStyle={styles.dropdownSelectedText}
                                         renderRightIcon={() => <ChevronDown size={16} color={colors.placeholderTextColor} />}
                                         maxHeight={250}
                                         activeColor={colors.backgroundDisabled}
+                                        selectedTextProps={{ allowFontScaling: false }}
+                                        renderItem={renderItem}
                                     />
                                 </View>
                             </>
@@ -368,8 +387,8 @@ const CustomerInformationComponent = ({ showDob = true, value, onChange }: Custo
                         <View style={styles.dobRow}>
                             <View style={styles.colDob}>
                                 <View style={styles.labelRow}>
-                                    <Text text={t('bookingInformation.dobDay')} style={styles.labelText} />
-                                    <Text text={t('bookingInformation.requiredMark')} style={styles.requiredMark} />
+                                    <TextFieldLabel text={t('bookingInformation.dobDay')} style={styles.labelText} />
+                                    <TextFieldLabel text={t('bookingInformation.requiredMark')} style={styles.requiredMark} />
                                 </View>
                                 <Dropdown
                                     data={dayOptions}
@@ -381,17 +400,20 @@ const CustomerInformationComponent = ({ showDob = true, value, onChange }: Custo
                                     containerStyle={styles.dropdownContainer}
                                     itemContainerStyle={styles.dropdownItem}
                                     selectedTextStyle={styles.dropdownSelectedText}
+                                    showsVerticalScrollIndicator={false}
                                     itemTextStyle={{ color: colors.text }}
                                     placeholderStyle={styles.dropdownSelectedText}
                                     renderRightIcon={() => <ChevronDown size={16} color={colors.placeholderTextColor} />}
                                     maxHeight={220}
                                     activeColor={colors.backgroundDisabled}
+                                    selectedTextProps={{ allowFontScaling: false }}
+                                    renderItem={renderItem}
                                 />
                             </View>
                             <View style={styles.colDob}>
                                 <View style={styles.labelRow}>
-                                    <Text text={t('bookingInformation.dobMonth')} style={styles.labelText} />
-                                    <Text text={t('bookingInformation.requiredMark')} style={styles.requiredMark} />
+                                    <TextFieldLabel text={t('bookingInformation.dobMonth')} style={styles.labelText} />
+                                    <TextFieldLabel text={t('bookingInformation.requiredMark')} style={styles.requiredMark} />
                                 </View>
                                 <Dropdown
                                     data={monthOptions}
@@ -403,16 +425,19 @@ const CustomerInformationComponent = ({ showDob = true, value, onChange }: Custo
                                     containerStyle={styles.dropdownContainer}
                                     itemContainerStyle={styles.dropdownItem}
                                     selectedTextStyle={styles.dropdownSelectedText}
+                                    showsVerticalScrollIndicator={false}
                                     itemTextStyle={{ color: colors.text }}
                                     placeholderStyle={styles.dropdownSelectedText}
                                     renderRightIcon={() => <ChevronDown size={16} color={colors.placeholderTextColor} />}
                                     maxHeight={220}
                                     activeColor={colors.backgroundDisabled}
+                                    selectedTextProps={{ allowFontScaling: false }}
+                                    renderItem={renderItem}
                                 />
                             </View>
                             <View style={styles.colDob}>
                                 <View style={styles.labelRow}>
-                                    <Text text={t('bookingInformation.dobYear')} style={styles.labelText} />
+                                    <TextFieldLabel text={t('bookingInformation.dobYear')} style={styles.labelText} />
                                 </View>
                                 <Dropdown
                                     data={yearOptions}
@@ -424,11 +449,14 @@ const CustomerInformationComponent = ({ showDob = true, value, onChange }: Custo
                                     containerStyle={styles.dropdownContainer}
                                     itemContainerStyle={styles.dropdownItem}
                                     selectedTextStyle={styles.dropdownSelectedText}
+                                    showsVerticalScrollIndicator={false}
                                     itemTextStyle={{ color: colors.text }}
                                     placeholderStyle={styles.dropdownSelectedText}
                                     renderRightIcon={() => <ChevronDown size={16} color={colors.placeholderTextColor} />}
                                     maxHeight={250}
                                     activeColor={colors.backgroundDisabled}
+                                    selectedTextProps={{ allowFontScaling: false }}
+                                    renderItem={renderItem}
                                 />
                             </View>
                         </View>
@@ -572,6 +600,11 @@ const $styles = (colors: Colors, isWide: boolean) => StyleSheet.create({
     formGroup: {
         gap: 20,
         marginBottom: 180,
+    },
+    dropdownItemContainer: {
+        paddingVertical: 8,
+        paddingHorizontal: 12,
+        color: colors.text,
     },
 });
 

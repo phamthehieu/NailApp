@@ -1,12 +1,14 @@
 import React, { useMemo, useRef } from 'react';
-import { View, Text, StyleSheet, ScrollView, useWindowDimensions } from 'react-native';
+import { View, StyleSheet, ScrollView, useWindowDimensions, Pressable } from 'react-native';
 import { scheduleItemsWeek } from '../../../data/scheduleItems';
 import { users } from '../../../data/users';
 import { Colors, useAppTheme } from '@/shared/theme';
 import { useIsTablet } from '@/shared/lib/useIsTablet';
+import { TextFieldLabel } from '@/shared/ui/Text';
 
 type Props = {
     selectedDate: Date;
+    onPressScheduleItem: (item: any) => void;
 };
 
 type CalendarDay = {
@@ -26,7 +28,7 @@ type CalendarDay = {
     }>;
 };
 
-const CalenderMonthComponent = ({ selectedDate }: Props) => {
+const CalenderMonthComponent = ({ selectedDate, onPressScheduleItem }: Props) => {
     const { theme: { colors } } = useAppTheme();
     const isTablet = useIsTablet();
     const { width: screenWidth } = useWindowDimensions();
@@ -132,7 +134,10 @@ const CalenderMonthComponent = ({ selectedDate }: Props) => {
         const displayText = `${event.userName} ${timeText}`;
 
         return (
-            <View
+            <Pressable
+                onPress={() => {
+                    onPressScheduleItem(event);
+                }}
                 key={`${event.id}-${index}`}
                 style={[
                     styles.eventBlock,
@@ -142,10 +147,10 @@ const CalenderMonthComponent = ({ selectedDate }: Props) => {
                     }
                 ]}
             >
-                <Text style={styles.eventText} numberOfLines={1}>
+                <TextFieldLabel style={styles.eventText} numberOfLines={1}>
                     {displayText}
-                </Text>
-            </View>
+                </TextFieldLabel>
+            </Pressable>
         );
     };
 
@@ -161,7 +166,7 @@ const CalenderMonthComponent = ({ selectedDate }: Props) => {
                     styles.headerCell,
                     needsHorizontalScroll ? styles.headerCellScrollable : styles.headerCellFlex
                 ]}>
-                    <Text style={styles.headerText}>{dayName}</Text>
+                    <TextFieldLabel style={styles.headerText}>{dayName}</TextFieldLabel>
                 </View>
             ))}
         </View>
@@ -185,7 +190,7 @@ const CalenderMonthComponent = ({ selectedDate }: Props) => {
                                 day.isToday && styles.dayCellToday,
                             ]}
                         >
-                            <Text
+                            <TextFieldLabel
                                 style={[
                                     styles.dayNumber,
                                     !day.isCurrentMonth && styles.dayNumberOtherMonth,
@@ -193,16 +198,16 @@ const CalenderMonthComponent = ({ selectedDate }: Props) => {
                                 ]}
                             >
                                 {day.dayNumber}
-                            </Text>
+                            </TextFieldLabel>
 
                             <View style={styles.eventsContainer}>
                                 {day.events.slice(0, 3).map((event, eventIndex) =>
                                     renderEvent(event, eventIndex)
                                 )}
                                 {day.events.length > 3 && (
-                                    <Text style={styles.moreEventsText}>
+                                    <TextFieldLabel style={styles.moreEventsText}>
                                         +{day.events.length - 3} sự kiện
-                                    </Text>
+                                    </TextFieldLabel>
                                 )}
                             </View>
                         </View>

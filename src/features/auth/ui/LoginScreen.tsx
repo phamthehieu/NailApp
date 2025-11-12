@@ -2,7 +2,7 @@ import { Paths } from '@/app/navigation/paths';
 import { RootScreenProps } from '@/app/navigation/types';
 import { useAppTheme } from '@/shared/theme';
 import StatusBarComponent from '@/shared/ui/StatusBar';
-import { Text } from '@/shared/ui/Text';
+import { TextFieldLabel } from '@/shared/ui/Text';
 import { ScrollView, View, Dimensions, KeyboardAvoidingView, Platform, Keyboard, Animated, PanResponder, PanResponderInstance, findNodeHandle, Pressable } from 'react-native';
 import { LayoutAnimation, UIManager } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -156,7 +156,7 @@ const LoginScreen = ({navigation}: RootScreenProps<Paths.Login>) => {
                         <View
                             style={styles.headerTitle}>
 
-                            <Text
+                            <TextFieldLabel
                                 text="NailApp"
                                 style={styles.headerTitleText}
                             />
@@ -168,7 +168,7 @@ const LoginScreen = ({navigation}: RootScreenProps<Paths.Login>) => {
                             const nextLanguage = currentLanguage === 'vi' ? 'en' : 'vi';
                             changeLanguage(nextLanguage);
                         }}>
-                            <Text text={getLanguageName(currentLanguage === 'vi' ? 'en' : 'vi')} style={styles.headerFlagText} />
+                            <TextFieldLabel text={getLanguageName(currentLanguage === 'vi' ? 'en' : 'vi')} style={styles.headerFlagText} />
                             <AutoImage
                                 source={currentLanguage === 'vi'
                                     ? require('@assets/images/english.png')
@@ -180,10 +180,10 @@ const LoginScreen = ({navigation}: RootScreenProps<Paths.Login>) => {
 
                     </View>
 
-                        <Text
+                        <TextFieldLabel
                             style={styles.loginText}>
                             {t('login.hello')}
-                        </Text>
+                        </TextFieldLabel>
 
                     <View
                         style={styles.loginContainer}>
@@ -297,7 +297,7 @@ const LoginScreen = ({navigation}: RootScreenProps<Paths.Login>) => {
                             }}
                             activeOpacity={0.7}
                         >
-                            <Text
+                            <TextFieldLabel
                                 text={t('login.forgotPassword')}
                                 style={styles.forgotPasswordText}
                             />

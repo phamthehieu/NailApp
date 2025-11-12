@@ -2,7 +2,7 @@ import { Pressable, StyleSheet, Switch, View, useWindowDimensions } from "react-
 import { useMemo } from "react";
 import { ChevronDown } from "lucide-react-native";
 import { Colors, useAppTheme } from "@/shared/theme";
-import { Text } from "@/shared/ui/Text";
+import { TextFieldLabel } from "@/shared/ui/Text";
 import { Dropdown } from "react-native-element-dropdown";
 import { useTranslation } from "react-i18next";
 
@@ -98,6 +98,16 @@ const PeriodicSettingsComponent = ({
         });
     };
 
+    const renderItem = (item: any) => {
+        return (
+            <View style={styles.dropdownItemContainer}>
+                <TextFieldLabel allowFontScaling={false} style={styles.dropdownSelectedText}>
+                    {item.label}
+                </TextFieldLabel>
+            </View>
+        );
+    };
+
     return (
         <View>
             <Pressable style={styles.row} onPress={() => onPeriodicChange(!isPeriodic)}>
@@ -107,15 +117,15 @@ const PeriodicSettingsComponent = ({
                     thumbColor={isPeriodic ? colors.yellow : colors.primary}
                     trackColor={{ true: colors.yellow + "55", false: colors.border }}
                 />
-                <Text text={t('bookingInformation.isPeriodic')} style={styles.periodicText} />
+                <TextFieldLabel text={t('bookingInformation.isPeriodic')} style={styles.periodicText} />
             </Pressable>
 
             {isPeriodic && (
                 <View style={isWide ? styles.rowWithGap : styles.columnWithGap}>
                     <View style={isWide ? styles.dropdownField : styles.dropdownFieldColumn}>
                         <View style={styles.labelRow}>
-                            <Text text={t('bookingInformation.repeatBy')} />
-                            <Text text={t('bookingInformation.requiredMark')} style={styles.requiredMark} />
+                            <TextFieldLabel text={t('bookingInformation.repeatBy')} />
+                            <TextFieldLabel text={t('bookingInformation.requiredMark')} style={styles.requiredMark} />
                         </View>
                         <Dropdown
                             data={repeatByOptions}
@@ -134,13 +144,15 @@ const PeriodicSettingsComponent = ({
                             renderRightIcon={() => <ChevronDown size={16} color={colors.placeholderTextColor} />}
                             maxHeight={220}
                             activeColor={colors.backgroundDisabled}
+                            selectedTextProps={{ allowFontScaling: false }}
+                            renderItem={renderItem}
                         />
                     </View>
 
                     <View style={isWide ? styles.dropdownField : styles.dropdownFieldColumn}>
                         <View style={styles.labelRow}>
-                            <Text text={t('bookingInformation.repeatValue')} />
-                            <Text text={t('bookingInformation.requiredMark')} style={styles.requiredMark} />
+                            <TextFieldLabel text={t('bookingInformation.repeatValue')} />
+                            <TextFieldLabel text={t('bookingInformation.requiredMark')} style={styles.requiredMark} />
                         </View>
                         <Dropdown
                             data={repeatValueOptions}
@@ -167,13 +179,15 @@ const PeriodicSettingsComponent = ({
                             renderRightIcon={() => <ChevronDown size={16} color={colors.placeholderTextColor} />}
                             maxHeight={220}
                             activeColor={colors.backgroundDisabled}
+                            selectedTextProps={{ allowFontScaling: false }}
+                            renderItem={renderItem}
                         />
                     </View>
 
                     <View style={isWide ? styles.dropdownField : styles.dropdownFieldColumn}>
                         <View style={styles.labelRow}>
-                            <Text text={t('bookingInformation.endDate')} />
-                            <Text text={t('bookingInformation.requiredMark')} style={styles.requiredMark} />
+                            <TextFieldLabel text={t('bookingInformation.endDate')} />
+                            <TextFieldLabel text={t('bookingInformation.requiredMark')} style={styles.requiredMark} />
                         </View>
                         <Dropdown
                             data={endDateOptions}
@@ -192,6 +206,8 @@ const PeriodicSettingsComponent = ({
                             renderRightIcon={() => <ChevronDown size={16} color={colors.placeholderTextColor} />}
                             maxHeight={220}
                             activeColor={colors.backgroundDisabled}
+                            selectedTextProps={{ allowFontScaling: false }}
+                            renderItem={renderItem}
                         />
                     </View>
                 </View>
@@ -262,6 +278,11 @@ const $styles = (colors: Colors, isWide: boolean) => StyleSheet.create({
         fontSize: 14,
         color: colors.error,
         marginLeft: 4,
+    },
+    dropdownItemContainer: {
+        paddingVertical: 8,
+        paddingHorizontal: 12,
+        color: colors.text,
     },
 });
 

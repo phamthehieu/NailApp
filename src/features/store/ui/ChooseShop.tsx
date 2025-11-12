@@ -2,7 +2,7 @@ import { Paths } from '@/app/navigation/paths';
 import { RootScreenProps } from '@/app/navigation/types';
 import { Colors, useAppTheme } from '@/shared/theme';
 import StatusBarComponent from '@/shared/ui/StatusBar';
-import { StyleSheet, KeyboardAvoidingView, Platform, View, FlatList, Text } from 'react-native';
+import { StyleSheet, KeyboardAvoidingView, Platform, View, FlatList } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useIsTablet } from '@/shared/lib/useIsTablet';
 import { useTranslation } from 'react-i18next';
@@ -14,6 +14,7 @@ import { ChevronRightIcon, SearchIcon, StoreIcon } from 'lucide-react-native';
 import { ListItem } from '@/shared/ui/ListItem';
 import { EmptyState } from '@/shared/ui/EmptyState';
 import { AutoImage } from '@/shared/ui/AutoImage';
+import { TextFieldLabel } from '@/shared/ui/Text';
 
 
 const ChooseShop = ({navigation}: RootScreenProps<Paths.ChooseShop>) => {
@@ -162,7 +163,7 @@ const ChooseShop = ({navigation}: RootScreenProps<Paths.ChooseShop>) => {
 
                             <AutoImage source={require('@assets/icon/no_data.png')} style={styles.emptyImage} />
 
-                            <Text style={styles.emptyText }>{t('chooseShop.noShopFound')}</Text>
+                            <TextFieldLabel style={styles.emptyText }>{t('chooseShop.noShopFound')}</TextFieldLabel>
 
                         </View>
                     }

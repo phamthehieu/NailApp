@@ -1,4 +1,4 @@
-import { View, Text, Pressable, StyleSheet, LayoutChangeEvent } from "react-native"
+import { View, Pressable, StyleSheet, LayoutChangeEvent } from "react-native"
 import { Plus } from "lucide-react-native"
 import { Colors, useAppTheme } from "@/shared/theme"
 import React, { useState, useEffect } from "react"
@@ -9,6 +9,7 @@ import Animated, {
     withTiming,
 } from "react-native-reanimated"
 import { useTranslation } from "react-i18next"
+import { TextFieldLabel } from "./Text"
 
 type TabType = { label: string; value: number }
 
@@ -99,14 +100,14 @@ const TabComponent = ({
                                     onPress={() => onTabPress(index)}
                                     style={styles.tab}
                                 >
-                                    <Text
+                                    <TextFieldLabel
                                         style={[
                                             styles.tabText,
                                             isActive ? styles.tabTextActive : styles.tabTextInactive
                                         ]}
                                     >
                                         {tab.label}
-                                    </Text>
+                                    </TextFieldLabel>
                                 </Pressable>
                             )
                         })}
@@ -119,7 +120,7 @@ const TabComponent = ({
                     onPress={onBookPress}
                 >
                     <Plus size={18} color={colors.white} />
-                        <Text style={styles.bookButtonText}>{t('calenderDashboard.calenderTab.book')}</Text>
+                        <TextFieldLabel style={styles.bookButtonText}>{t('calenderDashboard.calenderTab.book')}</TextFieldLabel>
                     </Pressable>
                 )}
             </View>

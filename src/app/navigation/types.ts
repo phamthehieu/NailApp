@@ -9,7 +9,7 @@ export type RootStackParamList = {
   Splash: undefined;
   Checkin: undefined;
   ChooseShop: undefined;
-  Account: undefined;
+  Settings: undefined;
   System: undefined;
   Report: undefined;
   BottomNavigator: undefined;

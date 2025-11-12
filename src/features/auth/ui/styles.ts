@@ -44,12 +44,14 @@ export const $styles = (colors: Colors, isTablet: boolean, screenWidth: number) 
             flexDirection: 'row',
             alignItems: 'center',
             marginRight: baseMargin,
+            height: headerFontSize + 10,
         },
         headerTitleText: {
             fontSize: headerFontSize,
             fontWeight: 'bold',
             marginRight: isTablet ? 12 : 9,
             color: colors.text,
+            height: headerFontSize + 10,
         },
         headerTitleIcon: {
             width: iconSize,

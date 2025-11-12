@@ -1,6 +1,8 @@
 import { Colors, useAppTheme } from "@/shared/theme";
+import { TextFieldLabel } from "@/shared/ui/Text";
+import { TextField } from "@/shared/ui/TextField";
 import { useTranslation } from "react-i18next";
-import { KeyboardAvoidingView, Modal, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { KeyboardAvoidingView, Modal, Platform, ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from "react-native";
 
 
 export default function ModalFliterComponent({ showAdvanced, setShowAdvanced, form, setForm }: { showAdvanced: boolean, setShowAdvanced: (show: boolean) => void, form: any, setForm: (form: any) => void }) {
@@ -16,8 +18,8 @@ export default function ModalFliterComponent({ showAdvanced, setShowAdvanced, fo
     >
         <View style={styles.modalBackdrop}>
             <View style={styles.modalCard}>
-                <Text style={styles.modalTitle}>{t('bookingManage.advancedTitle', { defaultValue: 'Tìm kiếm nâng cao' })}</Text>
-                <Text style={styles.modalSubtitle}>{t('bookingManage.advancedSubtitle', { defaultValue: 'Tìm kiếm theo nhiều tiêu chí' })}</Text>
+                <TextFieldLabel style={styles.modalTitle}>{t('bookingManage.advancedTitle', { defaultValue: 'Tìm kiếm nâng cao' })}</TextFieldLabel>
+                <TextFieldLabel style={styles.modalSubtitle}>{t('bookingManage.advancedSubtitle', { defaultValue: 'Tìm kiếm theo nhiều tiêu chí' })}</TextFieldLabel>
                 <KeyboardAvoidingView
                     behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                     keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 10}
@@ -25,22 +27,22 @@ export default function ModalFliterComponent({ showAdvanced, setShowAdvanced, fo
                 <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
                     <View style={styles.row2}>
                         <View style={[styles.col, { marginRight: 8 }]}>
-                            <Text style={styles.fieldLabel}>{t('bookingManage.fromDate', { defaultValue: 'Từ ngày' })}</Text>
+                            <TextFieldLabel style={styles.fieldLabel}>{t('bookingManage.fromDate', { defaultValue: 'Từ ngày' })}</TextFieldLabel>
                             <TouchableOpacity style={[styles.inputLike, { borderColor: '#333333' }]}>
-                                <Text style={styles.inputLikeText}>{form.fromDate || t('bookingManage.pickDate', { defaultValue: 'Chọn ngày' })}</Text>
+                                <TextFieldLabel style={styles.inputLikeText}>{form.fromDate || t('bookingManage.pickDate', { defaultValue: 'Chọn ngày' })}</TextFieldLabel>
                             </TouchableOpacity>
                         </View>
                         <View style={[styles.col, { marginLeft: 8 }]}>
-                            <Text style={styles.fieldLabel}>{t('bookingManage.toDate', { defaultValue: 'Đến ngày' })}</Text>
+                            <TextFieldLabel style={styles.fieldLabel}>{t('bookingManage.toDate', { defaultValue: 'Đến ngày' })}</TextFieldLabel>
                             <TouchableOpacity style={[styles.inputLike, { borderColor: '#333333' }]}>
-                                <Text style={styles.inputLikeText}>{form.toDate || t('bookingManage.pickDate', { defaultValue: 'Chọn ngày' })}</Text>
+                                <TextFieldLabel style={styles.inputLikeText}>{form.toDate || t('bookingManage.pickDate', { defaultValue: 'Chọn ngày' })}</TextFieldLabel>
                             </TouchableOpacity>
                         </View>
                     </View>
 
                     <View style={styles.fieldBlock}>
-                        <Text style={styles.fieldLabel}>{t('bookingManage.bookingCode', { defaultValue: 'Mã booking' })}</Text>
-                        <TextInput
+                        <TextFieldLabel style={styles.fieldLabel}>{t('bookingManage.bookingCode', { defaultValue: 'Mã booking' })}</TextFieldLabel>
+                        <TextField
                             value={form.bookingCode}
                             onChangeText={(v) => setForm({ ...form, bookingCode: v })}
                             placeholder={t('bookingManage.enterCode', { defaultValue: 'Nhập mã' })}
@@ -50,8 +52,8 @@ export default function ModalFliterComponent({ showAdvanced, setShowAdvanced, fo
                     </View>
 
                     <View style={styles.fieldBlock}>
-                        <Text style={styles.fieldLabel}>{t('bookingManage.customerName', { defaultValue: 'Tên khách hàng' })}</Text>
-                        <TextInput
+                        <TextFieldLabel style={styles.fieldLabel}>{t('bookingManage.customerName', { defaultValue: 'Tên khách hàng' })}</TextFieldLabel>
+                        <TextField
                             value={form.customerName}
                             onChangeText={(v) => setForm({ ...form, customerName: v })}
                             placeholder={t('bookingManage.enterCustomer', { defaultValue: 'Nhập tên khách' })}
@@ -61,8 +63,8 @@ export default function ModalFliterComponent({ showAdvanced, setShowAdvanced, fo
                     </View>
 
                     <View style={styles.fieldBlock}>
-                        <Text style={styles.fieldLabel}>{t('bookingManage.phone', { defaultValue: 'Số điện thoại' })}</Text>
-                        <TextInput
+                        <TextFieldLabel style={styles.fieldLabel}>{t('bookingManage.phone', { defaultValue: 'Số điện thoại' })}</TextFieldLabel>
+                        <TextField
                             value={form.phone}
                             onChangeText={(v) => setForm({ ...form, phone: v })}
                             placeholder={t('bookingManage.enterPhone', { defaultValue: 'Nhập số điện thoại' })}
@@ -73,23 +75,23 @@ export default function ModalFliterComponent({ showAdvanced, setShowAdvanced, fo
                     </View>
 
                     <View style={styles.fieldBlock}>
-                        <Text style={styles.fieldLabel}>{t('bookingManage.service', { defaultValue: 'Dịch vụ' })}</Text>
+                        <TextFieldLabel style={styles.fieldLabel}>{t('bookingManage.service', { defaultValue: 'Dịch vụ' })}</TextFieldLabel>
                         <TouchableOpacity style={[styles.inputLike, { borderColor: '#333333' }]}>
-                            <Text style={styles.inputLikeText}>{form.service || t('bookingManage.pickService', { defaultValue: 'Chọn dịch vụ' })}</Text>
+                            <TextFieldLabel style={styles.inputLikeText}>{form.service || t('bookingManage.pickService', { defaultValue: 'Chọn dịch vụ' })}</TextFieldLabel>
                         </TouchableOpacity>
                     </View>
 
                     <View style={styles.fieldBlock}>
-                        <Text style={styles.fieldLabel}>{t('bookingManage.status', { defaultValue: 'Trạng thái' })}</Text>
+                        <TextFieldLabel style={styles.fieldLabel}>{t('bookingManage.status', { defaultValue: 'Trạng thái' })}</TextFieldLabel>
                         <TouchableOpacity style={[styles.inputLike, { borderColor: '#333333' }]}>
-                            <Text style={styles.inputLikeText}>{form.status || t('bookingManage.pickStatus', { defaultValue: 'Chọn trạng thái' })}</Text>
+                            <TextFieldLabel style={styles.inputLikeText}>{form.status || t('bookingManage.pickStatus', { defaultValue: 'Chọn trạng thái' })}</TextFieldLabel>
                         </TouchableOpacity>
                     </View>
                 </ScrollView>
                 </KeyboardAvoidingView>
                 <View style={styles.modalActions}>
                     <TouchableOpacity style={[styles.button, styles.buttonGhost]} onPress={() => setShowAdvanced(false)}>
-                        <Text style={styles.buttonGhostText}>{t('common.close', { defaultValue: 'Đóng' })}</Text>
+                        <TextFieldLabel style={styles.buttonGhostText}>{t('common.close', { defaultValue: 'Đóng' })}</TextFieldLabel>
                     </TouchableOpacity>
                     <TouchableOpacity
                         style={[styles.button, styles.buttonPrimary, { backgroundColor: colors.yellow }]}
@@ -98,7 +100,7 @@ export default function ModalFliterComponent({ showAdvanced, setShowAdvanced, fo
                             // TODO: trigger search with form
                         }}
                     >
-                        <Text style={styles.buttonPrimaryText}>{t('common.confirm', { defaultValue: 'Xác nhận' })}</Text>
+                        <TextFieldLabel style={styles.buttonPrimaryText}>{t('common.confirm', { defaultValue: 'Xác nhận' })}</TextFieldLabel>
                     </TouchableOpacity>
                 </View>
             </View>

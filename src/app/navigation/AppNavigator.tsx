@@ -13,7 +13,7 @@ import { RootStackParamList } from './types';
 import { LoginScreen } from '@features/auth';
 import SplashScreen from '@/features/splash/SplashScreen';
 import { CheckinScreen, ChooseShopScreen } from '@/features/store';
-import { AccountScreen } from '@/features/account';
+import { SettingsScreen } from '@/features/settings';
 import { SystemScreen } from '@/features/system';
 import { ReportScreen } from '@/features/report';
 import { BookingManageScreen } from '@/features/manage';
@@ -40,7 +40,7 @@ const AppStack = () => {
 
             <Stack.Screen name={Paths.BottomNavigator} component={BottomNavigator} />
 
-            <Stack.Screen name={Paths.Account} component={AccountScreen} />
+            <Stack.Screen name={Paths.Settings} component={SettingsScreen} />
             <Stack.Screen name={Paths.System} component={SystemScreen} />
             <Stack.Screen name={Paths.Report} component={ReportScreen} />
 

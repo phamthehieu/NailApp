@@ -5,7 +5,7 @@ import { WifiOff } from 'lucide-react-native';
 import { useNetworkStatus, checkNetworkConnection } from '../lib/useNetworkStatus';
 import { useAppTheme } from '../theme';
 import type { ThemedStyle } from '../theme/types';
-import { Text } from './Text';
+import { TextFieldLabel } from './Text';
 import { Button } from './Button';
 import { useTranslation } from 'react-i18next';
 
@@ -82,14 +82,14 @@ export function NetworkStatusBanner() {
           <WifiOff size={64} color={theme.colors.error} />
         </View>
 
-        <Text
+        <TextFieldLabel
           style={themed($titleText)}
           text={t('network.noConnection')}
           preset="heading"
           weight="bold"
         />
 
-        <Text
+        <TextFieldLabel
           style={themed($messageText)}
           text={t('network.noConnectionMessage')}
           preset="default"

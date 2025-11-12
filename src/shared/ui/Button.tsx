@@ -12,7 +12,7 @@ import { useAppTheme } from '../theme/context';
 import { $styles } from '../theme/styles';
 import type { ThemedStyle, ThemedStyleArray } from '../theme/types';
 
-import { Text, TextProps } from './Text';
+import { TextFieldLabel, TextProps } from './Text';
 
 type Presets = 'default' | 'filled' | 'reversed';
 
@@ -140,9 +140,9 @@ export const Button = forwardRef(function Button(props: ButtonProps, ref: Ref<an
                         <LeftAccessory style={$leftAccessoryStyle} pressableState={state} disabled={disabled} />
                     )}
 
-                    <Text tx={tx} text={text} txOptions={txOptions} style={$textStyle(state)}>
+                    <TextFieldLabel tx={tx} text={text} txOptions={txOptions} style={$textStyle(state)}>
                         {children}
-                    </Text>
+                    </TextFieldLabel>
 
                     {!!RightAccessory && (
                         <RightAccessory

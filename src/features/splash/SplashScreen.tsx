@@ -6,7 +6,7 @@ import { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import StatusBarComponent from '@/shared/ui/StatusBar';
 import { AutoImage } from '@/shared/ui/AutoImage';
-import { Text } from '@/shared/ui/Text';
+import { TextFieldLabel } from '@/shared/ui/Text';
 import i18n from 'i18next';
 
 const SplashScreen = ({navigation}: RootScreenProps<Paths.Splash>) => {
@@ -32,7 +32,7 @@ const SplashScreen = ({navigation}: RootScreenProps<Paths.Splash>) => {
                 source={require('@assets/images/logo.png')}
                 style={styles.logo}
             />
-            <Text text={translatedText} style={[styles.version, { color: colors.text }]} />
+            <TextFieldLabel text={translatedText} style={[styles.version, { color: colors.text }]} />
         </View>
     );
 };

@@ -3,7 +3,7 @@ import { View, StyleSheet, ScrollView } from "react-native";
 import { User, Phone, Calendar } from "lucide-react-native";
 import { Colors, useAppTheme } from "@/shared/theme";
 import { useTranslation } from "react-i18next";
-import { Text } from "@/shared/ui/Text";
+import { TextFieldLabel } from "@/shared/ui/Text";
 import { scheduleItemsList } from "@/features/manage/data/scheduleItems";
 
 interface HistoryBookingComponentProps {
@@ -54,7 +54,7 @@ const HistoryBookingComponent = ({ bookingId }: HistoryBookingComponentProps) =>
     if (!booking) {
         return (
             <View style={styles.container}>
-                <Text style={styles.emptyText}>{t('bookingInformation.noData')}</Text>
+                <TextFieldLabel style={styles.emptyText}>{t('bookingInformation.noData')}</TextFieldLabel>
             </View>
         );
     }
@@ -67,47 +67,47 @@ const HistoryBookingComponent = ({ bookingId }: HistoryBookingComponentProps) =>
         >
             {/* Thông tin khách hàng */}
             <View style={styles.section}>
-                <Text style={styles.sectionTitle}>{t('bookingInformation.customerInfo')}</Text>
+                <TextFieldLabel style={styles.sectionTitle}>{t('bookingInformation.customerInfo')}</TextFieldLabel>
                 <View style={styles.card}>
                     <View style={styles.infoRow}>
                         <View style={styles.infoLeft}>
                             <User size={20} color={colors.yellow} />
-                            <Text style={styles.infoLabel}>{t('bookingInformation.customerName')}</Text>
+                            <TextFieldLabel style={styles.infoLabel}>{t('bookingInformation.customerName')}</TextFieldLabel>
                         </View>
-                        <Text style={styles.infoValue}>{booking.user || '-'}</Text>
+                        <TextFieldLabel style={styles.infoValue}>{booking.user || '-'}</TextFieldLabel>
                     </View>
                     <View style={styles.infoRow}>
                         <View style={styles.infoLeft}>
                             <Phone size={20} color={colors.yellow} />
-                            <Text style={styles.infoLabel}>{t('bookingInformation.phone')}</Text>
+                            <TextFieldLabel style={styles.infoLabel}>{t('bookingInformation.phone')}</TextFieldLabel>
                         </View>
-                        <Text style={styles.infoValue}>{booking.phone || '-'}</Text>
+                        <TextFieldLabel style={styles.infoValue}>{booking.phone || '-'}</TextFieldLabel>
                     </View>
                 </View>
             </View>
 
             {/* Lịch sử sử dụng dịch vụ */}
             <View style={styles.section}>
-                <Text style={styles.sectionTitle}>{t('historyBooking.serviceHistory')}</Text>
+                <TextFieldLabel style={styles.sectionTitle}>{t('historyBooking.serviceHistory')}</TextFieldLabel>
                 <View style={styles.card}>
                     {historyBookings.length === 0 ? (
-                        <Text style={styles.emptyHistoryText}>{t('historyBooking.noHistory')}</Text>
+                        <TextFieldLabel style={styles.emptyHistoryText}>{t('historyBooking.noHistory')}</TextFieldLabel>
                     ) : (
                         historyBookings.map((item, index) => (
                             <View key={item.id || index} style={[styles.historyItem, index < historyBookings.length - 1 && styles.historyItemBorder]}>
                                 <View style={styles.historyRow}>
                                     <Calendar size={20} color={colors.yellow} />
                                     <View style={styles.historyContent}>
-                                        <Text style={styles.historyDateTime}>
+                                        <TextFieldLabel style={styles.historyDateTime}>
                                             {item.date && item.time 
                                                 ? formatDateTime(item.date, item.time, item.endTime)
                                                 : '-'
                                             }
-                                        </Text>
-                                        <Text style={styles.historyService}>
+                                        </TextFieldLabel>
+                                        <TextFieldLabel style={styles.historyService}>
                                             {item.note || item.service || '-'}
                                             {item.staff && ` - ${item.staff}`}
-                                        </Text>
+                                        </TextFieldLabel>
                                     </View>
                                 </View>
                             </View>

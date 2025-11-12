@@ -3,7 +3,7 @@ export const enum Paths {
   Splash = 'Splash',
   Checkin = 'Checkin',
   ChooseShop = 'ChooseShop',
-  Account = 'Account',
+  Settings = 'Settings',
   System = 'System',
   Report = 'Report',
   BottomNavigator = 'BottomNavigator',

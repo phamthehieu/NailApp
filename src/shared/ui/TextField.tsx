@@ -16,7 +16,7 @@ import { useAppTheme } from '../theme/context';
 import { $styles } from '../theme/styles';
 import type { ThemedStyle, ThemedStyleArray } from '../theme/types';
 
-import { Text, TextProps } from './Text';
+import { TextFieldLabel, TextProps } from './Text';
 
 export interface TextFieldAccessoryProps {
     style: StyleProp<ViewStyle | TextStyle | ImageStyle>
@@ -186,7 +186,7 @@ export const TextField = forwardRef(function TextField(props: TextFieldProps, re
         >
             {!!(label || labelTx) && (
                 <View style={$styles.row}>
-                    <Text
+                    <TextFieldLabel
                         preset="formLabel"
                         text={label}
                         tx={labelTx}
@@ -195,9 +195,9 @@ export const TextField = forwardRef(function TextField(props: TextFieldProps, re
                         style={themed($labelStyles)}
                     />
                     {!!required && (
-                        <Text style={[themed($labelStyles), { marginLeft: 6, color: colors.error }]}>
+                        <TextFieldLabel style={[themed($labelStyles), { marginLeft: 6, color: colors.error }]}>
                         (*)
-                        </Text>
+                        </TextFieldLabel>
                     )}
                 </View>
             )}
@@ -221,6 +221,7 @@ export const TextField = forwardRef(function TextField(props: TextFieldProps, re
                     cursorColor={TextInputProps.cursorColor ?? colors.yellow}
                     selectionColor={TextInputProps.selectionColor ?? colors.yellow}
                     {...TextInputProps}
+                    allowFontScaling={false}
                     onFocus={(e) => {
                         setIsFocused(true)
                         TextInputProps.onFocus?.(e)
@@ -244,7 +245,7 @@ export const TextField = forwardRef(function TextField(props: TextFieldProps, re
             </View>
 
             {!!(helper || helperTx) && (
-                <Text
+                <TextFieldLabel
                     preset="formHelper"
                     text={helper}
                     tx={helperTx}

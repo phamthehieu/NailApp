@@ -1,5 +1,5 @@
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
-import { Text } from "@/shared/ui/Text";
+import { TextFieldLabel } from "@/shared/ui/Text";
 import { RootScreenProps } from "@/app/navigation/types";
 import { Paths } from "@/app/navigation/paths";
 import { Colors, useAppTheme } from "@/shared/theme";
@@ -44,6 +44,17 @@ const EditBookingScreen = ({ route, navigation }: RootScreenProps<Paths.EditBook
         { label: t('editBooking.statusOptions.paid'), value: 'paid' as BookingStatus },
         { label: t('editBooking.statusOptions.completed'), value: 'completed' as BookingStatus },
     ], [t]);
+
+    const renderItem = (item: any) => {
+        return (
+            <View style={styles.dropdownItemContainer}>
+                <TextFieldLabel allowFontScaling={false} style={styles.dropdownSelectedText}>
+                    {item.label}
+                </TextFieldLabel>
+            </View>
+        );
+    };
+
     return (
         <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
             <StatusBarComponent backgroundColor={colors.yellow} />
@@ -83,7 +94,7 @@ const EditBookingScreen = ({ route, navigation }: RootScreenProps<Paths.EditBook
 
                         <View style={styles.colDob}>
                             <View style={styles.labelRow}>
-                                <Text text={t('editBooking.status')} style={styles.labelText} />
+                                <TextFieldLabel text={t('editBooking.status')} style={styles.labelText} />
                             </View>
                             <Dropdown
                                 data={statusOptions}
@@ -102,6 +113,8 @@ const EditBookingScreen = ({ route, navigation }: RootScreenProps<Paths.EditBook
                                 renderRightIcon={() => <ChevronDown size={16} color={colors.placeholderTextColor} />}
                                 maxHeight={220}
                                 activeColor={colors.backgroundDisabled}
+                                selectedTextProps={{ allowFontScaling: false }}
+                                renderItem={renderItem}
                             />
                         </View>
 
@@ -219,6 +232,11 @@ const $styles = (colors: Colors) => StyleSheet.create({
     footerButtonPrimary: {
         backgroundColor: colors.yellow,
         borderColor: colors.yellow,
+    },
+    dropdownItemContainer: {
+        paddingVertical: 8,
+        paddingHorizontal: 12,
+        color: colors.text,
     },
 });
 
