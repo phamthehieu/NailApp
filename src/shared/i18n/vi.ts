@@ -14,6 +14,8 @@ const vi = {
     usernameRequired: 'Vui lòng nhập tên đăng nhập',
     passwordRequired: 'Vui lòng nhập mật khẩu',
     passwordMin: 'Mật khẩu phải có ít nhất 6 ký tự',
+    errorTitle: 'Lỗi đăng nhập',
+    errorMessage: 'Đăng nhập thất bại. Vui lòng thử lại.',
   },
   checkin: {
     checkin: 'Xác thực đặt lịch',
@@ -28,6 +30,8 @@ const vi = {
     chooseShop: 'Chọn cửa hàng',
     searchPlaceholder: 'Tìm kiếm cửa hàng',
     noShopFound: 'Không tìm thấy cửa hàng',
+    errorTitle: 'Lỗi chọn cửa hàng',
+    errorMessage: 'Chọn cửa hàng thất bại. Vui lòng thử lại.',
   },
   errorScreen: {
     title: 'Đã xảy ra lỗi',
@@ -250,6 +254,20 @@ const vi = {
     changePassword: 'Đổi mật khẩu',
     darkMode: 'Chế độ tối',
     language: 'Ngôn ngữ',
+  },
+  editProfileUser: {
+    title: 'Chỉnh sửa hồ sơ',
+    name: 'Tên',
+    namePlaceholder: 'Nhập tên',
+    email: 'Email',
+    emailPlaceholder: 'Nhập email',
+    description: 'Giới thiệu',
+    descriptionPlaceholder: 'Thêm mô tả ngắn',
+    phone: 'Số điện thoại',
+    phonePlaceholder: 'Nhập số điện thoại',
+    birthday: 'Ngày sinh',
+    birthdayPlaceholder: 'Chọn ngày sinh',
+    saveButton: 'Lưu',
   },
 };
 

@@ -13,14 +13,14 @@ import { TextField, TextFieldAccessoryProps } from '@/shared/ui/TextField';
 import { useRef, useMemo, useEffect, useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { TextInput, TouchableOpacity } from 'react-native';
-import { Eye, EyeOff, MapPinCheck  } from 'lucide-react-native';
+import { Eye, EyeOff, MapPinCheck } from 'lucide-react-native';
 import { Button } from '@/shared/ui/Button';
 import { useAuthForm } from '@/features/auth/hooks/useAuthForm';
 import { useLanguage } from '@/shared/lib/useLanguage';
 import { $styles } from './styles';
 import Loader from '@/shared/ui/Loader';
 
-const LoginScreen = ({navigation}: RootScreenProps<Paths.Login>) => {
+const LoginScreen = ({ navigation }: RootScreenProps<Paths.Login>) => {
     const { t } = useTranslation();
     const { currentLanguage, changeLanguage, getLanguageName } = useLanguage();
     const {
@@ -74,7 +74,10 @@ const LoginScreen = ({navigation}: RootScreenProps<Paths.Login>) => {
     const scrollViewRef = useRef<ScrollView>(null);
 
     useEffect(() => {
-        if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+        const isAndroid = Platform.OS === 'android';
+        const isFabricEnabled = Boolean((globalThis as any)?.nativeFabricUIManager);
+
+        if (isAndroid && !isFabricEnabled && UIManager.setLayoutAnimationEnabledExperimental) {
             UIManager.setLayoutAnimationEnabledExperimental(true);
         }
     }, []);
@@ -148,140 +151,142 @@ const LoginScreen = ({navigation}: RootScreenProps<Paths.Login>) => {
                     nestedScrollEnabled={true}
                 >
 
-                <View style={styles.contentWrapper}>
-
-                    <View
-                        style={styles.headerContainer}>
+                    <View style={styles.contentWrapper}>
 
                         <View
-                            style={styles.headerTitle}>
+                            style={styles.headerContainer}>
 
-                            <TextFieldLabel
-                                text="NailApp"
-                                style={styles.headerTitleText}
-                            />
+                            <View
+                                style={styles.headerTitle}>
 
-                            <AutoImage source={require('@assets/images/logo.png')} style={styles.headerTitleIcon} />
+                                <TextFieldLabel
+                                    text="NailApp"
+                                    style={styles.headerTitleText}
+                                />
+
+                                <AutoImage source={require('@assets/images/logo.png')} style={styles.headerTitleIcon} />
+                            </View>
+
+                            <Pressable style={styles.headerFlagContainer} onPress={() => {
+                                const nextLanguage = currentLanguage === 'vi' ? 'en' : 'vi';
+                                changeLanguage(nextLanguage);
+                            }}>
+                                <TextFieldLabel text={getLanguageName(currentLanguage === 'vi' ? 'en' : 'vi')} style={styles.headerFlagText} />
+                                <AutoImage
+                                    source={currentLanguage === 'vi'
+                                        ? require('@assets/images/english.png')
+                                        : require('@assets/images/vietnam.png')}
+                                    style={styles.headerFlagImage}
+                                    resizeMode="cover"
+                                />
+                            </Pressable>
+
                         </View>
-
-                        <Pressable style={styles.headerFlagContainer} onPress={() => {
-                            const nextLanguage = currentLanguage === 'vi' ? 'en' : 'vi';
-                            changeLanguage(nextLanguage);
-                        }}>
-                            <TextFieldLabel text={getLanguageName(currentLanguage === 'vi' ? 'en' : 'vi')} style={styles.headerFlagText} />
-                            <AutoImage
-                                source={currentLanguage === 'vi'
-                                    ? require('@assets/images/english.png')
-                                    : require('@assets/images/vietnam.png')}
-                                style={styles.headerFlagImage}
-                                resizeMode="cover"
-                            />
-                        </Pressable>
-
-                    </View>
 
                         <TextFieldLabel
                             style={styles.loginText}>
                             {t('login.hello')}
                         </TextFieldLabel>
 
-                    <View
-                        style={styles.loginContainer}>
-                        <LottieView
-                            source={require('@assets/animations/Login.json')}
-                            autoPlay
-                            loop
-                            style={styles.loginAnimation}
-                        />
-                    </View>
+                        <View
+                            style={styles.loginContainer}>
+                            <LottieView
+                                source={require('@assets/animations/Login.json')}
+                                autoPlay
+                                loop
+                                style={styles.loginAnimation}
+                            />
+                        </View>
 
-                    <View style={styles.loginFormContainer}>
+                        <View style={styles.loginFormContainer}>
 
-                        <TextField
-                           label={t('login.username')}
-                           placeholder={t('login.usernamePlaceholder')}
-                           value={username}
-                           onChangeText={(text) => {
-                               setUsername(text);
-                               if (errors.username) {
-                                   animateEase();
-                                   setErrors((prev) => ({ ...prev, username: undefined }));
-                               }
-                           }}
-                           inputWrapperStyle={styles.loginFormInput}
-                           returnKeyType="next"
-                           onSubmitEditing={() => {
-                               passwordInputRef.current?.focus();
-                               setTimeout(() => {
-                                   scrollViewRef.current?.scrollToEnd({ animated: true });
-                               }, 100);
-                           }}
-                           onBlur={() => {
-                               if (!username.trim()) {
-                                   animateEase();
-                                   setErrors((prev) => ({ ...prev, username: t('login.usernameRequired') }));
-                               }
-                           }}
-                           status={errors.username ? 'error' : undefined}
-                           helper={errors.username}
-                        />
+                            <TextField
+                                label={t('login.username')}
+                                keyboardType='numeric'
+                                placeholder={t('login.usernamePlaceholder')}
+                                value={username}
+                                onChangeText={(text) => {
+                                    setUsername(text);
+                                    if (errors.username) {
+                                        animateEase();
+                                        setErrors((prev) => ({ ...prev, username: undefined }));
+                                    }
+                                }}
+                                inputWrapperStyle={styles.loginFormInput}
+                                returnKeyType="next"
+                                onSubmitEditing={() => {
+                                    passwordInputRef.current?.focus();
+                                    setTimeout(() => {
+                                        scrollViewRef.current?.scrollToEnd({ animated: true });
+                                    }, 100);
+                                }}
+                                onBlur={() => {
+                                    if (!username.trim()) {
+                                        animateEase();
+                                        setErrors((prev) => ({ ...prev, username: t('login.usernameRequired') }));
+                                    }
+                                }}
+                                status={errors.username ? 'error' : undefined}
+                                helper={errors.username}
+                            />
 
-                        <TextField
-                         ref={passwordInputRef}
-                         label={t('login.password')}
-                         placeholder={t('login.passwordPlaceholder')}
-                         value={password}
-                         onChangeText={(text) => {
-                             setPassword(text);
-                             if (errors.password) {
-                                 animateEase();
-                                 setErrors((prev) => ({ ...prev, password: undefined }));
-                             }
-                         }}
-                         inputWrapperStyle={styles.loginFormInput}
-                         returnKeyType="done"
-                         secureTextEntry={!isPasswordVisible}
-                        RightAccessory={PasswordRightAccessory}
-                        onFocus={() => {
-                            const eventName = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
-                            let removed = false;
-                            const doScroll = () => {
-                                if (removed) return;
-                                const node = findNodeHandle(passwordInputRef.current);
-                                const responder = scrollViewRef.current?.getScrollResponder?.();
-                                if (node && responder?.scrollResponderScrollNativeHandleToKeyboard) {
-                                    responder.scrollResponderScrollNativeHandleToKeyboard(node, 32, true);
-                                }
-                                removed = true;
-                            };
-                            const sub = Keyboard.addListener(eventName, () => {
-                                requestAnimationFrame(doScroll);
-                                sub.remove();
-                            });
-                            const timer = setTimeout(() => {
-                                doScroll();
-                                try { sub.remove(); } catch {}
-                            }, 250);
-                        }}
-                         onSubmitEditing={() => {
-                             passwordInputRef.current?.blur();
-                             setTimeout(() => {
-                                 scrollToTop();
-                             }, 100);
-                         }}
-                         onBlur={() => {
-                             if (!password) {
-                                 animateEase();
-                                 setErrors((prev) => ({ ...prev, password: t('login.passwordRequired') }));
-                             } else if (password.length < 6) {
-                                 animateEase();
-                                 setErrors((prev) => ({ ...prev, password: t('login.passwordMin') }));
-                             }
-                         }}
-                         status={errors.password ? 'error' : undefined}
-                         helper={errors.password}
-                        />
-                    </View>
+                            <TextField
+                                ref={passwordInputRef}
+                                label={t('login.password')}
+                                placeholder={t('login.passwordPlaceholder')}
+                                value={password}
+                                onChangeText={(text) => {
+                                    setPassword(text);
+                                    if (errors.password) {
+                                        animateEase();
+                                        setErrors((prev) => ({ ...prev, password: undefined }));
+                                    }
+                                }}
+                                inputWrapperStyle={styles.loginFormInput}
+                                returnKeyType="done"
+                                secureTextEntry={!isPasswordVisible}
+                                RightAccessory={PasswordRightAccessory}
+                                onFocus={() => {
+                                    const eventName = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+                                    let removed = false;
+                                    const doScroll = () => {
+                                        if (removed) return;
+                                        const node = findNodeHandle(passwordInputRef.current);
+                                        const responder = scrollViewRef.current?.getScrollResponder?.();
+                                        if (node && responder?.scrollResponderScrollNativeHandleToKeyboard) {
+                                            responder.scrollResponderScrollNativeHandleToKeyboard(node, 32, true);
+                                        }
+                                        removed = true;
+                                    };
+                                    const sub = Keyboard.addListener(eventName, () => {
+                                        requestAnimationFrame(doScroll);
+                                        sub.remove();
+                                    });
+                                    const timer = setTimeout(() => {
+                                        doScroll();
+                                        try { sub.remove(); } catch { }
+                                    }, 250);
+                                }}
+                                onSubmitEditing={() => {
+                                    passwordInputRef.current?.blur();
+                                    setTimeout(() => {
+                                        scrollToTop();
+                                    }, 100);
+                                }}
+                                onBlur={() => {
+                                    if (!password) {
+                                        animateEase();
+                                        setErrors((prev) => ({ ...prev, password: t('login.passwordRequired') }));
+                                    } else if (password.length < 6) {
+                                        animateEase();
+                                        setErrors((prev) => ({ ...prev, password: t('login.passwordMin') }));
+                                    }
+                                }}
+                                status={errors.password ? 'error' : undefined}
+                                helper={errors.password}
+                            />
+
+                        </View>
 
                         <Button
                             text={t('login.loginButton')}
@@ -290,21 +295,21 @@ const LoginScreen = ({navigation}: RootScreenProps<Paths.Login>) => {
                             textStyle={styles.buttonLoginText}
                         />
 
-                    <View style={styles.optionsContainer}>
-                        <TouchableOpacity
-                            onPress={() => {
-                                console.log('Forgot password');
-                            }}
-                            activeOpacity={0.7}
-                        >
-                            <TextFieldLabel
-                                text={t('login.forgotPassword')}
-                                style={styles.forgotPasswordText}
-                            />
-                        </TouchableOpacity>
-                    </View>
+                        <View style={styles.optionsContainer}>
+                            <TouchableOpacity
+                                onPress={() => {
+                                    console.log('Forgot password');
+                                }}
+                                activeOpacity={0.7}
+                            >
+                                <TextFieldLabel
+                                    text={t('login.forgotPassword')}
+                                    style={styles.forgotPasswordText}
+                                />
+                            </TouchableOpacity>
+                        </View>
 
-                </View>
+                    </View>
 
                 </ScrollView>
             </KeyboardAvoidingView>
@@ -324,7 +329,7 @@ const LoginScreen = ({navigation}: RootScreenProps<Paths.Login>) => {
                     activeOpacity={0.8}
                     hitSlop={{ top: 10, bottom: 10, left: 0, right: 10 }}
                 >
-                   <MapPinCheck  size={20} color={colors.black} />
+                    <MapPinCheck size={20} color={colors.black} />
                 </TouchableOpacity>
             </Animated.View>
 

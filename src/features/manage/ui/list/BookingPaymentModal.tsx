@@ -219,24 +219,21 @@ const BookingPaymentModal = ({
                             </ScrollView>
                         )}
 
-                        {/* Voucher Section */}
                         <View style={styles.voucherSection}>
-                            <TextFieldLabel style={styles.voucherLabel}>{t('bookingPayment.voucher')}</TextFieldLabel>
-                            <View style={styles.voucherInputRow}>
-                                <TextField
-                                    style={styles.voucherInput}
-                                    placeholder={t('bookingPayment.voucherPlaceholder')}
-                                    placeholderTextColor={colors.placeholderTextColor}
-                                    value={voucherCode}
-                                    onChangeText={setVoucherCode}
-                                />
+                                <View style={styles.voucherInputContainer}>
+                                    <TextField
+                                        label={t('bookingPayment.voucher')}
+                                        placeholder={t('bookingPayment.voucherPlaceholder')}
+                                        placeholderTextColor={colors.placeholderTextColor}
+                                        value={voucherCode}
+                                        onChangeText={setVoucherCode}
+                                    />
+                                </View>
                                 <TouchableOpacity style={styles.applyButton}>
                                     <TextFieldLabel style={styles.applyButtonText}>{t('bookingPayment.apply')}</TextFieldLabel>
                                 </TouchableOpacity>
-                            </View>
                         </View>
 
-                        {/* Summary Section */}
                         <View style={styles.summarySection}>
                             <View style={styles.summaryRow}>
                                 <TextFieldLabel style={styles.summaryLabel}>{t('bookingPayment.totalAmount')}</TextFieldLabel>
@@ -610,17 +607,19 @@ const $styles = (colors: Colors, isSmallScreen: boolean) => StyleSheet.create({
     },
     // Voucher Styles
     voucherSection: {
+        flexDirection: 'row',
+        alignItems: 'flex-end',
+        gap: 12,
         marginBottom: 20,
+    },
+    voucherInputContainer: {
+        flex: 1,
     },
     voucherLabel: {
         fontSize: 14,
         fontWeight: '600',
         color: colors.text,
         marginBottom: 8,
-    },
-    voucherInputRow: {
-        flexDirection: 'row',
-        gap: 8,
     },
     voucherInput: {
         flex: 1,

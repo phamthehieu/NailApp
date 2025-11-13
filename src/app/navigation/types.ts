@@ -10,6 +10,7 @@ export type RootStackParamList = {
   Checkin: undefined;
   ChooseShop: undefined;
   Settings: undefined;
+  EditProfileUser: undefined;
   System: undefined;
   Report: undefined;
   BottomNavigator: undefined;

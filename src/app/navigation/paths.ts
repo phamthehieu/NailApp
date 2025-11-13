@@ -4,6 +4,7 @@ export const enum Paths {
   Checkin = 'Checkin',
   ChooseShop = 'ChooseShop',
   Settings = 'Settings',
+  EditProfileUser = 'EditProfileUser',
   System = 'System',
   Report = 'Report',
   BottomNavigator = 'BottomNavigator',

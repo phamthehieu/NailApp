@@ -8,7 +8,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import Loader from '@/shared/ui/Loader';
 import MHeader from '@/shared/ui/MHeader';
-import { Funnel } from 'lucide-react-native';
+import { Funnel, Store } from 'lucide-react-native';
 import { DrawerActions } from '@react-navigation/native';
 import ModalFliterComponent from '../components/ModalFliterComponent';
 import CalendarHeader from '../components/CalenderHeader';
@@ -179,17 +179,17 @@ const BookingManageScreen = ({ navigation }: RootScreenProps<Paths.BookingManage
 
             <MHeader
                 label={t('bookingManage.title')}
-                onBack={() => navigation.dispatch(DrawerActions.openDrawer())}
-                // showIconLeft={true}
-                // iconLeft={<Grid3x3 size={24} color={colors.background} />}
+                onBack={() => navigation.goBack()}
+                showIconLeft={true}
+                iconLeft={<Store size={24} color={colors.background} />}
                 bgColor={colors.yellow}
                 // enableSearch={true}
                 // searchPlaceholder={t('bookingManage.searchPlaceholder')}
                 // onChangeSearchText={(text) => {console.log(text)}}
                 // onSubmitSearch={(text) => {console.log(text)}}
-                showIconRight={activeTab.value === 2 && true}
-                iconRight={activeTab.value === 2 ? <Funnel size={24} color={colors.background} /> : undefined}
-                onPressIconRight={activeTab.value === 2 ? () => setShowAdvanced(true) : undefined}
+                showIconRight={true}
+                iconRight={<Funnel size={24} color={colors.background} />}
+                onPressIconRight={() => setShowAdvanced(true)}
             />
 
             <TabComponent

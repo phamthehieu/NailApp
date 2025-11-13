@@ -1,3 +1,6 @@
+const envName = process.env.NODE_ENV || 'development';
+const envPath = envName === 'production' ? '.env.production' : '.env.development';
+
 module.exports = {
   presets: ['module:@react-native/babel-preset'],
   plugins: [
@@ -15,6 +18,15 @@ module.exports = {
           '@shared': './src/shared',
           '@store': './src/store',
         },
+      },
+    ],
+    [
+      'module:react-native-dotenv',
+      {
+        moduleName: '@env',
+        path: envPath,
+        safe: false,
+        allowUndefined: true,
       },
     ],
     'react-native-reanimated/plugin'

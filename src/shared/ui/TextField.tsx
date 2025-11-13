@@ -26,76 +26,24 @@ export interface TextFieldAccessoryProps {
 }
 
 export interface TextFieldProps extends Omit<TextInputProps, 'ref'> {
-    /**
-     * Một style modifier cho các trạng thái đầu vào khác nhau.
-     */
+
     status?: 'error' | 'disabled'
-    /**
-     * Hiển thị dấu sao đỏ bắt buộc sau label
-     */
     required?: boolean
-    /**
-     * Văn bản nhãn để hiển thị nếu không sử dụng `labelTx`.
-     */
     label?: TextProps['text']
-    /**
-     * Văn bản nhãn được tra cứu thông qua i18n.
-     */
     labelTx?: TextProps['tx']
-    /**
-     * Các tùy chọn tùy chọn để chuyển sang i18n. Hữu ích cho việc nội suy
-     * as well as explicitly setting locale or translation fallbacks.
-     */
     labelTxOptions?: TextProps['txOptions']
-    /**
-     * Truyền bất kỳ thuộc tính nào thêm vào thành phần Text nhãn.
-     */
     LabelTextProps?: TextProps
-    /**
-     * The helper text to display if not using `helperTx`.
-     */
     helper?: TextProps['text']
-    /**
-     * Helper text which is looked up via i18n.
-     */
     helperTx?: TextProps['tx']
-    /**
-     * Optional helper options to pass to i18n. Useful for interpolation
-     * as well as explicitly setting locale or translation fallbacks.
-     */
     helperTxOptions?: TextProps['txOptions']
-    /**
-     * Pass any additional props directly to the helper Text component.
-     */
     HelperTextProps?: TextProps
-    /**
-     * The placeholder text to display if not using `placeholderTx`.
-     */
     placeholder?: TextProps['text']
-    /**
-     * Placeholder text which is looked up via i18n.
-     */
     placeholderTx?: TextProps['tx']
-    /**
-     * Optional placeholder options to pass to i18n. Useful for interpolation
-     * as well as explicitly setting locale or translation fallbacks.
-     */
     placeholderTxOptions?: TextProps['txOptions']
-    /**
-     * Optional input style override.
-     */
     style?: StyleProp<TextStyle>
-    /**
-     * Style overrides for the container
-     */
     containerStyle?: StyleProp<ViewStyle>
-    /**
-     * Style overrides for the input wrapper
-     */
     inputWrapperStyle?: StyleProp<ViewStyle>
-
     RightAccessory?: ComponentType<TextFieldAccessoryProps>
-
     LeftAccessory?: ComponentType<TextFieldAccessoryProps>
 }
 
@@ -144,7 +92,10 @@ export const TextField = forwardRef(function TextField(props: TextFieldProps, re
         $inputWrapperStyle,
         $inputWrapperStyleOverride,
         TextInputProps.multiline && { minHeight: 112 },
-        (LeftAccessory || RightAccessory) && { alignItems: 'center' as const },
+        (LeftAccessory || RightAccessory) && !TextInputProps.multiline && { 
+            alignItems: 'center' as const,
+            minHeight: 48,
+        },
         LeftAccessory && { paddingStart: 10 },
         RightAccessory && { paddingEnd: 0 },
         status === 'error' && { borderColor: colors.error },
@@ -166,9 +117,6 @@ export const TextField = forwardRef(function TextField(props: TextFieldProps, re
         HelperTextProps?.style,
     ]
 
-    /**
-     *
-     */
     function focusInput() {
         if (disabled) { return; }
 
@@ -213,6 +161,7 @@ export const TextField = forwardRef(function TextField(props: TextFieldProps, re
                 )}
 
                 <TextInput
+                    autoCapitalize="none"
                     ref={input}
                     underlineColorAndroid={colors.card}
                     textAlignVertical={TextInputProps.multiline ? "top" : "center"}
@@ -277,7 +226,8 @@ const $inputStyle: ThemedStyle<TextStyle> = ({ colors, typography, spacing }) =>
     fontFamily: typography.primary.normal,
     color: colors.text,
     fontSize: 16,
-    height: 28,
+    minHeight: 28,
+    lineHeight: 28,
     // https://github.com/facebook/react-native/issues/21720#issuecomment-532642093
     paddingVertical: 0,
     paddingHorizontal: 0,
@@ -291,14 +241,14 @@ const $helperStyle: ThemedStyle<TextStyle> = ({ spacing }) => ({
 
 const $rightAccessoryStyle: ThemedStyle<ViewStyle> = ({ spacing }) => ({
     marginEnd: spacing.xs + 10,
-    height: 48,
+    height: 42,
     justifyContent: 'center',
     alignItems: 'center',
 });
 
 const $leftAccessoryStyle: ThemedStyle<ViewStyle> = ({ spacing }) => ({
     marginStart: spacing.xs,
-    height: 48,
+    height: 42,
     justifyContent: 'center',
     alignItems: 'center',
 });

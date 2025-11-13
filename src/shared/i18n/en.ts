@@ -16,6 +16,8 @@ const en: Translations = {
         usernameRequired: 'Please enter your username',
         passwordRequired: 'Please enter your password',
         passwordMin: 'Password must be at least 6 characters',
+        errorTitle: 'Login error',
+        errorMessage: 'Login failed. Please try again.',
     },
     checkin: {
         checkin: 'Verify appointment',
@@ -30,6 +32,8 @@ const en: Translations = {
         chooseShop: 'Choose shop',
         searchPlaceholder: 'Search shop',
         noShopFound: 'No shop found',
+        errorTitle: 'Error choosing shop',
+        errorMessage: 'Failed to choose shop. Please try again.',
     },
     errorScreen: {
         title: 'Oops!',
@@ -252,6 +256,20 @@ const en: Translations = {
     changePassword: 'Change password',
     darkMode: 'Dark mode',
     language: 'Language',
+  },
+  editProfileUser: {
+    title: 'Edit profile',
+    name: 'Name',
+    namePlaceholder: 'Enter name',
+    email: 'Email',
+    emailPlaceholder: 'Enter email',
+    description: 'Description',
+    descriptionPlaceholder: 'Add a short bio',
+    phone: 'Phone',
+    phonePlaceholder: 'Enter phone',
+    birthday: 'Birthday',
+    birthdayPlaceholder: 'Select birthday',
+    saveButton: 'Save',
   },
 };
 

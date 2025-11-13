@@ -8,6 +8,8 @@ import StatusBarComponent from '@/shared/ui/StatusBar';
 import { AutoImage } from '@/shared/ui/AutoImage';
 import { TextFieldLabel } from '@/shared/ui/Text';
 import i18n from 'i18next';
+import { clearAuth, isAuthenticated } from '@/services/auth/authService';
+import { getUserInfoApi } from '../auth/api/authApi';
 
 const SplashScreen = ({navigation}: RootScreenProps<Paths.Splash>) => {
     const { theme } = useAppTheme();
@@ -18,9 +20,31 @@ const SplashScreen = ({navigation}: RootScreenProps<Paths.Splash>) => {
         : ENV.APP_VERSION;
 
     useEffect(() => {
-        setTimeout(() => {
-            navigation.replace(Paths.Login);
-        }, 2500);
+        const checkAuth = async () => {
+            if (!isAuthenticated()) {
+                navigation.reset({
+                    index: 0,
+                    routes: [{ name: Paths.Login }],
+                });
+                return;
+            }
+
+            try {
+                await getUserInfoApi();
+                navigation.reset({
+                    index: 0,
+                    routes: [{ name: Paths.ChooseShop }],
+                });
+            } catch (error) {
+                clearAuth();
+                navigation.reset({
+                    index: 0,
+                    routes: [{ name: Paths.Login }],
+                });
+            }
+        };
+
+        checkAuth();
     }, [navigation]);
 
     const translatedText = i18n.t('splash.version', { version: versionText });

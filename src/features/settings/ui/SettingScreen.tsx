@@ -22,6 +22,10 @@ import Loader from '@/shared/ui/Loader';
 import { ChevronRight, LogOut } from 'lucide-react-native';
 import { useLanguage } from '@/shared/lib/useLanguage';
 import { AutoImage } from '@/shared/ui/AutoImage';
+import { RootState, store, useAppDispatch } from '@/app/store';
+import { useSelector } from 'react-redux';
+import { clearAuthState } from '@/features/auth/model/authSlice';
+import { clearAuth } from '@/services/auth/authService';
 
 const SettingScreen = ({navigation}: RootScreenProps<Paths.Settings>) => {
     const { t } = useTranslation();
@@ -39,7 +43,8 @@ const SettingScreen = ({navigation}: RootScreenProps<Paths.Settings>) => {
     const [loading, setLoading] = useState(false);
     const scrollViewRef = useRef<ScrollView>(null);
     const styles = useMemo(() => $styles(colors, isTablet), [colors, isTablet]);
-
+    const userInfo = useSelector((state: RootState) => state.auth.userInfo);
+    const dispatch = useAppDispatch();
     const isDarkModeEnabled = themeContext === 'dark';
 
     const handleToggleTheme = useCallback(() => {
@@ -59,28 +64,32 @@ const SettingScreen = ({navigation}: RootScreenProps<Paths.Settings>) => {
     }, [changeLanguage, currentLanguage]);
 
     const handleEditProfile = () => {
-        // TODO: Navigate to edit profile when available.
+        navigation.navigate(Paths.EditProfileUser);
     };
 
     const handleChangePassword = () => {
-        // TODO: Navigate to change password when available.
     };
 
     const handleAboutUs = () => {
-        // TODO: Navigate to about us when available.
     };
 
     const handlePrivacyPolicy = () => {
-        // TODO: Navigate to privacy policy when available.
     };
 
     const handleLogout = () => {
-        // TODO: Implement logout flow.
+        dispatch(clearAuthState());
+        clearAuth();
+        navigation.reset({
+            index: 0,
+            routes: [{ name: Paths.Login }],
+        });
     };
+
+    console.log('userInfo', userInfo);
 
     return (
         <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
-            <StatusBarComponent />
+             <StatusBarComponent backgroundColor={colors.yellow} />
             <KeyboardAvoidingView
                 style={styles.keyboardAvoidingView}
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -98,16 +107,16 @@ const SettingScreen = ({navigation}: RootScreenProps<Paths.Settings>) => {
 
                     <View style={styles.profileCard}>
                         <View style={styles.profileRow}>
-                            <Image
-                                source={{ uri: 'https://i.pravatar.cc/150?img=47' }}
+                            <AutoImage
+                                source={require('@assets/images/logo.png')}
                                 style={styles.avatar}
                             />
                             <View style={styles.profileTextWrapper}>
                                 <TextFieldLabel weight="bold" style={styles.profileName}>
-                                    Yennefer Doe
+                                    {userInfo?.displayName}
                                 </TextFieldLabel>
                                 <TextFieldLabel style={styles.profileSubTitle}>
-                                    Account Settings
+                                    {userInfo?.roleObj?.name}
                                 </TextFieldLabel>
                             </View>
                         </View>
@@ -207,7 +216,6 @@ const SettingScreen = ({navigation}: RootScreenProps<Paths.Settings>) => {
                 </ScrollView>
             </KeyboardAvoidingView>
 
-
             <Loader loading={loading} title={t('loading.processing')} />
 
         </SafeAreaView >
@@ -266,7 +274,7 @@ const $styles = (colors: Colors, isTablet: boolean) => {
             height: isTablet ? 80 : 56,
             borderRadius: isTablet ? 40 : 28,
             borderWidth: 3,
-            borderColor: colors.white,
+            borderColor: colors.text,
         },
         profileTextWrapper: {
             marginLeft: isTablet ? 20 : 16,
@@ -287,6 +295,11 @@ const $styles = (colors: Colors, isTablet: boolean) => {
             marginTop: isTablet ? 28 : 24,
             paddingHorizontal: isTablet ? 20 : 16,
             paddingVertical: isTablet ? 18 : 14,
+            shadowColor: '#1F2937',
+            shadowOpacity: 0.12,
+            shadowOffset: { width: 0, height: 12 },
+            shadowRadius: 18,
+            elevation: 10,
         },
         sectionTitle: {
             fontSize: isTablet ? 16 : 14,

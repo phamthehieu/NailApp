@@ -2,19 +2,25 @@ import { Paths } from '@/app/navigation/paths';
 import { RootScreenProps } from '@/app/navigation/types';
 import { Colors, useAppTheme } from '@/shared/theme';
 import StatusBarComponent from '@/shared/ui/StatusBar';
-import { StyleSheet, KeyboardAvoidingView, Platform, View, FlatList } from 'react-native';
+import { StyleSheet, KeyboardAvoidingView, Platform, View, FlatList, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useIsTablet } from '@/shared/lib/useIsTablet';
 import { useTranslation } from 'react-i18next';
 import MHeader from '@/shared/ui/MHeader';
 import Loader from '@/shared/ui/Loader';
-import { useState } from 'react';
-import { TextField } from '@/shared/ui/TextField';
-import { ChevronRightIcon, SearchIcon, StoreIcon } from 'lucide-react-native';
+import { useCallback, useEffect, useState } from 'react';
+import { ChevronRightIcon, LogOutIcon } from 'lucide-react-native';
 import { ListItem } from '@/shared/ui/ListItem';
-import { EmptyState } from '@/shared/ui/EmptyState';
 import { AutoImage } from '@/shared/ui/AutoImage';
 import { TextFieldLabel } from '@/shared/ui/Text';
+import { RootState, store, useAppDispatch } from '@/app/store';
+import { clearAuth, saveToken } from '@/services/auth/authService';
+import { clearAuthState, setCredentials, setUserInfo } from '@/features/auth/model/authSlice';
+import { useSelector } from 'react-redux';
+import { setListChooseShop } from '../model/storeSlice';
+import { listChooseShopApi, ListChooseShopResponse, postSelectStoreApi } from '../api/storeApi';
+import { alertService } from '@/services/alertService';
+import { getUserInfoApi } from '@/features/auth/api/authApi';
 
 
 const ChooseShop = ({navigation}: RootScreenProps<Paths.ChooseShop>) => {
@@ -22,95 +28,72 @@ const ChooseShop = ({navigation}: RootScreenProps<Paths.ChooseShop>) => {
     const isTablet = useIsTablet();
     const { t } = useTranslation();
     const styles = $styles(colors, isTablet);
-    const [loading, setLoading] = useState(false);
-    const [search, setSearch] = useState('');
+    const [loadingList, setLoadingList] = useState(false);
+    const [loadingAction, setLoadingAction] = useState(false);
+    const listChooseShop = useSelector((state: RootState) => state.store.listChooseShop);
+    const dispatch = useAppDispatch();
+    const userId = useSelector((state: RootState) => state.auth.userId);
+    const fetchListChooseShop = useCallback(async () => {
+        if (!userId) {
+            return;
+        }
+        setLoadingList(true);
+        try {
+            const response = await listChooseShopApi(userId);
+            dispatch(setListChooseShop(response));
+        } catch (error) {
+            alertService.showAlert({
+                title: t('chooseShop.errorTitle'),
+                message: t('chooseShop.errorMessage'),
+                typeAlert: 'Error',
+                onConfirm: () => {},
+            });
+        } finally {
+            setLoadingList(false);
+        }
+    }, [dispatch, t, userId]);
 
-    const listShop = [
-        {
-            id: 1,
-            name: 'Cửa hàng 1',
-            address: '123 Đường ABC, Quận XYZ, TP. HCM',
-        },
-        {
-            id: 2,
-            name: 'Cửa hàng 2',
-            address: '123 Đường ABC, Quận XYZ, TP. HCM',
-        },
-        {
-            id: 3,
-            name: 'Cửa hàng 3',
-            address: '123 Đường ABC, Quận XYZ, TP. HCM',
-        },
-        {
-            id: 4,
-            name: 'Cửa hàng 4',
-            address: '123 Đường ABC, Quận XYZ, TP. HCM',
-        },
-        {
-            id: 5,
-            name: 'Cửa hàng 5',
-            address: '123 Đường ABC, Quận XYZ, TP. HCM',
-        },
-        {
-            id: 6,
-            name: 'Cửa hàng 6',
-            address: '123 Đường ABC, Quận XYZ, TP. HCM',
-        },
-        {
-            id: 7,
-            name: 'Cửa hàng 7',
-            address: '123 Đường ABC, Quận XYZ, TP. HCM',
-        },
-        {
-            id: 8,
-            name: 'Cửa hàng 8',
-            address: '123 Đường ABC, Quận XYZ, TP. HCM',
-        },
-        {
-            id: 9,
-            name: 'Cửa hàng 9',
-            address: '123 Đường ABC, Quận XYZ, TP. HCM',
-        },
-        {
-            id: 10,
-            name: 'Cửa hàng 10',
-            address: '123 Đường ABC, Quận XYZ, TP. HCM',
-        },
-        {
-            id: 11,
-            name: 'Cửa hàng 11',
-            address: '123 Đường ABC, Quận XYZ, TP. HCM',
-        },
-        {
-            id: 12,
-            name: 'Cửa hàng 12',
-            address: '123 Đường ABC, Quận XYZ, TP. HCM',
-        },
-        {
-            id: 13,
-            name: 'Cửa hàng 13',
-            address: '123 Đường ABC, Quận XYZ, TP. HCM',
-        },
-        {
-            id: 14,
-            name: 'Cửa hàng 14',
-            address: '123 Đường ABC, Quận XYZ, TP. HCM',
-        },
-        {
-            id: 15,
-            name: 'Cửa hàng 15',
-            address: '123 Đường ABC, Quận XYZ, TP. HCM',
-        },
-    ];
+    useEffect(() => {
+        fetchListChooseShop();
+    }, [fetchListChooseShop]);
 
-    const onChooseShop = (shop: any) => {
-        navigation.navigate(Paths.BottomNavigator);
-        // setLoading(true);
-        // setTimeout(() => {
-        //     setLoading(false);
-        //     navigation.navigate(Paths.BottomNavigator);
-        // }, 3000);
+    const onChooseShop = async (shop: ListChooseShopResponse) => {
+        try {
+            setLoadingAction(true);
+            const response = await postSelectStoreApi(shop.storeId);
 
+            if (response?.token) {
+                saveToken(
+                    response.token,
+                    response.refreshToken || null,
+                    response.id
+                );
+                dispatch(setCredentials({
+                    token: response.token,
+                    refreshToken: response.refreshToken ?? null,
+                    userId: response.id ?? null,
+                }));
+                const responseUserInfo = await getUserInfoApi();
+                dispatch(setUserInfo(responseUserInfo));
+                navigation.navigate(Paths.BottomNavigator);
+            } else {
+                alertService.showAlert({
+                    title: t('chooseShop.errorTitle'),
+                    message: t('chooseShop.errorMessage'),
+                    typeAlert: 'Error',
+                    onConfirm: () => {},
+                });
+            }
+        } catch (error) {
+            alertService.showAlert({
+                title: t('chooseShop.errorTitle'),
+                message: t('chooseShop.errorMessage'),
+                typeAlert: 'Error',
+                onConfirm: () => {},
+            });
+        } finally {
+            setLoadingAction(false);
+        }
     }
 
     return (
@@ -119,8 +102,19 @@ const ChooseShop = ({navigation}: RootScreenProps<Paths.ChooseShop>) => {
             <MHeader
                 label={t('chooseShop.chooseShop')}
                 onBack={() => navigation.goBack()}
-                showIconLeft={false}
                 bgColor={colors.yellow}
+                showIconLeft={true}
+                iconLeft={<></>}
+                showIconRight={true}
+                iconRight={<LogOutIcon size={24} color={colors.red} />}
+                onPressIconRight={() => {
+                    clearAuth();
+                    store.dispatch(clearAuthState());
+                    navigation.reset({
+                        index: 0,
+                        routes: [{ name: Paths.Login }],
+                    });
+                }}
             />
             <KeyboardAvoidingView
                 style={styles.keyboardAvoidingView}
@@ -128,21 +122,10 @@ const ChooseShop = ({navigation}: RootScreenProps<Paths.ChooseShop>) => {
                 keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 10}
             >
 
-                <View style={styles.searchContainer}>
-
-                    <TextField
-                        placeholder={t('chooseShop.searchPlaceholder')}
-                        value={search}
-                        onChangeText={setSearch}
-                        inputWrapperStyle={styles.searchInputWrapper}
-                         returnKeyType="done"
-                         LeftAccessory={() => <SearchIcon size={20} color={colors.text} />}
-                    />
-
-                </View>
-
                 <FlatList
-                    data={listShop}
+                    refreshControl={<RefreshControl refreshing={loadingList} onRefresh={fetchListChooseShop} />}
+                    contentContainerStyle={styles.flatListContainer}
+                    data={listChooseShop}
                     keyExtractor={(item) => item.id.toString()}
                     renderItem={({ item }) =>
                     {
@@ -171,7 +154,7 @@ const ChooseShop = ({navigation}: RootScreenProps<Paths.ChooseShop>) => {
 
             </KeyboardAvoidingView>
 
-            <Loader loading={loading} title={t('loading.processing')} />
+            <Loader loading={loadingList || loadingAction} title={t('loading.processing')} />
 
         </SafeAreaView >
     );
@@ -227,6 +210,9 @@ const $styles = (colors: Colors, isTablet: boolean) => {
             width: 100,
             height: 100,
             marginBottom: 16,
+        },
+        flatListContainer: {
+            paddingVertical: 16,
         },
     });
 };
