@@ -1,36 +1,36 @@
-import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { ListBookingHourResponse, ListStaffResponse, StaffItem } from "../api/BookingApi";
 
-interface StaffState {
-    listStaff: StaffItem[];
+
+import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { BookingManagerItem, BookingStatusItem, ListBookingManagerResponse, ListBookingStatusResponse } from "../api/BookingApi";
+
+interface BookingListState {
+    listBookingManager: BookingManagerItem[];
     pageIndex: number;
     totalItems: number;
     pageSize: number;
     totalPages: number;
     loading: boolean;
     error: string | null;
-    selectedStaff: StaffItem | null;
-    listBookingHour: ListBookingHourResponse[];
+    listBookingStatus: ListBookingStatusResponse | null;
 }
 
-const initialState: StaffState = {
-    listStaff: [],
+const initialState: BookingListState = {
+    listBookingManager: [],
     pageIndex: 0,
     totalItems: 0,
     pageSize: 0,
     totalPages: 0,
     loading: false,
     error: null,
-    selectedStaff: null,
-    listBookingHour: [],
+    listBookingStatus: null,
 };
 
-const staffSlice = createSlice({
-    name: 'staff',
+const bookingSlice = createSlice({
+    name: 'booking',
     initialState,
     reducers: {
-        setListStaff(state, action: PayloadAction<ListStaffResponse>) {
-            state.listStaff = action.payload.items;
+        setListBookingManager(state, action: PayloadAction<ListBookingManagerResponse>) {
+            state.listBookingManager = action.payload.items;
             state.pageIndex = action.payload.pageIndex;
             state.totalItems = action.payload.totalItems;
             state.pageSize = action.payload.pageSize;
@@ -45,31 +45,32 @@ const staffSlice = createSlice({
             state.error = action.payload;
             state.loading = false;
         },
-        clearStaffState(state) {
-            state.listStaff = [];
+        clearBookingListState(state) {
+            state.listBookingManager = [];
             state.pageIndex = 0;
             state.totalItems = 0;
             state.pageSize = 0;
             state.totalPages = 0;
             state.loading = false;
             state.error = null;
-            state.selectedStaff = null;
         },
-        setListBookingHour(state, action: PayloadAction<ListBookingHourResponse[]>) {
-            state.listBookingHour = action.payload;
+        setListBookingStatus(state, action: PayloadAction<ListBookingStatusResponse>) {
+            state.listBookingStatus = action.payload;
+            state.loading = false;
+            state.error = null;
         },
     },
 });
 
 export const {
-    setListStaff,
+    setListBookingManager,
     setLoading,
     setError,
-    clearStaffState,
-    setListBookingHour,
-} = staffSlice.actions;
+    clearBookingListState,
+    setListBookingStatus,
+} = bookingSlice.actions;
 
-export default staffSlice.reducer;
+export default bookingSlice.reducer;
 
 
 

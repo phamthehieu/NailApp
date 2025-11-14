@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { View, StyleSheet, FlatList, TouchableOpacity } from "react-native";
 import { Eye, Pencil, Trash2, User, Info, Calendar } from "lucide-react-native";
 import { TextFieldLabel } from "@/shared/ui/Text";
@@ -14,6 +14,10 @@ import { alertService } from "@/services/alertService";
 import BookingConfirmationModal from "./BookingConfirmationModal";
 import CheckinBookingModal from "./CheckinBookingModal";
 import BookingPaymentModal from "./BookingPaymentModal";
+import { useBookingForm } from "../../hooks/useBookingForm";
+import { useAppSelector } from "@/app/store";
+import { BookingManagerItem } from "../../api/BookingApi";
+import Loader from "@/shared/ui/Loader";
 
 interface BookingListComponentProps {
     navigation: RootScreenProps<Paths.BookingManage>['navigation'];
@@ -24,10 +28,17 @@ const BookingListComponent = ({ navigation }: BookingListComponentProps) => {
     const isTablet = useIsTablet();
     const styles = $styles(colors, isTablet);
     const { t } = useTranslation();
+    const { getListBookingManager, loading } = useBookingForm();
+    const { listBookingManager, listBookingStatus } = useAppSelector((state) => state.booking);
+
+    useEffect(() => {
+        getListBookingManager();
+    }, []);
 
     const [isBookingConfirmationModalVisible, setIsBookingConfirmationModalVisible] = useState(false);
     const [isCheckinBookingModalVisible, setIsCheckinBookingModalVisible] = useState(false);
     const [isBookingPaymentModalVisible, setIsBookingPaymentModalVisible] = useState(false);
+
     const formatDate = (dateString: string) => {
         const date = new Date(dateString);
         const day = String(date.getDate()).padStart(2, '0');
@@ -36,34 +47,18 @@ const BookingListComponent = ({ navigation }: BookingListComponentProps) => {
         return `${day}/${month}/${year}`;
     };
 
-    const getStatusColor = (status: string) => {
+    const getStatusColor = (status: number) => {
         switch (status) {
-            case "Chờ xác nhận":
+            case 0:
                 return colors.blue;
-            case "Đã xác nhận":
+            case 1:
                 return colors.yellow;
-            case "Đang thực hiện":
+            case 2:
                 return colors.purple;
-            case "Đã hoàn thành":
-            case "Hoàn tất":
+            case 3:
                 return colors.green;
-            case "Đã hủy":
-                return colors.red;
             default:
                 return colors.border;
-        }
-    };
-
-    const getActionButtonLabel = (status: string) => {
-        switch (status) {
-            case "Chờ xác nhận":
-                return "Xác nhận";
-            case "Đã xác nhận":
-                return "Check-in";
-            case "Đang thực hiện":
-                return "Thanh toán";
-            default:
-                return null;
         }
     };
 
@@ -92,49 +87,49 @@ const BookingListComponent = ({ navigation }: BookingListComponentProps) => {
     };
 
     const handleMainAction = (item: any) => {
-        const label = getActionButtonLabel(item.status);
-       if (label === 'Xác nhận') {
-        setIsBookingConfirmationModalVisible(true);
-       } else if (label === 'Check-in') {
-        setIsCheckinBookingModalVisible(true);
-       } else if (label === 'Thanh toán') {
-        setIsBookingPaymentModalVisible(true);
-       }
+        if (item.status === 1) {
+            setIsBookingConfirmationModalVisible(true);
+        } else if (item.status === 2) {
+            setIsCheckinBookingModalVisible(true);
+        } else if (item.status === 3) {
+            setIsBookingPaymentModalVisible(true);
+        }
     };
 
-    const renderBookingItem = ({ item }: { item: any }) => {
+    const renderBookingItem = ({ item }: { item: BookingManagerItem }) => {
         const statusColor = getStatusColor(item.status);
-        const actionLabel = getActionButtonLabel(item.status);
-        const formattedDate = formatDate(item.date);
+        const formattedDate = formatDate(item.bookingDate);
 
         return (
             <View style={styles.bookingCard}>
                 <View style={styles.header}>
                     <View style={styles.headerLeft}>
                         <View style={[styles.statusBadge, { borderColor: statusColor, borderWidth: 1 }]}>
-                            <TextFieldLabel style={[styles.statusText, { color: statusColor }]}>{item.status}</TextFieldLabel>
+                            <TextFieldLabel style={[styles.statusText, { color: statusColor }]}>{item.statusObj.name}</TextFieldLabel>
                         </View>
-                        <TextFieldLabel style={styles.bookingId}>{item.key}</TextFieldLabel>
+                        {isTablet && (
+                            <TextFieldLabel style={styles.bookingId}>{item.code}</TextFieldLabel>
+                        )}
                     </View>
                     <TextFieldLabel style={styles.dateText}>{formattedDate}</TextFieldLabel>
                 </View>
 
                 <View style={styles.infoRow}>
                     <User size={16} color={colors.text} />
-                    <TextFieldLabel style={styles.infoText}>{item.user}</TextFieldLabel>
-                    <TextFieldLabel style={styles.phoneText}>{item.phone}</TextFieldLabel>
+                    <TextFieldLabel style={styles.infoText}>{item.customer.name}</TextFieldLabel>
+                    <TextFieldLabel style={styles.phoneText}>{item.customer.phoneNumber}</TextFieldLabel>
                 </View>
 
                 <View style={styles.infoRow}>
                     <Info size={16} color={colors.text} />
-                    <TextFieldLabel style={styles.infoText}>{item.note}</TextFieldLabel>
+                    <TextFieldLabel style={styles.infoText}>{item.description}</TextFieldLabel>
                 </View>
 
-                {item.time && (
+                {item.bookingHours && (
                     <View style={styles.infoRow}>
                         <Calendar size={16} color={colors.text} />
                         <TextFieldLabel style={styles.infoText}>
-                            {formattedDate} {item.time}
+                            {formattedDate} {item.bookingHours}
                         </TextFieldLabel>
                     </View>
                 )}
@@ -158,12 +153,12 @@ const BookingListComponent = ({ navigation }: BookingListComponentProps) => {
                     >
                         <Trash2 size={18} color={colors.red} />
                     </TouchableOpacity>
-                    {actionLabel && (
+                    {item.status === 1 && (
                         <TouchableOpacity
                             style={[styles.mainActionButton, { backgroundColor: colors.yellow }]}
                             onPress={() => handleMainAction(item)}
                         >
-                            <TextFieldLabel style={styles.mainActionText}>{actionLabel}</TextFieldLabel>
+                            <TextFieldLabel style={styles.mainActionText}>{t('bookingList.confirmBooking')}</TextFieldLabel>
                         </TouchableOpacity>
                     )}
                 </View>
@@ -171,42 +166,44 @@ const BookingListComponent = ({ navigation }: BookingListComponentProps) => {
         );
     };
 
+    console.log('listBookingStatus', listBookingStatus);
     return (
         <>
-        <FlatList
-            data={scheduleItemsList}
-            keyExtractor={(item) => item.id.toString()}
-            renderItem={renderBookingItem}
-            numColumns={isTablet ? 2 : 1}
-            contentContainerStyle={styles.listContainer}
-            showsVerticalScrollIndicator={false}
-            columnWrapperStyle={isTablet ? styles.columnWrapper : undefined}
-            ListEmptyComponent={
+            <FlatList
+                data={listBookingManager}
+                keyExtractor={(item) => item.id.toString()}
+                renderItem={renderBookingItem}
+                numColumns={isTablet ? 2 : 1}
+                contentContainerStyle={styles.listContainer}
+                showsVerticalScrollIndicator={false}
+                columnWrapperStyle={isTablet ? styles.columnWrapper : undefined}
+                ListEmptyComponent={
 
-                <View style={styles.emptyContainer}>
+                    <View style={styles.emptyContainer}>
 
-                    <AutoImage source={require('@assets/icon/no_data.png')} style={styles.emptyImage} />
+                        <AutoImage source={require('@assets/icon/no_data.png')} style={styles.emptyImage} />
 
-                    <TextFieldLabel style={styles.emptyText}>{t('bookingList.noBookingFound')}</TextFieldLabel>
+                        <TextFieldLabel style={styles.emptyText}>{t('bookingList.noBookingFound')}</TextFieldLabel>
 
-                </View>
-            }
-        />
-        <BookingConfirmationModal
-            visible={isBookingConfirmationModalVisible}
-            onClose={() => setIsBookingConfirmationModalVisible(false)}
-            onConfirm={() => {}}
-        />
-        <CheckinBookingModal
-            visible={isCheckinBookingModalVisible}
-            onClose={() => setIsCheckinBookingModalVisible(false)}
-            onConfirm={() => {}}
-        />
-        <BookingPaymentModal
-            visible={isBookingPaymentModalVisible}
-            onClose={() => setIsBookingPaymentModalVisible(false)}
-            onConfirm={() => {}}
-        />
+                    </View>
+                }
+            />
+            <BookingConfirmationModal
+                visible={isBookingConfirmationModalVisible}
+                onClose={() => setIsBookingConfirmationModalVisible(false)}
+                onConfirm={() => { }}
+            />
+            <CheckinBookingModal
+                visible={isCheckinBookingModalVisible}
+                onClose={() => setIsCheckinBookingModalVisible(false)}
+                onConfirm={() => { }}
+            />
+            <BookingPaymentModal
+                visible={isBookingPaymentModalVisible}
+                onClose={() => setIsBookingPaymentModalVisible(false)}
+                onConfirm={() => { }}
+            />
+            <Loader loading={loading} title={t('bookingList.loading')} />
         </>
     );
 };
@@ -264,6 +261,11 @@ const $styles = (colors: Colors, isTablet: boolean) =>
         dateText: {
             fontSize: 14,
             color: colors.text,
+            borderWidth: 1,
+            borderColor: colors.border,
+            paddingHorizontal: 8,
+            paddingVertical: 4,
+            borderRadius: 12,
         },
         infoRow: {
             flexDirection: "row",

@@ -15,7 +15,7 @@ const UserAvatar = ({ listStaff }: Props) => {
         <View style={styles.container}>
             <View style={styles.avatarContainer}>
                 <Image
-                    source={{ uri: listStaff.avatarUrl ?? 'https://via.placeholder.com/150' }}
+                    source={listStaff.avatarUrl ? { uri: listStaff.avatarUrl } : require('@assets/images/avatar.png')}
                     style={styles.avatar}
                     accessibilityLabel={`${listStaff.displayName}'s profile picture`}
                 />

@@ -16,13 +16,13 @@ import { CalenderDayComponent, CalenderWeedComponent, CalenderMonthComponent } f
 import TabComponent from '@/shared/ui/TabComponent';
 import BookingListComponent from './list/BookingListComponent';
 import { useStaffForm } from '../hooks/useStaffForm';
+import { useBookingForm } from '../hooks/useBookingForm';
 
 type TabType = { label: string; value: number }
 
 const BookingManageScreen = ({ navigation }: RootScreenProps<Paths.BookingManage>) => {
     const { t } = useTranslation();
     const { theme: { colors } } = useAppTheme();
-    const { getListStaff } = useStaffForm();
     const [viewMode, setViewMode] = useState<'Ngày' | 'Tuần' | 'Tháng'>('Ngày');
     const [anchorDate, setAnchorDate] = useState<Date>(new Date());
     const [activeRange, setActiveRange] = useState<{ start: Date; end: Date } | null>(null);
@@ -39,7 +39,7 @@ const BookingManageScreen = ({ navigation }: RootScreenProps<Paths.BookingManage
         status: '',
     });
     const styles = $styles(colors);
-
+    const { getListBookingStatus } = useBookingForm();
     // Animation values
     const tab1Opacity = useRef(new Animated.Value(1)).current;
     const tab1TranslateX = useRef(new Animated.Value(0)).current;
@@ -104,7 +104,6 @@ const BookingManageScreen = ({ navigation }: RootScreenProps<Paths.BookingManage
         }
     }, [viewMode, anchorDate, activeRange]);
 
-    // Animation khi chuyển tab
     useEffect(() => {
         if (activeTab.value === 1) {
             // Tab 1 (Calendar) hiển thị
@@ -175,7 +174,7 @@ const BookingManageScreen = ({ navigation }: RootScreenProps<Paths.BookingManage
     };
 
     useEffect(() => {
-        getListStaff();
+        getListBookingStatus();
     }, []);
 
     return (

@@ -59,6 +59,25 @@ const vi = {
     year: 'Năm',
     cancel: 'Hủy',
     done: 'Xong',
+    advancedTitle: 'Tìm kiếm nâng cao',
+    advancedSubtitle: 'Tìm kiếm theo nhiều tiêu chí',
+    dateRange: 'Ngày đặt lịch',
+    dateRangeStart: 'Từ ngày',
+    dateRangeEnd: 'Đến ngày',
+    bookingCode: 'Mã booking',
+    enterCode: 'Nhập mã booking',
+    customerName: 'Tên khách hàng',
+    enterCustomer: 'Nhập tên khách hàng',
+    phone: 'Số điện thoại',
+    enterPhone: 'Nhập số điện thoại',
+    service: 'Dịch vụ',
+    pickService: 'Chọn dịch vụ',
+    status: 'Trạng thái',
+    pickStatus: 'Chọn trạng thái',
+    close: 'Đóng',
+    confirm: 'Xác nhận',
+    bookingDate: 'Ngày đặt lịch',
+    pickDate: 'Chọn ngày',
   },
   bottomNavigator: {
     bookingManage: 'Quản lý',
@@ -86,6 +105,7 @@ const vi = {
       range: 'Phạm vi',
       monthPicker: 'Chọn tháng',
       yearPicker: 'Chọn năm',
+      hideStaffWithoutWorkingHours: 'Ẩn NV trống giờ',
     },
     calenderTab: {
       schedule: 'Lịch trình',
@@ -103,6 +123,7 @@ const vi = {
   },
   bookingList: {
     noBookingFound: 'Không tìm thấy đặt lịch',
+    loading: 'Đang tải dữ liệu...',
   },
   detailBookingItem: {
     title: 'Thông tin đặt lịch',
@@ -269,6 +290,7 @@ const vi = {
     birthdayPlaceholder: 'Chọn ngày sinh',
     saveButton: 'Lưu',
   },
+
 };
 
 export default vi;

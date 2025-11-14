@@ -19,14 +19,14 @@ export async function loginApi(
   dataLogin: LoginRequest
 ): Promise<LoginResponse> {
   return http.postPortal<LoginResponse>(
-    '/api/AppUserProfile/Login',
+    '/api/StaffProfile/Login',
     dataLogin
   );
 }
 
 export async function getUserInfoApi(): Promise<AuthUserInfo> {
   return http.getPortal<AuthUserInfo>(
-    '/api/AppUserProfile/GetInfo'
+    '/api/StaffProfile/GetInfo'
   );
 }
 

@@ -1,5 +1,5 @@
-import React, { useRef, useState, useMemo } from 'react';
-import { View, StyleSheet, ScrollView, Pressable } from 'react-native';
+import React, { useRef, useMemo, useEffect, useCallback, useState } from 'react';
+import { View, StyleSheet, ScrollView, Pressable, Switch } from 'react-native';
 import UserAvatar from './UserAvatar';
 import CurrentTimeLine from './CurrentTimeLine';
 import { users } from '../../../data/users';
@@ -11,6 +11,8 @@ import { useIsTablet } from '@/shared/lib/useIsTablet';
 import { TextFieldLabel } from '@/shared/ui/Text';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/app/store';
+import { useStaffForm } from '@/features/manage/hooks/useStaffForm';
+import { useTranslation } from 'react-i18next';
 
 type Props = {
     selectedDate: Date;
@@ -19,23 +21,93 @@ type Props = {
 
 const CalenderDayComponent = ({ selectedDate: _selectedDate, onPressScheduleItem }: Props) => {
     const { theme: { colors } } = useAppTheme();
+    const { getListStaff, getListBookingHour } = useStaffForm();
+    const { t } = useTranslation();
     const timeScrollRef = useRef<ScrollView>(null);
     const headerScrollRef = useRef<ScrollView>(null);
     const bodyScrollRef = useRef<ScrollView>(null);
-    const { listStaff } = useSelector((state: RootState) => state.staff);
-    const [hoursStart, setHoursStart] = useState(8);
-    const [minutesStart, setMinutesStart] = useState(15);
-    const [hoursEnd, setHoursEnd] = useState(22);
-    const [minutesEnd, setMinutesEnd] = useState(30);
+    const verticalScrollRef = useRef<ScrollView>(null);
+    const { listStaff, listBookingHour } = useSelector((state: RootState) => state.staff);
     const timeSlotWidth = 200;
-    const minVisibleHour = 7;
-    const maxVisibleHour = 23;
+    const [hideStaffWithoutWorkingHours, setHideStaffWithoutWorkingHours] = useState(false);
+
+    const getDayOfWeek = (date: Date): string => {
+        const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        return days[date.getDay()];
+    };
+
+    const getWorkingHoursForStaff = useCallback((staffId: number, dayOfWeek: string) => {
+        const bookingHour = listBookingHour.find(
+            item => item.staffId === staffId &&
+                item.dayOfTheWeek === dayOfWeek &&
+                item.active === true
+        );
+
+        if (!bookingHour) {
+            return null;
+        }
+
+        const startTime = bookingHour.startTime;
+        const endTime = bookingHour.endTime;
+
+        const startHour = parseInt(startTime.substring(0, 2));
+        const startMinute = parseInt(startTime.substring(3, 5));
+        const endHour = parseInt(endTime.substring(0, 2));
+        const endMinute = parseInt(endTime.substring(3, 5));
+
+        return { startHour, startMinute, endHour, endMinute };
+    }, [listBookingHour]);
+
+    const dayOfWeek = getDayOfWeek(_selectedDate);
+
+    const filteredListStaff = useMemo(() => {
+        if (!hideStaffWithoutWorkingHours) {
+            return listStaff;
+        }
+        return listStaff.filter(staff => {
+            const workingHours = getWorkingHoursForStaff(staff.id, dayOfWeek);
+            return workingHours !== null;
+        });
+    }, [listStaff, hideStaffWithoutWorkingHours, dayOfWeek, getWorkingHoursForStaff]);
+
+    const { minVisibleHour, maxVisibleHour } = useMemo(() => {
+        if (filteredListStaff.length === 0 || listBookingHour.length === 0) {
+            return { minVisibleHour: 0, maxVisibleHour: 23 };
+        }
+
+        let minHour = 24;
+        let maxHour = 0;
+        let hasAnyWorkingHours = false;
+
+        filteredListStaff.forEach(staff => {
+            const workingHours = getWorkingHoursForStaff(staff.id, dayOfWeek);
+            if (workingHours) {
+                hasAnyWorkingHours = true;
+                const startHour = workingHours.startHour;
+                const endHour = workingHours.endHour;
+
+                if (startHour < minHour) minHour = startHour;
+                if (endHour > maxHour) maxHour = endHour;
+            }
+        });
+
+        if (!hasAnyWorkingHours) {
+            return { minVisibleHour: 0, maxVisibleHour: 23 };
+        }
+
+        const paddingHour = 1;
+        const finalMinHour = Math.max(0, minHour - paddingHour);
+        const finalMaxHour = Math.min(23, maxHour + paddingHour);
+
+        return { minVisibleHour: finalMinHour, maxVisibleHour: finalMaxHour };
+    }, [filteredListStaff, listBookingHour, dayOfWeek, getWorkingHoursForStaff]);
+
     const displayTimeSlots = useMemo(() => {
         return timeSlots.filter(slot => {
             const h = parseInt(slot.time.substring(0, 2));
             return h >= minVisibleHour && h <= maxVisibleHour;
         });
-    }, []);
+    }, [minVisibleHour, maxVisibleHour]);
 
     const isTablet = useIsTablet();
 
@@ -100,7 +172,7 @@ const CalenderDayComponent = ({ selectedDate: _selectedDate, onPressScheduleItem
         });
     };
 
-    const formatTime = (time24h: string) => {
+    const formatTime = (time24h: string): string => {
         const hours = parseInt(time24h.substring(0, 2));
         const minutes = time24h.substring(2, 4);
         const period = hours >= 12 ? 'PM' : 'AM';
@@ -117,13 +189,34 @@ const CalenderDayComponent = ({ selectedDate: _selectedDate, onPressScheduleItem
             </>
         );
     };
-    console.log("Hieu 120", listStaff);
+
+    useEffect(() => {
+        getListStaff();
+        getListBookingHour();
+    }, []);
+
     return (
         <View style={styles.mainContainer}>
             <View style={styles.fixedUserColumn}>
-                <View style={styles.userColumnHeader}>
-                    <TextFieldLabel style={styles.userText}></TextFieldLabel>
-                </View>
+
+                <Pressable onPress={() => setHideStaffWithoutWorkingHours(!hideStaffWithoutWorkingHours)} style={styles.userColumnHeader}>
+
+                    <View style={styles.filterContainer}>
+
+                        <Switch
+                            value={hideStaffWithoutWorkingHours}
+                            onValueChange={setHideStaffWithoutWorkingHours}
+                            trackColor={{ false: colors.backgroundDisabled, true: colors.yellow + '80' }}
+                            thumbColor={hideStaffWithoutWorkingHours ? colors.yellow : colors.primary}
+                            ios_backgroundColor={colors.backgroundDisabled}
+                        />
+
+                        {isTablet ? <TextFieldLabel style={styles.filterLabel} numberOfLines={1} ellipsizeMode="tail">{t('calenderDashboard.calenderHeader.hideStaffWithoutWorkingHours')}</TextFieldLabel> : null}
+
+                    </View>
+
+                </Pressable>
+
                 <ScrollView
                     ref={timeScrollRef}
                     showsVerticalScrollIndicator={false}
@@ -131,20 +224,28 @@ const CalenderDayComponent = ({ selectedDate: _selectedDate, onPressScheduleItem
                     nestedScrollEnabled={false}
                     pointerEvents="none"
                 >
+
                     <View style={styles.userColumnContent}>
-                        {listStaff.map((staff) => (
+
+                        {filteredListStaff.map((staff) => (
+
                             <View key={staff.id} style={styles.userColumnRow}>
+
                                 <UserAvatar listStaff={staff} />
+
                             </View>
                         ))}
+
                     </View>
+
                 </ScrollView>
+
             </View>
 
             <View style={styles.scrollableContent}>
                 <View style={styles.fixedHeader}>
-                    <ScrollView 
-                        horizontal 
+                    <ScrollView
+                        horizontal
                         showsHorizontalScrollIndicator={false}
                         ref={headerScrollRef}
                         scrollEventThrottle={16}
@@ -162,6 +263,7 @@ const CalenderDayComponent = ({ selectedDate: _selectedDate, onPressScheduleItem
                 </View>
 
                 <ScrollView
+                    ref={verticalScrollRef}
                     showsVerticalScrollIndicator={false}
                     contentContainerStyle={{ paddingTop: 80 }}
                     scrollEventThrottle={16}
@@ -191,54 +293,91 @@ const CalenderDayComponent = ({ selectedDate: _selectedDate, onPressScheduleItem
                     >
                         <View style={styles.container}>
                             <View style={styles.userRowsContainer}>
-                                <CurrentTimeLine scheduleHeight={users.length * 100} timeSlotWidth={timeSlotWidth} hours={hoursStart} minutes={minutesStart} type={'start'} baseHourOffset={minVisibleHour} />
-                                {/* <CurrentTimeLine scheduleHeight={users.length * 100} timeSlotWidth={timeSlotWidth} hours={hoursNow} minutes={minutesNow} type={'now'} /> */}
-                                <CurrentTimeLine scheduleHeight={users.length * 100} timeSlotWidth={timeSlotWidth} hours={hoursEnd} minutes={minutesEnd} type={'end'} baseHourOffset={minVisibleHour} />
-                                {users.map((user) => (
-                                    <View key={user.id} style={styles.userRow}>
-                                        {displayTimeSlots.map((slot) => {
-                                            const slotHour = parseInt(slot.time.substring(0, 2));
-                                            const slotMinutes = parseInt(slot.time.substring(2, 4));
-                                            const working = isWorkingHours(slot.time, hoursStart, minutesStart, hoursEnd, minutesEnd);
+                                {filteredListStaff.map((staff, index) => {
+                                    const staffWorkingHours = getWorkingHoursForStaff(staff.id, dayOfWeek);
+                                    const hasWorkingHours = staffWorkingHours !== null;
+                                    const staffHoursStart = staffWorkingHours?.startHour ?? 0;
+                                    const staffMinutesStart = staffWorkingHours?.startMinute ?? 0;
+                                    const staffHoursEnd = staffWorkingHours?.endHour ?? 0;
+                                    const staffMinutesEnd = staffWorkingHours?.endMinute ?? 0;
 
-                                            return (
-                                                <View
-                                                    key={`${slot.time}-${user.id}`}
-                                                    style={[
-                                                        styles.scheduleCell,
-                                                        !working && styles.nonWorkingHoursCell
-                                                    ]}
-                                                >
-                                                    {renderQuarterHourLines()}
-                                                    {renderScheduleItem(user.id, slot.time)}
+                                    const staffTopPosition = index * 100;
 
-                                                    {slotHour === hoursStart && slotMinutes === 0 && minutesStart > 0 && (
-                                                        <View style={[
-                                                            styles.partialOverlay,
-                                                            {
-                                                                width: (minutesStart / 60) * timeSlotWidth,
-                                                                backgroundColor: colors.bottomColor,
-                                                                opacity: 0.8
-                                                            }
-                                                        ]} />
-                                                    )}
+                                    return (
+                                        <React.Fragment key={staff.id}>
+                                            {hasWorkingHours && (
+                                                <>
+                                                    <View style={[styles.timeLineWrapper, { top: staffTopPosition }]}>
+                                                        <CurrentTimeLine
+                                                            scheduleHeight={80}
+                                                            timeSlotWidth={timeSlotWidth}
+                                                            hours={staffHoursStart}
+                                                            minutes={staffMinutesStart}
+                                                            type={'start'}
+                                                            baseHourOffset={minVisibleHour}
+                                                        />
+                                                    </View>
+                                                    <View style={[styles.timeLineWrapper, { top: staffTopPosition }]}>
+                                                        <CurrentTimeLine
+                                                            scheduleHeight={80}
+                                                            timeSlotWidth={timeSlotWidth}
+                                                            hours={staffHoursEnd}
+                                                            minutes={staffMinutesEnd}
+                                                            type={'end'}
+                                                            baseHourOffset={minVisibleHour}
+                                                        />
+                                                    </View>
+                                                </>
+                                            )}
+                                            <View style={styles.userRow}>
+                                                {displayTimeSlots.map((slot) => {
+                                                    const slotHour = parseInt(slot.time.substring(0, 2));
+                                                    const slotMinutes = parseInt(slot.time.substring(2, 4));
 
-                                                    {slotHour === hoursEnd && slotMinutes === 0 && minutesEnd < 60 && (
-                                                        <View style={[
-                                                            styles.partialOverlay,
-                                                            {
-                                                                left: (minutesEnd / 60) * timeSlotWidth,
-                                                                width: ((60 - minutesEnd) / 60) * timeSlotWidth,
-                                                                backgroundColor: colors.bottomColor,
-                                                                opacity: 0.8
-                                                            }
-                                                        ]} />
-                                                    )}
-                                                </View>
-                                            );
-                                        })}
-                                    </View>
-                                ))}
+                                                    const working = hasWorkingHours
+                                                        ? isWorkingHours(slot.time, staffHoursStart, staffMinutesStart, staffHoursEnd, staffMinutesEnd)
+                                                        : false;
+
+                                                    return (
+                                                        <View
+                                                            key={`${slot.time}-${staff.id}`}
+                                                            style={[
+                                                                styles.scheduleCell,
+                                                                !working && styles.nonWorkingHoursCell
+                                                            ]}
+                                                        >
+                                                            {renderQuarterHourLines()}
+                                                            {renderScheduleItem(staff.id.toString(), slot.time)}
+
+                                                            {hasWorkingHours && slotHour === staffHoursStart && slotMinutes === 0 && staffMinutesStart > 0 && (
+                                                                <View style={[
+                                                                    styles.partialOverlay,
+                                                                    {
+                                                                        width: (staffMinutesStart / 60) * timeSlotWidth,
+                                                                        backgroundColor: colors.bottomColor,
+                                                                        opacity: 0.8
+                                                                    }
+                                                                ]} />
+                                                            )}
+
+                                                            {hasWorkingHours && slotHour === staffHoursEnd && slotMinutes === 0 && staffMinutesEnd < 60 && (
+                                                                <View style={[
+                                                                    styles.partialOverlay,
+                                                                    {
+                                                                        left: (staffMinutesEnd / 60) * timeSlotWidth,
+                                                                        width: ((60 - staffMinutesEnd) / 60) * timeSlotWidth,
+                                                                        backgroundColor: colors.bottomColor,
+                                                                        opacity: 0.8
+                                                                    }
+                                                                ]} />
+                                                            )}
+                                                        </View>
+                                                    );
+                                                })}
+                                            </View>
+                                        </React.Fragment>
+                                    );
+                                })}
                             </View>
                         </View>
                     </ScrollView>
@@ -267,6 +406,17 @@ const $styles = (colors: Colors, timeSlotWidth: number, isTablet: boolean) => St
         borderBottomWidth: 1,
         borderColor: colors.borderTable,
         backgroundColor: colors.backgroundTable,
+        paddingHorizontal: 8,
+    },
+    filterContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    filterLabel: {
+        fontSize: 12,
+        color: colors.text,
+        marginLeft: 8,
     },
     userColumnContent: {
         position: 'relative',
@@ -316,6 +466,12 @@ const $styles = (colors: Colors, timeSlotWidth: number, isTablet: boolean) => St
     },
     userRowsContainer: {
         position: 'relative',
+    },
+    timeLineWrapper: {
+        position: 'absolute',
+        left: 0,
+        right: 0,
+        zIndex: 500,
     },
     userRow: {
         flexDirection: 'row',

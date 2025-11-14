@@ -17,6 +17,7 @@ export interface DateTimePickerProps extends Partial<ModalProps> {
   cancelText?: string;
   allowFutureDates?: boolean;
   allowPastDates?: boolean;
+  autoCloseOnConfirm?: boolean;
 }
 
 const DateTimePicker: React.FC<DateTimePickerProps> = memo(({
@@ -32,6 +33,7 @@ const DateTimePicker: React.FC<DateTimePickerProps> = memo(({
   cancelText = "Hủy",
   allowFutureDates = true,
   allowPastDates = true,
+  autoCloseOnConfirm = true,
   ...rest
 }) => {
   const resolvedMin = useMemo((): Date | undefined => {
@@ -92,8 +94,10 @@ const DateTimePicker: React.FC<DateTimePickerProps> = memo(({
 
   const handleConfirm = useCallback((selectedDate: Date) => {
     onChange(selectedDate);
-    onClose();
-  }, [onChange, onClose]);
+    if (autoCloseOnConfirm) {
+      onClose();
+    }
+  }, [onChange, onClose, autoCloseOnConfirm]);
 
   const handleCancel = useCallback(() => {
     onClose();
