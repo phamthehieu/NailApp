@@ -15,13 +15,14 @@ import CalendarHeader from '../components/CalenderHeader';
 import { CalenderDayComponent, CalenderWeedComponent, CalenderMonthComponent } from './schedule';
 import TabComponent from '@/shared/ui/TabComponent';
 import BookingListComponent from './list/BookingListComponent';
+import { useStaffForm } from '../hooks/useStaffForm';
 
 type TabType = { label: string; value: number }
 
 const BookingManageScreen = ({ navigation }: RootScreenProps<Paths.BookingManage>) => {
     const { t } = useTranslation();
     const { theme: { colors } } = useAppTheme();
-
+    const { getListStaff } = useStaffForm();
     const [viewMode, setViewMode] = useState<'Ngày' | 'Tuần' | 'Tháng'>('Ngày');
     const [anchorDate, setAnchorDate] = useState<Date>(new Date());
     const [activeRange, setActiveRange] = useState<{ start: Date; end: Date } | null>(null);
@@ -172,6 +173,11 @@ const BookingManageScreen = ({ navigation }: RootScreenProps<Paths.BookingManage
         }
         return null;
     };
+
+    useEffect(() => {
+        getListStaff();
+    }, []);
+
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
 
@@ -183,10 +189,6 @@ const BookingManageScreen = ({ navigation }: RootScreenProps<Paths.BookingManage
                 showIconLeft={true}
                 iconLeft={<Store size={24} color={colors.background} />}
                 bgColor={colors.yellow}
-                // enableSearch={true}
-                // searchPlaceholder={t('bookingManage.searchPlaceholder')}
-                // onChangeSearchText={(text) => {console.log(text)}}
-                // onSubmitSearch={(text) => {console.log(text)}}
                 showIconRight={true}
                 iconRight={<Funnel size={24} color={colors.background} />}
                 onPressIconRight={() => setShowAdvanced(true)}

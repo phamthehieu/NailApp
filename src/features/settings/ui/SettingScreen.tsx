@@ -26,6 +26,7 @@ import { RootState, store, useAppDispatch } from '@/app/store';
 import { useSelector } from 'react-redux';
 import { clearAuthState } from '@/features/auth/model/authSlice';
 import { clearAuth } from '@/services/auth/authService';
+import Keychain from 'react-native-keychain';
 
 const SettingScreen = ({navigation}: RootScreenProps<Paths.Settings>) => {
     const { t } = useTranslation();
@@ -76,16 +77,36 @@ const SettingScreen = ({navigation}: RootScreenProps<Paths.Settings>) => {
     const handlePrivacyPolicy = () => {
     };
 
-    const handleLogout = () => {
+    const handleLogout = async () => {
+        const savedUsername = userInfo?.username;
+
         dispatch(clearAuthState());
         clearAuth();
+
+        try {
+            let usernameToSave = savedUsername;
+
+            if (!usernameToSave) {
+                const credentials = await Keychain.getGenericPassword();
+                if (credentials && typeof credentials === 'object' && 'username' in credentials) {
+                    usernameToSave = credentials.username;
+                }
+            }
+
+            await Keychain.resetGenericPassword();
+
+            if (usernameToSave) {
+                await Keychain.setGenericPassword(usernameToSave, '');
+            }
+        } catch (error) {
+            await Keychain.resetGenericPassword();
+        }
+
         navigation.reset({
             index: 0,
             routes: [{ name: Paths.Login }],
         });
     };
-
-    console.log('userInfo', userInfo);
 
     return (
         <SafeAreaView style={styles.container} edges={['top', 'bottom']}>

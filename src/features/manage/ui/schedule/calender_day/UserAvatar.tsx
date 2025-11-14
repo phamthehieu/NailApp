@@ -2,29 +2,25 @@ import { Colors, useAppTheme } from '@/shared/theme';
 import React from 'react';
 import { View, Image, StyleSheet } from 'react-native';
 import { TextFieldLabel } from '@/shared/ui/Text';
-type User = {
-    id: string;
-    name: string;
-    avatar: string;
+import { StaffItem } from '../../../api/BookingApi';
+
+type Props = {
+    listStaff: StaffItem;
 };
 
-type UserAvatarProps = {
-    user: User;
-};
-
-const UserAvatar = ({ user }: UserAvatarProps) => {
+const UserAvatar = ({ listStaff }: Props) => {
     const { theme: { colors } } = useAppTheme();
     const styles = $styles(colors);
     return (
         <View style={styles.container}>
             <View style={styles.avatarContainer}>
                 <Image
-                    source={{ uri: user.avatar }}
+                    source={{ uri: listStaff.avatarUrl ?? 'https://via.placeholder.com/150' }}
                     style={styles.avatar}
-                    accessibilityLabel={`${user.name}'s profile picture`}
+                    accessibilityLabel={`${listStaff.displayName}'s profile picture`}
                 />
             </View>
-            <TextFieldLabel style={styles.name}>{user.name}</TextFieldLabel>
+            <TextFieldLabel style={styles.name}>{listStaff.displayName}</TextFieldLabel>
         </View>
     );
 };

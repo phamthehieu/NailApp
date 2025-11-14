@@ -3,11 +3,13 @@ import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
 
 import authReducer from '@/features/auth/model/authSlice';
 import storeReducer from '@/features/store/model/storeSlice';
+import staffReducer from '@/features/manage/model/staffSlice';
 
 export const store = configureStore({
   reducer: {
     auth: authReducer,
     store: storeReducer,
+    staff: staffReducer,
   },
 });
 

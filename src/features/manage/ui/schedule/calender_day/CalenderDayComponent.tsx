@@ -9,6 +9,8 @@ import { isWorkingHours, getScheduleBlocksForHour } from '../../../api/schedule'
 import { Colors, useAppTheme } from '@/shared/theme';
 import { useIsTablet } from '@/shared/lib/useIsTablet';
 import { TextFieldLabel } from '@/shared/ui/Text';
+import { useSelector } from 'react-redux';
+import { RootState } from '@/app/store';
 
 type Props = {
     selectedDate: Date;
@@ -20,6 +22,7 @@ const CalenderDayComponent = ({ selectedDate: _selectedDate, onPressScheduleItem
     const timeScrollRef = useRef<ScrollView>(null);
     const headerScrollRef = useRef<ScrollView>(null);
     const bodyScrollRef = useRef<ScrollView>(null);
+    const { listStaff } = useSelector((state: RootState) => state.staff);
     const [hoursStart, setHoursStart] = useState(8);
     const [minutesStart, setMinutesStart] = useState(15);
     const [hoursEnd, setHoursEnd] = useState(22);
@@ -114,7 +117,7 @@ const CalenderDayComponent = ({ selectedDate: _selectedDate, onPressScheduleItem
             </>
         );
     };
-
+    console.log("Hieu 120", listStaff);
     return (
         <View style={styles.mainContainer}>
             <View style={styles.fixedUserColumn}>
@@ -129,9 +132,9 @@ const CalenderDayComponent = ({ selectedDate: _selectedDate, onPressScheduleItem
                     pointerEvents="none"
                 >
                     <View style={styles.userColumnContent}>
-                        {users.map((user) => (
-                            <View key={user.id} style={styles.userColumnRow}>
-                                <UserAvatar user={user} />
+                        {listStaff.map((staff) => (
+                            <View key={staff.id} style={styles.userColumnRow}>
+                                <UserAvatar listStaff={staff} />
                             </View>
                         ))}
                     </View>
