@@ -2,7 +2,7 @@ import { Colors, useAppTheme } from '@/shared/theme';
 import React from 'react';
 import { View, Image, StyleSheet } from 'react-native';
 import { TextFieldLabel } from '@/shared/ui/Text';
-import { StaffItem } from '../../../api/BookingApi';
+import { StaffItem } from '../../../api/types';
 
 type Props = {
     listStaff: StaffItem;

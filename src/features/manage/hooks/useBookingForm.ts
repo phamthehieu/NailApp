@@ -1,8 +1,7 @@
 import { useAppDispatch, useAppSelector } from "@/app/store";
-import { useCallback, useMemo, useState } from "react";
-import { startOfDay } from 'date-fns';
-import { getlistBookingManagerApi, getListBookingStatusApi } from "../api/BookingApi";
-import { setListBookingManager, setListBookingStatus, appendListBookingManager, resetPageIndex } from "../model/bookingSlice";
+import { useCallback, useState } from "react";
+import { getDetailBookingItemApi, getlistBookingManagerApi, getListBookingStatusApi } from "../api/BookingApi";
+import { setListBookingManager, setListBookingStatus, appendListBookingManager, resetPageIndex, setDetailBookingItem } from "../model/bookingSlice";
 import { alertService } from "@/services/alertService";
 import { useTranslation } from "react-i18next";
 
@@ -60,6 +59,24 @@ export function useBookingForm() {
     }, [getListBookingManager]);
 
     const resetPagination = useCallback(() => {
+        setDateFrom(null);
+        setDateTo(null);
+        setBookingDate(null);
+        setStatus(undefined);
+        setBookingCode(undefined);
+        setCustomerName(undefined);
+        setPhone(undefined);
+        setSearch(undefined);
+        setSortBy(undefined);
+        setPageSize(3);
+        setSortType(undefined);
+        setBookingCode(undefined);
+        setCustomerName(undefined);
+        setPhone(undefined);
+        setSearch(undefined);
+        setSortBy(undefined);
+        setPageSize(3);
+        setSortType(undefined);
         dispatch(resetPageIndex());
     }, [dispatch]);
 
@@ -73,6 +90,14 @@ export function useBookingForm() {
         }
     }, []);
 
+    const getDetailBookingItem = useCallback(async (bookingCode: string) => {
+        try {
+            const response = await getDetailBookingItemApi(bookingCode);
+            dispatch(setDetailBookingItem(response));
+        } catch (error) {
+            console.error(error);
+        }
+    }, []);
     return {
         getListBookingManager,
         getListBookingStatus,
@@ -102,5 +127,6 @@ export function useBookingForm() {
         loading,
         setLoading,
         loadingMore,
+        getDetailBookingItem
     }
 }

@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { ListBookingHourResponse, ListStaffResponse, StaffItem } from "../api/BookingApi";
+import { ListBookingHourResponse, ListStaffResponse, StaffItem } from "../api/types";
 
 interface StaffState {
     listStaff: StaffItem[];

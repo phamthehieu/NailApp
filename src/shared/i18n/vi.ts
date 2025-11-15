@@ -149,6 +149,11 @@ const vi = {
   bookingInformation: {
     customerInfo: 'Thông tin khách hàng',
     bookingInfo: 'Thông tin đặt lịch',
+    serviceInfo: 'Thông tin dịch vụ',
+    serviceName: 'Tên dịch vụ',
+    price: 'Giá dịch vụ',
+    serviceTime: 'Thời gian thực hiện',
+    minutes: 'phút',
     customerName: 'Tên khách hàng',
     customerNamePlaceholder: 'Nhập tên khách hàng (Nickname)',
     phone: 'Số điện thoại',

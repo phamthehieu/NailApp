@@ -16,7 +16,7 @@ import CheckinBookingModal from "./CheckinBookingModal";
 import BookingPaymentModal from "./BookingPaymentModal";
 import { useBookingForm } from "../../hooks/useBookingForm";
 import { useAppSelector } from "@/app/store";
-import { BookingManagerItem } from "../../api/BookingApi";
+import { BookingManagerItem } from "../../api/types";
 import Loader from "@/shared/ui/Loader";
 import Toast from "react-native-toast-message";
 
@@ -29,7 +29,7 @@ const BookingListComponent = ({ navigation }: BookingListComponentProps) => {
     const isTablet = useIsTablet();
     const styles = $styles(colors, isTablet);
     const { t } = useTranslation();
-    const { getListBookingManager, loadMoreBookings, loading, loadingMore, resetPagination } = useBookingForm();
+    const { getListBookingManager, loadMoreBookings, loading, loadingMore, resetPagination, getDetailBookingItem } = useBookingForm();
     const { listBookingManager, pageIndex, totalPages } = useAppSelector((state) => state.booking);
 
     useEffect(() => {
@@ -66,6 +66,7 @@ const BookingListComponent = ({ navigation }: BookingListComponentProps) => {
     };
 
     const handleView = (item: any) => {
+        getDetailBookingItem(item.id);
         navigation.navigate(Paths.DetailBookingItem, { bookingId: item.id });
     };
 
@@ -190,12 +191,6 @@ const BookingListComponent = ({ navigation }: BookingListComponentProps) => {
                 .finally(() => {
                     isLoadingMoreRef.current = false;
                 });
-        } else {
-            Toast.show({
-                type: 'info',
-                text1: t('bookingList.noMoreBookings'),
-                text2: t('bookingList.noMoreBookingsMessage'),
-            });
         }
     }, [loadingMore, loading, pageIndex, totalPages, loadMoreBookings, listBookingManager.length]);
 

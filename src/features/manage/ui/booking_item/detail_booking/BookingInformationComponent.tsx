@@ -5,6 +5,7 @@ import { Colors, useAppTheme } from "@/shared/theme";
 import { useTranslation } from "react-i18next";
 import { TextFieldLabel } from "@/shared/ui/Text";
 import { scheduleItemsList } from "@/features/manage/data/scheduleItems";
+import { useAppSelector } from "@/app/store";
 
 interface BookingInformationComponentProps {
     bookingId?: number | string;
@@ -14,7 +15,7 @@ const BookingInformationComponent = ({ bookingId }: BookingInformationComponentP
     const { theme: { colors } } = useAppTheme();
     const styles = $styles(colors);
     const { t } = useTranslation();
-
+    const { detailBookingItem } = useAppSelector((state) => state.booking);
     const booking = useMemo(() => {
         if (!bookingId) return null;
         return scheduleItemsList.find(item => item.id === bookingId);
@@ -35,7 +36,7 @@ const BookingInformationComponent = ({ bookingId }: BookingInformationComponentP
         return time;
     };
 
-    if (!booking) {
+    if (!detailBookingItem) {
         return (
             <View style={styles.container}>
                 <TextFieldLabel style={styles.emptyText}>{t('bookingInformation.noData')}</TextFieldLabel>
@@ -58,19 +59,18 @@ const BookingInformationComponent = ({ bookingId }: BookingInformationComponentP
                             <User size={20} color={colors.yellow} />
                             <TextFieldLabel style={styles.infoLabel}>{t('bookingInformation.customerName')}</TextFieldLabel>
                         </View>
-                        <TextFieldLabel style={styles.infoValue}>{booking.user || '-'}</TextFieldLabel>
+                        <TextFieldLabel style={styles.infoValue}>{detailBookingItem.customer.name || '-'}</TextFieldLabel>
                     </View>
                     <View style={styles.infoRow}>
                         <View style={styles.infoLeft}>
                             <Phone size={20} color={colors.yellow} />
                             <TextFieldLabel style={styles.infoLabel}>{t('bookingInformation.phone')}</TextFieldLabel>
                         </View>
-                        <TextFieldLabel style={styles.infoValue}>{booking.phone || '-'}</TextFieldLabel>
+                        <TextFieldLabel style={styles.infoValue}>{detailBookingItem.customer.phoneNumber || '-'}</TextFieldLabel>
                     </View>
                 </View>
             </View>
 
-            {/* Thông tin đặt lịch */}
             <View style={styles.section}>
                 <TextFieldLabel style={styles.sectionTitle}>{t('bookingInformation.bookingInfo')}</TextFieldLabel>
                 <View style={styles.card}>
@@ -79,7 +79,7 @@ const BookingInformationComponent = ({ bookingId }: BookingInformationComponentP
                             <Calendar size={20} color={colors.yellow} />
                             <TextFieldLabel style={styles.infoLabel}>{t('bookingInformation.bookingDate')}</TextFieldLabel>
                         </View>
-                        <TextFieldLabel style={styles.infoValue}>{booking.date ? formatDate(booking.date) : '-'}</TextFieldLabel>
+                        <TextFieldLabel style={styles.infoValue}>{detailBookingItem.bookingDate ? formatDate(detailBookingItem.bookingDate) : '-'}</TextFieldLabel>
                     </View>
                     <View style={styles.infoRow}>
                         <View style={styles.infoLeft}>
@@ -87,29 +87,37 @@ const BookingInformationComponent = ({ bookingId }: BookingInformationComponentP
                             <TextFieldLabel style={styles.infoLabel}>{t('bookingInformation.bookingTime')}</TextFieldLabel>
                         </View>
                         <TextFieldLabel style={styles.infoValue}>
-                            {booking.time ? formatTime(booking.time, booking.endTime) : '-'}
+                            {detailBookingItem.bookingHours ? formatTime(detailBookingItem.bookingHours) : '-'}
                         </TextFieldLabel>
                     </View>
-                    <View style={styles.infoRow}>
-                        <View style={styles.infoLeft}>
-                            <Info size={20} color={colors.yellow} />
-                            <TextFieldLabel style={styles.infoLabel}>{t('bookingInformation.service')}</TextFieldLabel>
-                        </View>
-                        <View style={styles.infoValueRight}>
-                            <TextFieldLabel style={styles.infoValue}>{booking.note || booking.service || '-'}</TextFieldLabel>
-                            {booking.duration && (
-                                <TextFieldLabel style={styles.infoSubValue}>{booking.duration}</TextFieldLabel  >
-                            )}
-                        </View>
-                    </View>
-                    <View style={styles.infoRow}>
-                        <View style={styles.infoLeft}>
-                            <User size={20} color={colors.yellow} />
-                            <TextFieldLabel style={styles.infoLabel}>{t('bookingInformation.staff')}</TextFieldLabel>
-                        </View>
-                        <TextFieldLabel style={styles.infoValue}>{booking.staff || '-'}</TextFieldLabel>
-                    </View>
                 </View>
+            </View>
+
+            <View style={styles.section}>
+                <TextFieldLabel style={styles.sectionTitle}>{t('bookingInformation.serviceInfo')}</TextFieldLabel>
+                {detailBookingItem.services.map((service, index) => (
+                    <View key={service.id} style={[styles.card, {marginBottom: 16}]}>
+                        <>
+                            <View key={index} style={styles.infoRow}>
+                                <TextFieldLabel style={styles.infoLabel}>{t('bookingInformation.serviceName')}</TextFieldLabel>
+                                <TextFieldLabel style={styles.infoValue}>{service.serviceName || '-'}</TextFieldLabel>
+                            </View>
+                            <View style={styles.infoRow}>
+                                <TextFieldLabel style={styles.infoLabel}>{t('bookingInformation.price')}</TextFieldLabel>
+                                <TextFieldLabel style={styles.infoValue}>{service.price || '-'}</TextFieldLabel>
+                            </View>
+                            <View style={styles.infoRow}>
+                                <TextFieldLabel style={styles.infoLabel}>{t('bookingInformation.serviceTime')}</TextFieldLabel>
+                                <TextFieldLabel style={styles.infoValue}>{service.serviceTime || '-'} {t('bookingInformation.minutes')}</TextFieldLabel>
+                            </View>
+                            <View style={styles.infoRow}>
+                                <TextFieldLabel style={styles.infoLabel}>{t('bookingInformation.staff')}</TextFieldLabel>
+                                <TextFieldLabel style={styles.infoValue}>{service.staff?.displayName || '-'}</TextFieldLabel>
+                            </View>
+                        </>
+                    </View>
+                ))}
+
             </View>
         </ScrollView>
     );

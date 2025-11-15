@@ -150,6 +150,11 @@ const en: Translations = {
   bookingInformation: {
     customerInfo: 'Customer information',
     bookingInfo: 'Booking information',
+    serviceInfo: 'Service information',
+    serviceName: 'Service name',
+    price: 'Service price',
+    serviceTime: 'Service time',
+    minutes: 'minutes',
     customerName: 'Customer name',
     customerNamePlaceholder: 'Enter customer name (Nickname)',
     phone: 'Phone number',

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { RootScreenProps } from '@/app/navigation/types';
 import { Paths } from '@/app/navigation/paths';
@@ -8,12 +8,12 @@ import { useTranslation } from 'react-i18next';
 import { Animated, StyleSheet, View } from 'react-native';
 import StatusBarComponent from '@/shared/ui/StatusBar';
 import { ArrowLeft } from 'lucide-react-native';
-import { scheduleItemsList } from '../../../data/scheduleItems';
 import TabComponent from '@/shared/ui/TabComponent';
 import BookingInformationComponent from './BookingInformationComponent';
 import HistoryBookingComponent from './HistoryBookingComponent';
 import { Button } from '@/shared/ui/Button';
 import { alertService } from '@/services/alertService';
+import { useAppSelector } from '@/app/store';
 
 type TabType = { label: string; value: number }
 
@@ -22,17 +22,13 @@ const DetailBookingItem = ({ navigation, route }: RootScreenProps<Paths.DetailBo
     const { theme: { colors } } = useAppTheme();
     const styles = $styles(colors);
     const { t } = useTranslation();
-
+    const { detailBookingItem } = useAppSelector((state) => state.booking);
     const tab1Opacity = useRef(new Animated.Value(1)).current;
     const tab1TranslateX = useRef(new Animated.Value(0)).current;
     const tab2Opacity = useRef(new Animated.Value(0)).current;
     const tab2TranslateX = useRef(new Animated.Value(50)).current;
 
     const [activeTab, setActiveTab] = useState<TabType>({ label: t('calenderDashboard.calenderTab.schedule'), value: 1 });
-
-    const booking = useMemo(() => {
-        return scheduleItemsList.find(item => item.id === bookingId);
-    }, [bookingId]);
 
     const getStatusColor = (status: string) => {
         switch (status) {
@@ -53,7 +49,7 @@ const DetailBookingItem = ({ navigation, route }: RootScreenProps<Paths.DetailBo
         }
     };
 
-    const statusColor = booking ? getStatusColor(booking.status) : colors.yellow;
+    const statusColor = detailBookingItem ? getStatusColor(detailBookingItem.statusObj?.name) : colors.yellow;
 
     const handleCancelBooking = () => {
         alertService.showAlert({
@@ -73,7 +69,6 @@ const DetailBookingItem = ({ navigation, route }: RootScreenProps<Paths.DetailBo
 
     const handleEditBooking = () => {
         console.log('Edit booking:', bookingId);
-        // TODO: Implement edit booking logic
     };
 
     useEffect(() => {
@@ -126,7 +121,6 @@ const DetailBookingItem = ({ navigation, route }: RootScreenProps<Paths.DetailBo
             ]).start();
         }
     }, [activeTab.value]);
-
     return (
         <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
 
@@ -138,7 +132,7 @@ const DetailBookingItem = ({ navigation, route }: RootScreenProps<Paths.DetailBo
                 iconLeft={<ArrowLeft size={24} color={colors.background} />}
                 onBack={() => navigation.goBack()}
                 bgColor={colors.yellow}
-                status={booking?.status}
+                status={detailBookingItem?.statusObj?.name}
                 statusColor={statusColor}
                 statusBgColor={colors.yellow}
             />
@@ -223,7 +217,6 @@ const $styles = (colors: Colors) => StyleSheet.create({
         flex: 1,
         paddingHorizontal: 16,
         paddingVertical: 12,
-        paddingBottom: 80, // Space for bottom buttons
     },
     tabsWrapper: {
         flex: 1,

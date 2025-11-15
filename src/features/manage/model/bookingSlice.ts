@@ -1,7 +1,7 @@
 
 
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { BookingManagerItem, BookingStatusItem, ListBookingManagerResponse, ListBookingStatusResponse } from "../api/BookingApi";
+import { BookingManagerItem, DetailBookingItemResponse, ListBookingManagerResponse, ListBookingStatusResponse } from "../api/types";
 
 interface BookingListState {
     listBookingManager: BookingManagerItem[];
@@ -12,6 +12,7 @@ interface BookingListState {
     loading: boolean;
     error: string | null;
     listBookingStatus: ListBookingStatusResponse | null;
+    detailBookingItem: DetailBookingItemResponse | null;
 }
 
 const initialState: BookingListState = {
@@ -23,6 +24,7 @@ const initialState: BookingListState = {
     loading: false,
     error: null,
     listBookingStatus: null,
+    detailBookingItem: null,
 };
 
 const bookingSlice = createSlice({
@@ -76,6 +78,9 @@ const bookingSlice = createSlice({
         resetPageIndex(state) {
             state.pageIndex = 0;
         },
+        setDetailBookingItem(state, action: PayloadAction<DetailBookingItemResponse>) {
+            state.detailBookingItem = action.payload;
+        },
     },
 });
 
@@ -87,6 +92,7 @@ export const {
     setListBookingStatus,
     appendListBookingManager,
     resetPageIndex,
+    setDetailBookingItem,
 } = bookingSlice.actions;
 
 export default bookingSlice.reducer;

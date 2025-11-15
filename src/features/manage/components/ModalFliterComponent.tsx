@@ -6,14 +6,17 @@ import { useTranslation } from "react-i18next";
 import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
 import { useRef, useState } from "react";
 import { useBookingForm } from "../hooks/useBookingForm";
-import { X } from "lucide-react-native";
+import { ChevronDown, X } from "lucide-react-native";
 import { format } from "date-fns";
+import { useAppSelector } from "@/app/store";
+import { Dropdown } from "react-native-element-dropdown";
 
 
 export default function ModalFliterComponent({ showAdvanced, setShowAdvanced, form, setForm }: { showAdvanced: boolean, setShowAdvanced: (show: boolean) => void, form: any, setForm: (form: any) => void }) {
     const { theme: { colors } } = useAppTheme();
     const styles = $styles(colors);
     const { t } = useTranslation();
+    const { listBookingStatus } = useAppSelector((state) => state.booking);
     const { getListBookingManager, resetPagination, dateFrom, setDateFrom, dateTo, setDateTo, bookingDate, setBookingDate, bookingCode, setBookingCode, customerName, setCustomerName, phone, setPhone, search, setSearch, sortBy, setSortBy, pageSize, setPageSize, sortType, status, setStatus } = useBookingForm();
     const [activePicker, setActivePicker] = useState<'range-from' | 'range-to' | null>(null);
     const [activeBookingDatePicker, setActiveBookingDatePicker] = useState<boolean>(false);
@@ -91,6 +94,20 @@ export default function ModalFliterComponent({ showAdvanced, setShowAdvanced, fo
     const handleCloseBookingDatePicker = () => {
         setActiveBookingDatePicker(false);
     };
+    const statusOptions = Array.isArray(listBookingStatus) 
+        ? listBookingStatus.map((item) => ({ label: item.name, value: item.id }))
+        : listBookingStatus?.items?.map((item) => ({ label: item.name, value: item.id })) ?? [];
+
+    const renderItem = (item: any) => {
+        return (
+            <View style={styles.dropdownItemContainer}>
+                <TextFieldLabel allowFontScaling={false} style={styles.dropdownSelectedText}>
+                    {item.label}
+                </TextFieldLabel>
+            </View>
+        );
+    };
+console.log("statusOptions", listBookingStatus);
     return (
         <Modal
             visible={showAdvanced}
@@ -200,11 +217,31 @@ export default function ModalFliterComponent({ showAdvanced, setShowAdvanced, fo
                                 />
                             </View>
 
-                            <View style={styles.fieldBlock}>
-                                <TextFieldLabel style={styles.fieldLabel}>{t('bookingManage.status')}</TextFieldLabel>
-                                <TouchableOpacity style={[styles.inputLike, { borderColor: '#333333' }]}>
-                                    <TextFieldLabel style={styles.inputLikeText}>{status || t('bookingManage.pickStatus')}</TextFieldLabel>
-                                </TouchableOpacity>
+                            <View style={styles.colSmall}>
+                                <View style={styles.labelRow}>
+                                    <TextFieldLabel text={t('bookingManage.status')} style={styles.labelText} />
+                                </View>
+                                <Dropdown
+                                    data={statusOptions}
+                                    labelField="label"
+                                    valueField="value"
+                                    placeholder={t('bookingManage.pickStatus')}
+                                    value={status}
+                                    onChange={({ value }) => setStatus(value)}
+                                    style={styles.dropdown}
+                                    containerStyle={styles.dropdownContainer}
+                                    itemContainerStyle={styles.dropdownItem}
+                                    selectedTextStyle={styles.dropdownSelectedText}
+                                    showsVerticalScrollIndicator={false}
+                                    itemTextStyle={{ color: colors.text }}
+                                    placeholderStyle={styles.dropdownSelectedText}
+                                    renderRightIcon={() => <ChevronDown size={16} color={colors.placeholderTextColor} />}
+                                    maxHeight={250}
+                                    activeColor={colors.backgroundDisabled}
+                                    selectedTextProps={{ allowFontScaling: false }}
+                                    renderItem={renderItem}
+                                    dropdownPosition="top"
+                                />
                             </View>
                         </ScrollView>
                     </KeyboardAvoidingView>
@@ -364,6 +401,48 @@ const $styles = (colors: Colors) => {
             paddingHorizontal: 12,
             justifyContent: 'center',
             alignItems: 'center',
+        },
+        colSmall: {
+            width: "100%",
+            flexGrow: 0,
+            marginBottom: 12,
+            marginTop: 12,
+        },
+        labelRow: {
+            flexDirection: "row",
+            alignItems: "center",
+            marginBottom: 6,
+        },
+        labelText: {
+            fontSize: 14,
+            fontWeight: "500",
+        },
+        dropdown: {
+            height: 48,
+            borderWidth: 1,
+            borderColor: colors.border,
+            borderRadius: 12,
+            paddingHorizontal: 12,
+            backgroundColor: colors.card,
+        },
+        dropdownContainer: {
+            borderRadius: 12,
+            borderColor: colors.border,
+            backgroundColor: colors.card,
+        },
+        dropdownItem: {
+            borderBottomWidth: StyleSheet.hairlineWidth,
+            borderBottomColor: colors.border,
+            paddingVertical: 12,
+        },
+        dropdownSelectedText: {
+            fontSize: 16,
+            color: colors.text,
+        },
+        dropdownItemContainer: {
+            paddingVertical: 8,
+            paddingHorizontal: 12,
+            color: colors.text,
         },
     });
 };
