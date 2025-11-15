@@ -124,6 +124,12 @@ const vi = {
   bookingList: {
     noBookingFound: 'Không tìm thấy đặt lịch',
     loading: 'Đang tải dữ liệu...',
+    loadingMore: 'Đang tải thêm...',
+    errorTitle: 'Lỗi',
+    errorMessage: 'Đã xảy ra lỗi. Vui lòng thử lại.',
+    noMoreBookings: 'Không có thêm đặt lịch',
+    noMoreBookingsMessage: 'Đã đến cuối danh sách đặt lịch.',
+    
   },
   detailBookingItem: {
     title: 'Thông tin đặt lịch',

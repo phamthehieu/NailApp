@@ -12,6 +12,7 @@ import { loadDateFnsLocale } from '@shared/lib/formatDate';
 import * as storage from '@store/index';
 import { AlertProvider } from './providers/AlertProvider';
 import { store } from '@/app/store';
+import { ToastProvider } from '@shared/ui/toast/ToastProvider';
 
 export const NAVIGATION_PERSISTENCE_KEY = 'NAVIGATION_STATE';
 
@@ -45,6 +46,7 @@ export function App() {
                 onStateChange={onNavigationStateChange}
               />
               <NetworkStatusBanner />
+              <ToastProvider />
             </AlertProvider>
           </ThemeProvider>
       </SafeAreaProvider>

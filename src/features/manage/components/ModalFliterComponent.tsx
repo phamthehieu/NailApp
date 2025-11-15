@@ -11,10 +11,10 @@ import { format } from "date-fns";
 
 
 export default function ModalFliterComponent({ showAdvanced, setShowAdvanced, form, setForm }: { showAdvanced: boolean, setShowAdvanced: (show: boolean) => void, form: any, setForm: (form: any) => void }) {
-    const {theme: { colors }} = useAppTheme();
+    const { theme: { colors } } = useAppTheme();
     const styles = $styles(colors);
     const { t } = useTranslation();
-    const { getListBookingManager, dateFrom, setDateFrom, dateTo, setDateTo, bookingDate, setBookingDate, bookingCode, setBookingCode, customerName, setCustomerName, phone, setPhone, search, setSearch, sortBy, setSortBy, pageIndex, setPageIndex, pageSize, setPageSize, sortType, status, setStatus } = useBookingForm();
+    const { getListBookingManager, resetPagination, dateFrom, setDateFrom, dateTo, setDateTo, bookingDate, setBookingDate, bookingCode, setBookingCode, customerName, setCustomerName, phone, setPhone, search, setSearch, sortBy, setSortBy, pageSize, setPageSize, sortType, status, setStatus } = useBookingForm();
     const [activePicker, setActivePicker] = useState<'range-from' | 'range-to' | null>(null);
     const [activeBookingDatePicker, setActiveBookingDatePicker] = useState<boolean>(false);
     const [tempRange, setTempRange] = useState<{ from: Date; to: Date } | null>(null);
@@ -73,6 +73,7 @@ export default function ModalFliterComponent({ showAdvanced, setShowAdvanced, fo
     };
 
     const handleFilter = () => {
+        resetPagination();
         getListBookingManager();
     };
 
@@ -92,154 +93,172 @@ export default function ModalFliterComponent({ showAdvanced, setShowAdvanced, fo
     };
     return (
         <Modal
-        visible={showAdvanced}
-        animationType="fade"
-        transparent
-        onRequestClose={() => setShowAdvanced(false)}
-    >
-        <View style={styles.modalBackdrop}>
-            <View style={styles.modalCard}>
-                <TextFieldLabel style={styles.modalTitle}>{t('bookingManage.advancedTitle', { defaultValue: 'Tìm kiếm nâng cao' })}</TextFieldLabel>
-                <TextFieldLabel style={styles.modalSubtitle}>{t('bookingManage.advancedSubtitle', { defaultValue: 'Tìm kiếm theo nhiều tiêu chí' })}</TextFieldLabel>
-                <KeyboardAvoidingView
-                    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                    keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 10}
-                    style={{ flex: 1 }}
-                >
-                <ScrollView
-                    keyboardShouldPersistTaps="handled"
-                    showsVerticalScrollIndicator={false}
-                    style={{ flex: 1 }}
-                    contentContainerStyle={{ paddingBottom: 16 }}
-                >
-                    <View style={styles.fieldBlock}>
-                        <TextFieldLabel style={styles.fieldLabel}>{t('bookingManage.dateRange')}</TextFieldLabel>
-                        <TouchableOpacity style={[styles.inputLike, { borderColor: colors.border }]} onPress={handleOpenRangePicker}>
-                            <TextFieldLabel style={styles.inputLikeText}>{`${dateFrom ? format(dateFrom, 'dd/MM/yyyy HH:mm') : t('bookingManage.pickDate')} - ${dateTo ? format(dateTo, 'dd/MM/yyyy HH:mm') : t('bookingManage.pickDate')}`}</TextFieldLabel>
-                        </TouchableOpacity>
-                    </View>
-
-                    <View style={styles.fieldBlock}>
-                        <TextFieldLabel style={styles.fieldLabel}>{t('bookingManage.dateRange')}</TextFieldLabel>
-                            <TouchableOpacity style={[styles.inputLike, { borderColor: colors.border }]} onPress={handleOpenBookingDatePicker}>
-                                <TextFieldLabel style={styles.inputLikeText}>{bookingDate ? format(bookingDate, 'dd/MM/yyyy') : t('bookingManage.pickDate')}</TextFieldLabel>
-                        </TouchableOpacity>
-                    </View>
-
-                    <View style={styles.fieldBlock}>
-                        <TextFieldLabel style={styles.fieldLabel}>{t('bookingManage.bookingCode')}</TextFieldLabel>
-                        <TextField
-                            value={bookingCode}
-                            onChangeText={(v: string) => setBookingCode(v)}
-                            placeholder={t('bookingManage.enterCode')}
-                            placeholderTextColor={'#888888'}
-                            style={[styles.input]}
-                            RightAccessory={() => (
-                                bookingCode ? (
-                                   <TouchableOpacity onPress={() => setBookingCode('')} style={styles.searchIconButton}>
-                                    <X size={20} color={colors.red} />
-                                </TouchableOpacity>
-                                ) : null
-                            )}
-                        />
-                    </View>
-
-                    <View style={styles.fieldBlock}>
-                        <TextFieldLabel style={styles.fieldLabel}>{t('bookingManage.customerName')}</TextFieldLabel>
-                        <TextField
-                            value={customerName}
-                            onChangeText={(v: string) => setCustomerName(v)}
-                            placeholder={t('bookingManage.enterCustomer')}
-                            placeholderTextColor={'#888888'}
-                            style={[styles.input]}
-                            RightAccessory={() => (
-                                customerName ? (
-                                   <TouchableOpacity onPress={() => setBookingCode('')} style={styles.searchIconButton}>
-                                    <X size={20} color={colors.red} />
-                                </TouchableOpacity>
-                                ) : null
-                            )}
-                        />
-                    </View>
-
-                    <View style={styles.fieldBlock}>
-                        <TextFieldLabel style={styles.fieldLabel}>{t('bookingManage.phone')}</TextFieldLabel>
-                        <TextField
-                            value={phone}
-                            onChangeText={(v: string) => setPhone(v)}
-                            placeholder={t('bookingManage.enterPhone')}
-                            placeholderTextColor={'#888888'}
-                            keyboardType="phone-pad"
-                            style={[styles.input]}
-                            RightAccessory={() => (
-                                phone ? (
-                                   <TouchableOpacity onPress={() => setBookingCode('')} style={styles.searchIconButton}>
-                                    <X size={20} color={colors.red} />
-                                </TouchableOpacity>
-                                ) : null
-                            )}
-                        />
-                    </View>
-
-                    <View style={styles.fieldBlock}>
-                        <TextFieldLabel style={styles.fieldLabel}>{t('bookingManage.status')}</TextFieldLabel>
-                        <TouchableOpacity style={[styles.inputLike, { borderColor: '#333333' }]}>
-                            <TextFieldLabel style={styles.inputLikeText}>{status || t('bookingManage.pickStatus')}</TextFieldLabel>
-                        </TouchableOpacity>
-                    </View>
-                </ScrollView>
-                </KeyboardAvoidingView>
-                <View style={styles.modalActions}>
-                    <TouchableOpacity style={[styles.button, styles.buttonGhost]} onPress={() => setShowAdvanced(false)}>
-                        <TextFieldLabel style={styles.buttonGhostText}>{t('bookingManage.close')}</TextFieldLabel>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                        style={[styles.button, styles.buttonPrimary, { backgroundColor: colors.yellow }]}
-                        onPress={() => {
-                            setShowAdvanced(false);
-                            handleFilter();
-                        }}
+            visible={showAdvanced}
+            animationType="fade"
+            transparent
+            onRequestClose={() => setShowAdvanced(false)}
+        >
+            <View style={styles.modalBackdrop}>
+                <View style={styles.modalCard}>
+                    <TextFieldLabel style={styles.modalTitle}>{t('bookingManage.advancedTitle', { defaultValue: 'Tìm kiếm nâng cao' })}</TextFieldLabel>
+                    <TextFieldLabel style={styles.modalSubtitle}>{t('bookingManage.advancedSubtitle', { defaultValue: 'Tìm kiếm theo nhiều tiêu chí' })}</TextFieldLabel>
+                    <KeyboardAvoidingView
+                        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 10}
+                        style={{ flex: 1 }}
                     >
-                        <TextFieldLabel style={styles.buttonPrimaryText}>{t('bookingManage.confirm')}</TextFieldLabel>
-                    </TouchableOpacity>
+                        <ScrollView
+                            keyboardShouldPersistTaps="handled"
+                            showsVerticalScrollIndicator={false}
+                            style={{ flex: 1 }}
+                            contentContainerStyle={{ paddingBottom: 16 }}
+                        >
+                            <View style={styles.fieldBlock}>
+                                <TextFieldLabel style={styles.fieldLabel}>{t('bookingManage.dateRange')}</TextFieldLabel>
+                                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                    <TouchableOpacity style={[styles.inputLike, { borderColor: colors.border, flex: 1 }]} onPress={handleOpenRangePicker}>
+                                        <TextFieldLabel style={styles.inputLikeText}>{`${dateFrom ? format(dateFrom, 'dd/MM/yyyy HH:mm') : t('bookingManage.pickDate')} - ${dateTo ? format(dateTo, 'dd/MM/yyyy HH:mm') : t('bookingManage.pickDate')}`}</TextFieldLabel>
+                                    </TouchableOpacity>
+                                    {dateFrom && dateTo && (
+                                        <TouchableOpacity onPress={() => {
+                                            setDateFrom(null);
+                                            setDateTo(null);
+                                            resetPagination();
+                                        }} style={styles.searchIconButton}>
+                                            <X size={20} color={colors.red} />
+                                        </TouchableOpacity>
+                                    )}
+                                </View>
+                            </View>
+
+                            <View style={styles.fieldBlock}>
+                                <TextFieldLabel style={styles.fieldLabel}>{t('bookingManage.dateRange')}</TextFieldLabel>
+                                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                    <TouchableOpacity style={[styles.inputLike, { borderColor: colors.border, flex: 1 }]} onPress={handleOpenBookingDatePicker}>
+                                        <TextFieldLabel style={styles.inputLikeText}>{bookingDate ? format(bookingDate, 'dd/MM/yyyy') : t('bookingManage.pickDate')}</TextFieldLabel>
+                                    </TouchableOpacity>
+                                    {bookingDate && (
+                                        <TouchableOpacity onPress={() => setBookingDate(null)} style={styles.searchIconButton}>
+                                            <X size={20} color={colors.red} />
+                                        </TouchableOpacity>
+                                    )}
+                                </View>
+                            </View>
+
+                            <View style={styles.fieldBlock}>
+                                <TextFieldLabel style={styles.fieldLabel}>{t('bookingManage.bookingCode')}</TextFieldLabel>
+                                <TextField
+                                    value={bookingCode}
+                                    onChangeText={(v: string) => setBookingCode(v)}
+                                    placeholder={t('bookingManage.enterCode')}
+                                    placeholderTextColor={'#888888'}
+                                    style={[styles.input]}
+                                    RightAccessory={() => (
+                                        bookingCode ? (
+                                            <TouchableOpacity onPress={() => setBookingCode('')} style={styles.searchIconButton}>
+                                                <X size={20} color={colors.red} />
+                                            </TouchableOpacity>
+                                        ) : null
+                                    )}
+                                />
+                            </View>
+
+                            <View style={styles.fieldBlock}>
+                                <TextFieldLabel style={styles.fieldLabel}>{t('bookingManage.customerName')}</TextFieldLabel>
+                                <TextField
+                                    value={customerName}
+                                    onChangeText={(v: string) => setCustomerName(v)}
+                                    placeholder={t('bookingManage.enterCustomer')}
+                                    placeholderTextColor={'#888888'}
+                                    style={[styles.input]}
+                                    RightAccessory={() => (
+                                        customerName ? (
+                                            <TouchableOpacity onPress={() => setCustomerName('')} style={styles.searchIconButton}>
+                                                <X size={20} color={colors.red} />
+                                            </TouchableOpacity>
+                                        ) : null
+                                    )}
+                                />
+                            </View>
+
+                            <View style={styles.fieldBlock}>
+                                <TextFieldLabel style={styles.fieldLabel}>{t('bookingManage.phone')}</TextFieldLabel>
+                                <TextField
+                                    value={phone}
+                                    onChangeText={(v: string) => setPhone(v)}
+                                    placeholder={t('bookingManage.enterPhone')}
+                                    placeholderTextColor={'#888888'}
+                                    keyboardType="phone-pad"
+                                    style={[styles.input]}
+                                    RightAccessory={() => (
+                                        phone ? (
+                                            <TouchableOpacity onPress={() => setPhone('')} style={styles.searchIconButton}>
+                                                <X size={20} color={colors.red} />
+                                            </TouchableOpacity>
+                                        ) : null
+                                    )}
+                                />
+                            </View>
+
+                            <View style={styles.fieldBlock}>
+                                <TextFieldLabel style={styles.fieldLabel}>{t('bookingManage.status')}</TextFieldLabel>
+                                <TouchableOpacity style={[styles.inputLike, { borderColor: '#333333' }]}>
+                                    <TextFieldLabel style={styles.inputLikeText}>{status || t('bookingManage.pickStatus')}</TextFieldLabel>
+                                </TouchableOpacity>
+                            </View>
+                        </ScrollView>
+                    </KeyboardAvoidingView>
+                    <View style={styles.modalActions}>
+                        <TouchableOpacity style={[styles.button, styles.buttonGhost]} onPress={() => setShowAdvanced(false)}>
+                            <TextFieldLabel style={styles.buttonGhostText}>{t('bookingManage.close')}</TextFieldLabel>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            style={[styles.button, styles.buttonPrimary, { backgroundColor: colors.yellow }]}
+                            onPress={() => {
+                                setShowAdvanced(false);
+                                handleFilter();
+                            }}
+                        >
+                            <TextFieldLabel style={styles.buttonPrimaryText}>{t('bookingManage.confirm')}</TextFieldLabel>
+                        </TouchableOpacity>
+                    </View>
                 </View>
             </View>
-        </View>
-        <DateTimePicker
-            mode="datetime"
-            title={t('bookingManage.dateRangeStart')}
-            value={tempRange?.from ?? dateFrom ?? new Date()}
-            visible={activePicker === 'range-from'}
-            onChange={handleConfirmDate}
-            onClose={handleClosePicker}
-            allowFutureDates
-            allowPastDates
-            autoCloseOnConfirm={false}
-        />
-        <DateTimePicker
-            mode="datetime"
-            title={t('bookingManage.dateRangeEnd')}
-            value={tempRange?.to ?? dateTo ?? new Date()}
-            visible={activePicker === 'range-to'}
-            minimumDate={tempRange?.from ?? dateFrom ?? new Date()}
-            onChange={handleConfirmDate}
-            onClose={handleClosePicker}
-            allowFutureDates
-            allowPastDates
-            autoCloseOnConfirm={false}
-        />
-        <DateTimePicker
-            mode="date"
-            title={t('bookingManage.bookingDate')}
-            value={bookingDate ?? new Date()}
-            visible={activeBookingDatePicker}
-            onChange={handleConfirmBookingDate}
-            onClose={handleCloseBookingDatePicker}
-            allowFutureDates={false}
-            allowPastDates
-            autoCloseOnConfirm={false}
-        />
-    </Modal>
+            <DateTimePicker
+                mode="datetime"
+                title={t('bookingManage.dateRangeStart')}
+                value={tempRange?.from ?? dateFrom ?? new Date()}
+                visible={activePicker === 'range-from'}
+                onChange={handleConfirmDate}
+                onClose={handleClosePicker}
+                allowFutureDates
+                allowPastDates
+                autoCloseOnConfirm={false}
+            />
+            <DateTimePicker
+                mode="datetime"
+                title={t('bookingManage.dateRangeEnd')}
+                value={tempRange?.to ?? dateTo ?? new Date()}
+                visible={activePicker === 'range-to'}
+                minimumDate={tempRange?.from ?? dateFrom ?? new Date()}
+                onChange={handleConfirmDate}
+                onClose={handleClosePicker}
+                allowFutureDates
+                allowPastDates
+                autoCloseOnConfirm={false}
+            />
+            <DateTimePicker
+                mode="date"
+                title={t('bookingManage.bookingDate')}
+                value={bookingDate ?? new Date()}
+                visible={activeBookingDatePicker}
+                onChange={handleConfirmBookingDate}
+                onClose={handleCloseBookingDatePicker}
+                allowFutureDates
+                allowPastDates
+                autoCloseOnConfirm={false}
+            />
+        </Modal>
     )
 }
 

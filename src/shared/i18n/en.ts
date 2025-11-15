@@ -126,6 +126,11 @@ const en: Translations = {
     bookingList: {
         noBookingFound: 'No booking found',
         loading: 'Loading data...',
+        loadingMore: 'Loading more...',
+        errorTitle: 'Error',
+        errorMessage: 'An error occurred. Please try again.',
+        noMoreBookings: 'No more bookings',
+        noMoreBookingsMessage: 'You have reached the end of the booking list.',
     },
   detailBookingItem: {
     title: 'Booking details',

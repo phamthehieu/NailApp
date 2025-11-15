@@ -59,6 +59,23 @@ const bookingSlice = createSlice({
             state.loading = false;
             state.error = null;
         },
+        appendListBookingManager(state, action: PayloadAction<ListBookingManagerResponse>) {
+            state.listBookingManager = [...state.listBookingManager, ...action.payload.items];
+            state.pageIndex = action.payload.pageIndex;
+            state.totalItems = action.payload.totalItems;
+            state.pageSize = action.payload.pageSize;
+            if (action.payload.totalPages > state.totalPages) {
+                state.totalPages = action.payload.totalPages;
+            }
+            if (state.totalPages === 0 && action.payload.totalPages > 0) {
+                state.totalPages = action.payload.totalPages;
+            }
+            state.loading = false;
+            state.error = null;
+        },
+        resetPageIndex(state) {
+            state.pageIndex = 0;
+        },
     },
 });
 
@@ -68,6 +85,8 @@ export const {
     setError,
     clearBookingListState,
     setListBookingStatus,
+    appendListBookingManager,
+    resetPageIndex,
 } = bookingSlice.actions;
 
 export default bookingSlice.reducer;

@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { View, StyleSheet, FlatList, TouchableOpacity } from "react-native";
+import React, { useEffect, useState, useCallback, useRef } from "react";
+import { View, StyleSheet, FlatList, TouchableOpacity, RefreshControl } from "react-native";
 import { Eye, Pencil, Trash2, User, Info, Calendar } from "lucide-react-native";
 import { TextFieldLabel } from "@/shared/ui/Text";
 import { useAppTheme } from "@/shared/theme";
@@ -18,6 +18,7 @@ import { useBookingForm } from "../../hooks/useBookingForm";
 import { useAppSelector } from "@/app/store";
 import { BookingManagerItem } from "../../api/BookingApi";
 import Loader from "@/shared/ui/Loader";
+import Toast from "react-native-toast-message";
 
 interface BookingListComponentProps {
     navigation: RootScreenProps<Paths.BookingManage>['navigation'];
@@ -28,16 +29,18 @@ const BookingListComponent = ({ navigation }: BookingListComponentProps) => {
     const isTablet = useIsTablet();
     const styles = $styles(colors, isTablet);
     const { t } = useTranslation();
-    const { getListBookingManager, loading } = useBookingForm();
-    const { listBookingManager, listBookingStatus } = useAppSelector((state) => state.booking);
+    const { getListBookingManager, loadMoreBookings, loading, loadingMore, resetPagination } = useBookingForm();
+    const { listBookingManager, pageIndex, totalPages } = useAppSelector((state) => state.booking);
 
     useEffect(() => {
         getListBookingManager();
     }, []);
 
     const [isBookingConfirmationModalVisible, setIsBookingConfirmationModalVisible] = useState(false);
+    const [refreshing, setRefreshing] = useState(false);
     const [isCheckinBookingModalVisible, setIsCheckinBookingModalVisible] = useState(false);
     const [isBookingPaymentModalVisible, setIsBookingPaymentModalVisible] = useState(false);
+    const isLoadingMoreRef = useRef(false);
 
     const formatDate = (dateString: string) => {
         const date = new Date(dateString);
@@ -166,7 +169,50 @@ const BookingListComponent = ({ navigation }: BookingListComponentProps) => {
         );
     };
 
-    console.log('listBookingStatus', listBookingStatus);
+    const handleLoadMore = useCallback(() => {
+        if (isLoadingMoreRef.current || loadingMore || loading) {
+            return;
+        }
+
+        const canLoadMore = totalPages > 0 && pageIndex < totalPages;
+
+        if (canLoadMore) {
+            isLoadingMoreRef.current = true;
+            loadMoreBookings()
+                .catch((error) => {
+                    alertService.showAlert({
+                        title: t('bookingList.errorTitle'),
+                        message: t('bookingList.errorMessage'),
+                        typeAlert: 'Error',
+                        onConfirm: () => { },
+                    });
+                })
+                .finally(() => {
+                    isLoadingMoreRef.current = false;
+                });
+        } else {
+            Toast.show({
+                type: 'info',
+                text1: t('bookingList.noMoreBookings'),
+                text2: t('bookingList.noMoreBookingsMessage'),
+            });
+        }
+    }, [loadingMore, loading, pageIndex, totalPages, loadMoreBookings, listBookingManager.length]);
+
+    const hasMoreData = totalPages > 0 && pageIndex < totalPages;
+
+    const onRefresh = useCallback(async () => {
+        setRefreshing(true);
+        try {
+            resetPagination();
+            await getListBookingManager();
+        } catch (error) {
+            console.error('Error refreshing:', error);
+        } finally {
+            setRefreshing(false);
+        }
+    }, [getListBookingManager, resetPagination]);
+
     return (
         <>
             <FlatList
@@ -177,6 +223,17 @@ const BookingListComponent = ({ navigation }: BookingListComponentProps) => {
                 contentContainerStyle={styles.listContainer}
                 showsVerticalScrollIndicator={false}
                 columnWrapperStyle={isTablet ? styles.columnWrapper : undefined}
+                onEndReached={handleLoadMore}
+                onEndReachedThreshold={0.1}
+                removeClippedSubviews={false}
+                refreshControl={
+                    <RefreshControl
+                        refreshing={refreshing}
+                        onRefresh={onRefresh}
+                        colors={[colors.yellow]}
+                        tintColor={colors.yellow}
+                    />
+                }
                 ListEmptyComponent={
 
                     <View style={styles.emptyContainer}>
@@ -186,6 +243,13 @@ const BookingListComponent = ({ navigation }: BookingListComponentProps) => {
                         <TextFieldLabel style={styles.emptyText}>{t('bookingList.noBookingFound')}</TextFieldLabel>
 
                     </View>
+                }
+                ListFooterComponent={
+                    loadingMore && hasMoreData ? (
+                        <View style={styles.footerLoader}>
+                            <TextFieldLabel style={styles.footerText}>{t('bookingList.loadingMore')}</TextFieldLabel>
+                        </View>
+                    ) : null
                 }
             />
             <BookingConfirmationModal
@@ -330,6 +394,16 @@ const $styles = (colors: Colors, isTablet: boolean) =>
             width: 100,
             height: 100,
             marginBottom: 16,
+        },
+        footerLoader: {
+            paddingVertical: 16,
+            alignItems: 'center',
+            justifyContent: 'center',
+        },
+        footerText: {
+            fontSize: 14,
+            color: colors.text,
+            opacity: 0.6,
         },
     });
 

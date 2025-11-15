@@ -43,6 +43,7 @@ const DetailBookingItem = ({ navigation, route }: RootScreenProps<Paths.DetailBo
             case "Đang thực hiện":
                 return colors.purple;
             case "Đã hoàn thành":
+                return colors.green;
             case "Hoàn tất":
                 return colors.green;
             case "Đã hủy":

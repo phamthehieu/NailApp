@@ -192,10 +192,11 @@ export const getlistBookingManagerApi = async (
     if (sortBy) {
         params.append('SortBy', sortBy);
     }
-    if (pageIndex !== undefined && pageIndex !== null) {
-        params.append('PageIndex', pageIndex.toString());
+    const safePageIndex = pageIndex !== undefined && pageIndex !== null && pageIndex >= 0 ? pageIndex : 0;
+    if (safePageIndex > 0) {
+        params.append('PageIndex', safePageIndex.toString());
     }
-    if (pageSize !== undefined && pageSize !== null) {
+    if (pageSize) {
         params.append('PageSize', pageSize.toString());
     }
     if (sortType) {

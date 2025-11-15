@@ -1,24 +1,18 @@
-import { useAppDispatch } from "@/app/store";
+import { useAppDispatch, useAppSelector } from "@/app/store";
 import { useCallback, useMemo, useState } from "react";
 import { startOfDay } from 'date-fns';
 import { getlistBookingManagerApi, getListBookingStatusApi } from "../api/BookingApi";
-import { setListBookingManager, setListBookingStatus } from "../model/bookingSlice";
-
-
-type ZonedDateParts = {
-    year: number;
-    month: number;
-    day: number;
-    hour: number;
-    minute: number;
-    second: number;
-};
+import { setListBookingManager, setListBookingStatus, appendListBookingManager, resetPageIndex } from "../model/bookingSlice";
+import { alertService } from "@/services/alertService";
+import { useTranslation } from "react-i18next";
 
 
 export function useBookingForm() {
     const dispatch = useAppDispatch();
-    const [dateFrom, setDateFrom] = useState<Date | null>(startOfDay(new Date()));
-    const [dateTo, setDateTo] = useState<Date | null>(new Date());
+    const { t } = useTranslation();
+    const { pageIndex: reduxPageIndex } = useAppSelector((state) => state.booking);
+    const [dateFrom, setDateFrom] = useState<Date | null>(null);
+    const [dateTo, setDateTo] = useState<Date | null>(null);
     const [bookingDate, setBookingDate] = useState<Date | null>(null);
     const [status, setStatus] = useState<string | undefined>(undefined);
     const [bookingCode, setBookingCode] = useState<string | undefined>(undefined);
@@ -26,22 +20,48 @@ export function useBookingForm() {
     const [phone, setPhone] = useState<string | undefined>(undefined);
     const [search, setSearch] = useState<string | undefined>(undefined);
     const [sortBy, setSortBy] = useState<string | undefined>(undefined);
-    const [pageIndex, setPageIndex] = useState<number | undefined>(undefined);
-    const [pageSize, setPageSize] = useState<number | undefined>(undefined);
+    const [pageSize, setPageSize] = useState<number | undefined>(3);
     const [sortType, setSortType] = useState<string | undefined>(undefined);
     const [loading, setLoading] = useState<boolean>(false);
+    const [loadingMore, setLoadingMore] = useState<boolean>(false);
 
-    const getListBookingManager = useCallback(async () => {
+    const getListBookingManager = useCallback(async (isLoadMore: boolean = false) => {
         try {
-            setLoading(true);
-            const response = await getlistBookingManagerApi(dateFrom, dateTo, bookingDate, status, bookingCode, customerName, phone, search, sortBy, pageIndex, pageSize, sortType);
-            dispatch(setListBookingManager(response));
+            if (isLoadMore) {
+                setLoadingMore(true);
+            } else {
+                setLoading(true);
+            }
+            const safeReduxPageIndex = Math.max(0, reduxPageIndex || 0);
+            const currentPageIndex = isLoadMore ? safeReduxPageIndex + 1 : 0;
+            const finalPageIndex = Math.max(0, currentPageIndex);
+            const response = await getlistBookingManagerApi(dateFrom, dateTo, bookingDate, status, bookingCode, customerName, phone, search, sortBy, finalPageIndex, pageSize, sortType);
+            if (isLoadMore) {
+                dispatch(appendListBookingManager(response));
+            } else {
+                dispatch(setListBookingManager(response));
+            }
         } catch (error) {
             console.error(error);
+            alertService.showAlert({
+                title: t('bookingList.errorTitle'),
+                message: t('bookingList.errorMessage'),
+                typeAlert: 'Error',
+                onConfirm: () => {},
+            });
         } finally {
             setLoading(false);
+            setLoadingMore(false);
         }
-    }, [dateFrom, dateTo, bookingDate, status, bookingCode, customerName, phone, search, sortBy, pageIndex, pageSize, sortType, loading]);
+    }, [dateFrom, dateTo, bookingDate, status, bookingCode, customerName, phone, search, sortBy, reduxPageIndex, pageSize, sortType, dispatch]);
+
+    const loadMoreBookings = useCallback(async () => {
+        await getListBookingManager(true);
+    }, [getListBookingManager]);
+
+    const resetPagination = useCallback(() => {
+        dispatch(resetPageIndex());
+    }, [dispatch]);
 
 
     const getListBookingStatus = useCallback(async () => {
@@ -56,6 +76,8 @@ export function useBookingForm() {
     return {
         getListBookingManager,
         getListBookingStatus,
+        loadMoreBookings,
+        resetPagination,
         dateFrom,
         setDateFrom,
         dateTo,
@@ -70,8 +92,6 @@ export function useBookingForm() {
         setSearch,
         sortBy,
         setSortBy,
-        pageIndex,
-        setPageIndex,
         pageSize,
         setPageSize,
         sortType,
@@ -81,5 +101,6 @@ export function useBookingForm() {
         setBookingDate,
         loading,
         setLoading,
+        loadingMore,
     }
 }
