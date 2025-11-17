@@ -11,6 +11,7 @@ interface StaffState {
     error: string | null;
     selectedStaff: StaffItem | null;
     listBookingHourSetting: ListBookingHourSettingResponse[];
+    listBookingHourSettingByStaffId: ListBookingHourSettingResponse[];
 }
 
 const initialState: StaffState = {
@@ -23,6 +24,7 @@ const initialState: StaffState = {
     error: null,
     selectedStaff: null,
     listBookingHourSetting: [],
+    listBookingHourSettingByStaffId: [],
 };
 
 const staffSlice = createSlice({
@@ -58,6 +60,9 @@ const staffSlice = createSlice({
         setListBookingHourSetting(state, action: PayloadAction<ListBookingHourSettingResponse[]>) {
             state.listBookingHourSetting = action.payload;
         },
+        setListBookingHourSettingByStaffId(state, action: PayloadAction<ListBookingHourSettingResponse[]>) {
+            state.listBookingHourSettingByStaffId = action.payload;
+        },
     },
 });
 
@@ -67,6 +72,7 @@ export const {
     setError,
     clearStaffState,
     setListBookingHourSetting,
+    setListBookingHourSettingByStaffId,
 } = staffSlice.actions;
 
 export default staffSlice.reducer;

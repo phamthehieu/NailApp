@@ -46,7 +46,7 @@ const BookingManageScreen = ({ navigation }: RootScreenProps<Paths.BookingManage
     const [activeRange, setActiveRange] = useState<{ start: Date; end: Date } | null>(getCurrentWeekRange());
     const [showAdvanced, setShowAdvanced] = useState(false);
     const [activeTab, setActiveTab] = useState<TabType>({ label: t('calenderDashboard.calenderTab.schedule'), value: 1 });
-    const { getListBookingHourSetting } = useStaffForm();
+    const { getListBookingHourSetting, getListBookingHourSettingByStaffId } = useStaffForm();
     const [form, setForm] = useState({
         fromDate: '',
         toDate: '',
@@ -86,11 +86,12 @@ const BookingManageScreen = ({ navigation }: RootScreenProps<Paths.BookingManage
             s.setHours(0, 0, 0, 0);
             const e = new Date(d.getFullYear(), d.getMonth() + 1, 0);
             e.setHours(23, 59, 59, 999);
-        } else if (viewMode === 'Tuần' && !activeRange) {
+        } else if (viewMode === 'Tuần') {
             const start = getStartOfWeek(d);
             const end = new Date(start);
             end.setDate(end.getDate() + 6);
             end.setHours(23, 59, 59, 999);
+            setActiveRange({ start, end });
         }
     };
 
@@ -216,6 +217,7 @@ const BookingManageScreen = ({ navigation }: RootScreenProps<Paths.BookingManage
             if (viewMode === 'Ngày') {
                 getListBookingManagerByDate(anchorDate, debouncedSearchText);
             } else if (viewMode === 'Tuần') {
+                getListBookingHourSettingByStaffId(selectedUserId);
                 getListBookingManagerByRange(activeRange?.start, activeRange?.end, debouncedSearchText, selectedUserId);
             } else if (viewMode === 'Tháng') {
                 const startDate = new Date(anchorDate.getFullYear(), anchorDate.getMonth(), 1);

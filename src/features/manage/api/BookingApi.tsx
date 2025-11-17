@@ -137,3 +137,7 @@ export const getHistoryBookingItemApi = async (CustomerId?: string, Search?: str
     return http.get<HistoryBookingItemResponse>(`/api/Booking/HistoryBooking?${params.toString()}`);
 }
 
+export const getListBookingHourSettingByStaffIdApi = async (staffId: number) => {
+    return http.getPortal<ListBookingHourSettingResponse[]>(`/api/BookingHours/ListBookingHoursByStaffId?staffId=${staffId}`);
+}
+

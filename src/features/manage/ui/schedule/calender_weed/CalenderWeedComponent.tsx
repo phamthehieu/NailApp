@@ -25,23 +25,73 @@ type DayInfo = {
     label: string;
 };
 
+type WorkingHoursInfo = {
+    startHour: number;
+    startMinute: number;
+    endHour: number;
+    endMinute: number;
+    effectiveStartDate: Date | null;
+};
+
 const CalenderWeedComponent = ({ selectedDate, dateRange, onPressScheduleItem, selectedUserId, setSelectedUserId }: Props) => {
     const { theme: { colors } } = useAppTheme();
-    const { listStaff } = useSelector((state: RootState) => state.staff);
+    const { listStaff, listBookingHourSettingByStaffId } = useSelector((state: RootState) => state.staff);
     const listBookingManagerByRange = useAppSelector((state) => state.booking.listBookingManagerByRange);
     const timeScrollRef = useRef<ScrollView>(null);
     const headerScrollRef = useRef<ScrollView>(null);
     const bodyScrollRef = useRef<ScrollView>(null);
 
     const timeSlotWidth = 200;
-    const minVisibleHour = 0;
-    const maxVisibleHour = 23;
+    const { minVisibleHour, maxVisibleHour } = useMemo(() => {
+        let minMinutes: number | null = null;
+        let maxMinutes: number | null = null;
+
+        listBookingHourSettingByStaffId.forEach((setting) => {
+            if (!setting || !setting.active) {
+                return;
+            }
+
+            const [startHourString, startMinuteString] = setting.startTime.split(':');
+            const [endHourString, endMinuteString] = setting.endTime.split(':');
+
+            const startHour = parseInt(startHourString ?? '0', 10);
+            const startMinute = parseInt(startMinuteString ?? '0', 10);
+            const endHour = parseInt(endHourString ?? '0', 10);
+            const endMinute = parseInt(endMinuteString ?? '0', 10);
+
+            if (
+                Number.isNaN(startHour) ||
+                Number.isNaN(startMinute) ||
+                Number.isNaN(endHour) ||
+                Number.isNaN(endMinute)
+            ) {
+                return;
+            }
+
+            const startTotalMinutes = startHour * 60 + startMinute;
+            const endTotalMinutes = endHour * 60 + endMinute;
+
+            minMinutes = minMinutes === null ? startTotalMinutes : Math.min(minMinutes, startTotalMinutes);
+            maxMinutes = maxMinutes === null ? endTotalMinutes : Math.max(maxMinutes, endTotalMinutes);
+        });
+
+        if (minMinutes === null || maxMinutes === null) {
+            return { minVisibleHour: 0, maxVisibleHour: 23 };
+        }
+
+        const paddingHour = 1;
+        const minHour = Math.max(0, Math.floor(minMinutes / 60) - paddingHour);
+        const maxHour = Math.min(23, Math.ceil(maxMinutes / 60) + paddingHour);
+
+        return { minVisibleHour: minHour, maxVisibleHour: maxHour };
+    }, [listBookingHourSettingByStaffId]);
+
     const displayTimeSlots = useMemo(() => {
         return timeSlots.filter(slot => {
             const h = parseInt(slot.time.substring(0, 2));
             return h >= minVisibleHour && h <= maxVisibleHour;
         });
-    }, []);
+    }, [minVisibleHour, maxVisibleHour]);
 
     const isTablet = useIsTablet();
 
@@ -64,6 +114,11 @@ const CalenderWeedComponent = ({ selectedDate, dateRange, onPressScheduleItem, s
         const month = date.getMonth() + 1;
         const year = date.getFullYear();
         return `${dayName}, ${day}/${month}/${year}`;
+    };
+
+    const getDayOfWeekName = (date: Date) => {
+        const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        return days[date.getDay()];
     };
 
     const selectedDays = useMemo(() => {
@@ -100,6 +155,48 @@ const CalenderWeedComponent = ({ selectedDate, dateRange, onPressScheduleItem, s
 
         return days;
     }, [selectedDate, dateRange]);
+
+    const workingHoursByDay = useMemo(() => {
+        const map = new Map<string, WorkingHoursInfo>();
+
+        listBookingHourSettingByStaffId.forEach((setting) => {
+            if (!setting || !setting.active) {
+                return;
+            }
+
+            const [startHourString, startMinuteString] = setting.startTime.split(':');
+            const [endHourString, endMinuteString] = setting.endTime.split(':');
+
+            const startHour = parseInt(startHourString ?? '0', 10);
+            const startMinute = parseInt(startMinuteString ?? '0', 10);
+            const endHour = parseInt(endHourString ?? '0', 10);
+            const endMinute = parseInt(endMinuteString ?? '0', 10);
+
+            if (
+                Number.isNaN(startHour) ||
+                Number.isNaN(startMinute) ||
+                Number.isNaN(endHour) ||
+                Number.isNaN(endMinute)
+            ) {
+                return;
+            }
+
+            const effectiveStartDate = setting.createdAt ? new Date(setting.createdAt) : null;
+            if (effectiveStartDate) {
+                effectiveStartDate.setHours(0, 0, 0, 0);
+            }
+
+            map.set(setting.dayOfTheWeek, {
+                startHour,
+                startMinute,
+                endHour,
+                endMinute,
+                effectiveStartDate,
+            });
+        });
+
+        return map;
+    }, [listBookingHourSettingByStaffId]);
 
 
     const isSameDay = (date1: Date, date2: Date): boolean => {
@@ -263,6 +360,8 @@ const CalenderWeedComponent = ({ selectedDate, dateRange, onPressScheduleItem, s
 
         return items;
     }, [listBookingManagerByRange]);
+
+    console.log('listBookingHourSettingByStaffId', listBookingHourSettingByStaffId);
     return (
         <View style={styles.mainContainer}>
             <View style={styles.fixedUserColumn}>
@@ -357,52 +456,87 @@ const CalenderWeedComponent = ({ selectedDate, dateRange, onPressScheduleItem, s
                     >
                         <View style={styles.container}>
                             <View style={styles.userRowsContainer}>
-                                {/* <CurrentTimeLine scheduleHeight={selectedDays.length * 100} timeSlotWidth={timeSlotWidth} hours={hoursStart} minutes={minutesStart} type={'start'} baseHourOffset={minVisibleHour} /> */}
-                                {/* <CurrentTimeLine scheduleHeight={selectedDays.length * 100} timeSlotWidth={timeSlotWidth} hours={hoursNow} minutes={minutesNow} type={'now'} /> */}
-                                {/* <CurrentTimeLine scheduleHeight={selectedDays.length * 100} timeSlotWidth={timeSlotWidth} hours={hoursEnd} minutes={minutesEnd} type={'end'} baseHourOffset={minVisibleHour} /> */}
-                                {selectedDays.map((day, dayIndex) => (
-                                    <View key={`day-row-${dayIndex}`} style={styles.userRow}>
-                                        {displayTimeSlots.map((slot) => {
-                                            const slotHour = parseInt(slot.time.substring(0, 2));
-                                            const slotMinutes = parseInt(slot.time.substring(2, 4));
-                                            return (
-                                                <View
-                                                    key={`${slot.time}-day-${dayIndex}`}
-                                                    style={[
-                                                        styles.scheduleCell,
-                                                        // !working && styles.nonWorkingHoursCell
-                                                    ]}
-                                                >
-                                                    {renderQuarterHourLines()}
-                                                    {renderScheduleItem(selectedUserId.toString(), slot.time, day.date)}
+                                {selectedDays.map((day, dayIndex) => {
+                                    const dayName = getDayOfWeekName(day.date);
+                                    const workingHours = workingHoursByDay.get(dayName);
+                                    const hasWorkingHours = Boolean(workingHours);
+                                    const dayHoursStart = workingHours?.startHour ?? 0;
+                                    const dayMinutesStart = workingHours?.startMinute ?? 0;
+                                    const dayHoursEnd = workingHours?.endHour ?? 0;
+                                    const dayMinutesEnd = workingHours?.endMinute ?? 0;
+                                    const isBeforeEffectiveDate = workingHours?.effectiveStartDate
+                                        ? day.date < workingHours.effectiveStartDate
+                                        : false;
+                                    const showWorkingHours = hasWorkingHours && !isBeforeEffectiveDate;
 
-                                                    {/* {slotHour === hoursStart && slotMinutes === 0 && minutesStart > 0 && (
-                                                        <View style={[
-                                                            styles.partialOverlay,
-                                                            {
-                                                                width: (minutesStart / 60) * timeSlotWidth,
-                                                                backgroundColor: colors.bottomColor,
-                                                                opacity: 0.8
-                                                            }
-                                                        ]} />
-                                                    )}
+                                    return (
+                                        <View key={`day-row-${dayIndex}`} style={styles.userRow}>
+                                            {showWorkingHours && (
+                                                <>
+                                                    <CurrentTimeLine
+                                                        scheduleHeight={78}
+                                                        timeSlotWidth={timeSlotWidth}
+                                                        hours={dayHoursStart}
+                                                        minutes={dayMinutesStart}
+                                                        type={'start'}
+                                                        baseHourOffset={minVisibleHour}
+                                                    />
+                                                    <CurrentTimeLine
+                                                        scheduleHeight={78}
+                                                        timeSlotWidth={timeSlotWidth}
+                                                        hours={dayHoursEnd}
+                                                        minutes={dayMinutesEnd}
+                                                        type={'end'}
+                                                        baseHourOffset={minVisibleHour}
+                                                    />
+                                                </>
+                                            )}
+                                            {displayTimeSlots.map((slot) => {
+                                                const slotHour = parseInt(slot.time.substring(0, 2));
+                                                const slotMinutes = parseInt(slot.time.substring(2, 4));
+                                                const working = showWorkingHours
+                                                    ? isWorkingHours(slot.time, dayHoursStart, dayMinutesStart, dayHoursEnd, dayMinutesEnd)
+                                                    : false;
 
-                                                    {slotHour === hoursEnd && slotMinutes === 0 && minutesEnd < 60 && (
-                                                        <View style={[
-                                                            styles.partialOverlay,
-                                                            {
-                                                                left: (minutesEnd / 60) * timeSlotWidth,
-                                                                width: ((60 - minutesEnd) / 60) * timeSlotWidth,
-                                                                backgroundColor: colors.bottomColor,
-                                                                opacity: 0.8
-                                                            }
-                                                        ]} />
-                                                    )} */}
-                                                </View>
-                                            );
-                                        })}
-                                    </View>
-                                ))}
+                                                return (
+                                                    <View
+                                                        key={`${slot.time}-day-${dayIndex}`}
+                                                        style={[
+                                                            styles.scheduleCell,
+                                                            showWorkingHours && !working && styles.nonWorkingHoursCell
+                                                        ]}
+                                                    >
+                                                        {renderQuarterHourLines()}
+                                                        {renderScheduleItem(selectedUserId.toString(), slot.time, day.date)}
+
+                                                        {showWorkingHours && slotHour === dayHoursStart && slotMinutes === 0 && dayMinutesStart > 0 && (
+                                                            <View style={[
+                                                                styles.partialOverlay,
+                                                                {
+                                                                    width: (dayMinutesStart / 60) * timeSlotWidth,
+                                                                    backgroundColor: colors.bottomColor,
+                                                                    opacity: 0.8
+                                                                }
+                                                            ]} />
+                                                        )}
+
+                                                        {showWorkingHours && slotHour === dayHoursEnd && slotMinutes === 0 && dayMinutesEnd < 60 && (
+                                                            <View style={[
+                                                                styles.partialOverlay,
+                                                                {
+                                                                    left: (dayMinutesEnd / 60) * timeSlotWidth,
+                                                                    width: ((60 - dayMinutesEnd) / 60) * timeSlotWidth,
+                                                                    backgroundColor: colors.bottomColor,
+                                                                    opacity: 0.8
+                                                                }
+                                                            ]} />
+                                                        )}
+                                                    </View>
+                                                );
+                                            })}
+                                        </View>
+                                    );
+                                })}
                             </View>
                         </View>
                     </ScrollView>
