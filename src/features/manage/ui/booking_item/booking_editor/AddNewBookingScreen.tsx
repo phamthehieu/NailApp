@@ -20,7 +20,7 @@ const AddNewBookingScreen = ({ navigation }: RootScreenProps<Paths.AddNewBooking
     const { theme: { colors } } = useAppTheme();
     const styles = $styles(colors);
     const { t } = useTranslation();
-    const { getListBookingSetting, loading } = useEditBookingForm();
+    const { getListBookingSetting, loading, getListService } = useEditBookingForm();
 
     const steps = useMemo(() => ([
         { label: t('bookingInformation.customerInfo'), icon: UserRound },
@@ -48,6 +48,7 @@ const AddNewBookingScreen = ({ navigation }: RootScreenProps<Paths.AddNewBooking
 
     useEffect(() => {
         getListBookingSetting();
+        getListService();
     }, []);
 
     return (

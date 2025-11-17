@@ -6,56 +6,53 @@ import { TextField } from "@/shared/ui/TextField";
 import { TextFieldLabel } from "@/shared/ui/Text";
 import { Dropdown } from "react-native-element-dropdown";
 import { useTranslation } from "react-i18next";
+import { RootState, useAppSelector } from "@/app/store";
 
 export type ServiceItem = {
     id: number;
     name: string;
-    duration: string;
-    staff: string;
-    anyEmployee: boolean;
+    serviceTime: number;
+    employeeIds: number[];
 };
 
 type ServiceListComponentProps = {
     services: ServiceItem[];
     onChange: (services: ServiceItem[]) => void;
-    serviceOptions?: Array<{ label: string; value: string }>;
-    employeeOptions?: Array<{ label: string; value: string }>;
 };
 
-const ServiceListComponent = ({ 
+const ServiceListComponent = ({
     services, 
     onChange,
-    serviceOptions: customServiceOptions,
-    employeeOptions: customEmployeeOptions,
 }: ServiceListComponentProps) => {
     const { theme: { colors } } = useAppTheme();
     const { width } = useWindowDimensions();
     const isWide = width >= 700;
     const styles = $styles(colors, isWide);
     const { t } = useTranslation();
+    const listService = useAppSelector((state: RootState) => state.editBooking.listService);
+    const listStaff = useAppSelector((state: RootState) => state.staff.listStaff);
+    const serviceOptions = useMemo(() => {
+        return listService?.items?.map((item) => ({
+            label: item.name,
+            value: item.id.toString(),
+            serviceTime: item.serviceTime,
+        })) || [];
+    }, [listService]);
 
-    const serviceOptions = useMemo(() => 
-        customServiceOptions || [
-            { label: t('bookingInformation.serviceOptions.removeGel'), value: "remove_gel" },
-            { label: t('bookingInformation.serviceOptions.nailCare'), value: "nail_care" },
-            { label: t('bookingInformation.serviceOptions.gelPolish'), value: "gel_polish" },
-            { label: t('bookingInformation.serviceOptions.acrylic'), value: "acrylic" },
-        ],
-        [customServiceOptions, t]
-    );
-
-    const employeeOptions = useMemo(() => 
-        customEmployeeOptions || [
-            { label: t('bookingInformation.employeeOptions.any'), value: "any" },
-            { label: t('bookingInformation.employeeOptions.an'), value: "an" },
-            { label: t('bookingInformation.employeeOptions.binh'), value: "binh" },
-            { label: t('bookingInformation.employeeOptions.chi'), value: "chi" },
-        ],
-        [customEmployeeOptions, t]
-    );
+    const staffOptions = useMemo(() => {
+        const options =
+            listStaff?.map((item) => ({
+                label: item.displayName,
+                value: item.id.toString(),
+            })) || [];
+        return [
+            { label: t('bookingInformation.anyEmployee'), value: '0' },
+            ...options,
+        ];
+    }, [listStaff, t]);
 
     const addService = useCallback(() => {
-        onChange([...services, { id: Date.now(), name: "", duration: "", staff: "", anyEmployee: false }]);
+        onChange([...services, { id: Date.now(), name: "", serviceTime: 0, employeeIds: [] }]);
     }, [services, onChange]);
 
     const updateService = useCallback((id: number, patch: Partial<ServiceItem>) => {
@@ -75,6 +72,7 @@ const ServiceListComponent = ({
             </View>
         );
     };
+
     return (
         <View>
             <View style={styles.row}>
@@ -99,7 +97,13 @@ const ServiceListComponent = ({
                             labelField="label"
                             valueField="value"
                             value={item.name}
-                            onChange={({ value }) => updateService(item.id, { name: value as string })}
+                            onChange={({ value }) => {
+                                const selected = serviceOptions.find((option) => option.value === value);
+                                updateService(item.id, { 
+                                    name: value as string,
+                                    serviceTime: selected?.serviceTime ?? 0,
+                                });
+                            }}
                             style={styles.dropdown}
                             showsVerticalScrollIndicator={false}
                             containerStyle={styles.dropdownContainer}
@@ -122,8 +126,8 @@ const ServiceListComponent = ({
                         <TextField
                             placeholder={t('bookingInformation.durationPlaceholder')}
                             keyboardType="number-pad"
-                            value={item.duration}
-                            onChangeText={(text) => updateService(item.id, { duration: text })}
+                            value={item.serviceTime.toString()}
+                            onChangeText={(text) => updateService(item.id, { serviceTime: parseInt(text) })}
                         />
                     </View>
                     <View style={styles.field}>
@@ -132,12 +136,12 @@ const ServiceListComponent = ({
                             <TextFieldLabel text={t('bookingInformation.requiredMark')} style={styles.requiredMark} />
                         </View>
                         <Dropdown
-                            data={employeeOptions}
+                            data={staffOptions}
                             labelField="label"
                             valueField="value"
-                            value={item.staff}
-                            onChange={({ value }) => updateService(item.id, { staff: value as string })}
-                            style={[styles.dropdown, item.anyEmployee && { opacity: 0.6 }]}
+                            value={item.employeeIds?.join(',') ?? ''}
+                            onChange={({ value }) => updateService(item.id, { employeeIds: [Number(value)] })}
+                            style={[styles.dropdown]}
                             showsVerticalScrollIndicator={false}
                             containerStyle={styles.dropdownContainer}
                             itemContainerStyle={styles.dropdownItem}
@@ -148,14 +152,13 @@ const ServiceListComponent = ({
                             renderRightIcon={() => <ChevronDown size={16} color={colors.placeholderTextColor} />}
                             maxHeight={220}
                             activeColor={colors.backgroundDisabled}
-                            disable={item.anyEmployee}
                             selectedTextProps={{ allowFontScaling: false }}
                             renderItem={renderItem}
                         />
                     </View>
 
                     <View style={styles.actions}>
-                        <View style={styles.anyWrap}>
+                        {/* <View style={styles.anyWrap}>
                             <Switch
                                 value={item.anyEmployee}
                                 onValueChange={(val) => updateService(item.id, { anyEmployee: val, staff: val ? 'any' : item.staff })}
@@ -163,7 +166,7 @@ const ServiceListComponent = ({
                                 trackColor={{ true: colors.yellow + "55", false: colors.border }}
                             />
                             <TextFieldLabel text={t('bookingInformation.anyEmployee')} />
-                        </View>
+                        </View> */}
 
                         <Pressable onPress={() => removeService(item.id)} style={styles.deleteBtn}>
                             <Trash2 size={16} color={colors.error} />

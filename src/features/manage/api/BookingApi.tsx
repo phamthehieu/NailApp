@@ -167,5 +167,5 @@ export const getListServiceApi = async (SystemCatalogId?: number, Search?: strin
     if (SortType) {
         params.append('SortType', SortType);
     }
-    return http.getPortal<ListServiceResponse>(`/api/ServiceManagement/List?${params.toString()}`);
+    return http.get<ListServiceResponse>(`/api/ServiceManagement/List?${params.toString()}`);
 }

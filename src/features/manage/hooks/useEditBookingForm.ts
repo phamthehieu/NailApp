@@ -32,6 +32,7 @@ export function useEditBookingForm() {
         try {
             if (loading) return;
             setLoading(true);
+            const PageSize = 10000;
             const response = await getListServiceApi(SystemCatalogId, Search, SortBy, PageIndex, PageSize, SortType);
             dispatch(setListService(response));
         } catch (error) {
