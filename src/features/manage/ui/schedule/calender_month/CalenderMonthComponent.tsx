@@ -1,12 +1,10 @@
 import React, { useMemo, useRef } from 'react';
 import { View, StyleSheet, ScrollView, useWindowDimensions, Pressable } from 'react-native';
-import { scheduleItemsWeek } from '../../../data/scheduleItems';
-import { users } from '../../../data/users';
 import { Colors, useAppTheme } from '@/shared/theme';
 import { useIsTablet } from '@/shared/lib/useIsTablet';
 import { TextFieldLabel } from '@/shared/ui/Text';
-import { useSelector } from 'react-redux';
-import { RootState } from '@/app/store';
+import { useTranslation } from 'react-i18next';
+import { useAppSelector } from '@/app/store';
 
 type Props = {
     selectedDate: Date;
@@ -32,15 +30,17 @@ type CalendarDay = {
 
 const CalenderMonthComponent = ({ selectedDate, onPressScheduleItem }: Props) => {
     const { theme: { colors } } = useAppTheme();
+    const { t } = useTranslation();
     const isTablet = useIsTablet();
     const { width: screenWidth } = useWindowDimensions();
     const styles = $styles(colors, isTablet);
     const headerScrollRef = useRef<ScrollView>(null);
     const bodyScrollRef = useRef<ScrollView>(null);
+    const listBookingManagerByRange = useAppSelector((state) => state.booking.listBookingManagerByRange);
 
     const MIN_CELL_WIDTH = 120;
     const NUM_COLUMNS = 7;
-    const MIN_TOTAL_WIDTH = MIN_CELL_WIDTH * NUM_COLUMNS; // 840px
+    const MIN_TOTAL_WIDTH = MIN_CELL_WIDTH * NUM_COLUMNS;
     const needsHorizontalScroll = screenWidth < MIN_TOTAL_WIDTH;
 
     const formatUserName = (fullName: string): string => {
@@ -52,10 +52,39 @@ const CalenderMonthComponent = ({ selectedDate, onPressScheduleItem }: Props) =>
         return `${initials}.${lastName}`;
     };
 
+    const normalizeTimeParts = (time?: string) => {
+        if (!time) {
+            return { hours: 0, minutes: 0 };
+        }
+
+        if (time.includes(':')) {
+            const [hourPart = '0', minutePart = '0'] = time.split(':');
+            return {
+                hours: Number(hourPart) || 0,
+                minutes: Number(minutePart) || 0,
+            };
+        }
+
+        const sanitized = time.replace(/[^\d]/g, '');
+        const hours = Number(sanitized.substring(0, 2)) || 0;
+        const minutes = Number(sanitized.substring(2, 4)) || 0;
+
+        return { hours, minutes };
+    };
+
     const formatTime = (time24h: string): string => {
-        const hours = time24h.substring(0, 2);
-        const minutes = time24h.substring(2, 4);
-        return `${hours}:${minutes}`;
+        if (!time24h) return '';
+        const { hours, minutes } = normalizeTimeParts(time24h);
+        return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+    };
+
+    const addMinutesToTime = (time24h: string, minutesToAdd: number): string => {
+        if (!time24h) return '';
+        const { hours, minutes } = normalizeTimeParts(time24h);
+        const date = new Date();
+        date.setHours(hours, minutes, 0, 0);
+        date.setMinutes(date.getMinutes() + minutesToAdd);
+        return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
     };
 
     const isSameDay = (date1: Date, date2: Date): boolean => {
@@ -65,6 +94,21 @@ const CalenderMonthComponent = ({ selectedDate, onPressScheduleItem }: Props) =>
             date1.getMonth() === date2.getMonth() &&
             date1.getDate() === date2.getDate()
         );
+    };
+
+    const getStatusColor = (status: number) => {
+        switch (status) {
+            case 0:
+                return colors.blue;
+            case 1:
+                return colors.yellow;
+            case 2:
+                return colors.purple;
+            case 3:
+                return colors.green;
+            default:
+                return colors.borderTable;
+        }
     };
 
     const calendarDays = useMemo(() => {
@@ -89,23 +133,26 @@ const CalenderMonthComponent = ({ selectedDate, onPressScheduleItem }: Props) =>
         today.setHours(0, 0, 0, 0);
 
         const currentDate = new Date(startDate);
+        const bookings = Array.isArray(listBookingManagerByRange) ? listBookingManagerByRange : [];
+
         while (currentDate <= endDate) {
             const dateCopy = new Date(currentDate);
             dateCopy.setHours(0, 0, 0, 0);
 
-            const dayEvents = scheduleItemsWeek
-                .filter(item => item.date && isSameDay(item.date, dateCopy))
+            const dayEvents = bookings
+                .filter(item => item.bookingDate && isSameDay(new Date(item.bookingDate), dateCopy))
                 .map(item => {
-                    const user = users.find(u => u.id === item.userId);
+                    const totalServiceMinutes = item.services?.reduce((total, service) => total + (service.serviceTime || 0), 0) || 0;
+                    const color = getStatusColor(item.status);
                     return {
-                        id: item.id,
-                        userId: item.userId,
-                        title: item.title,
-                        startTime: item.startTime,
-                        endTime: item.endTime,
-                        color: item.color,
-                        borderColor: item.borderColor,
-                        userName: user ? formatUserName(user.name) : '',
+                        id: String(item.id ?? item.code),
+                        userId: String(item.customer?.id ?? ''),
+                        title: item.code,
+                        startTime: item.bookingHours || '',
+                        endTime: totalServiceMinutes > 0 ? addMinutesToTime(item.bookingHours, totalServiceMinutes) : item.bookingHours || '',
+                        color,
+                        borderColor: color,
+                        userName: formatUserName(item.customer?.name || ''),
                     };
                 });
 
@@ -121,7 +168,7 @@ const CalenderMonthComponent = ({ selectedDate, onPressScheduleItem }: Props) =>
         }
 
         return days;
-    }, [selectedDate]);
+    }, [selectedDate, listBookingManagerByRange, colors]);
 
     const weeks = useMemo(() => {
         const result: CalendarDay[][] = [];
@@ -132,8 +179,10 @@ const CalenderMonthComponent = ({ selectedDate, onPressScheduleItem }: Props) =>
     }, [calendarDays]);
 
     const renderEvent = (event: CalendarDay['events'][0], index: number) => {
-        const timeText = `${formatTime(event.startTime)} - ${formatTime(event.endTime)}`;
-        const displayText = `${event.userName} ${timeText}`;
+        const formattedStart = formatTime(event.startTime);
+        const formattedEnd = formatTime(event.endTime);
+        const timeText = [formattedStart, formattedEnd].filter(Boolean).join(' - ');
+        const displayText = timeText ? `${event.userName} ${timeText}`.trim() : event.userName;
 
         return (
             <Pressable
@@ -163,7 +212,7 @@ const CalenderMonthComponent = ({ selectedDate, onPressScheduleItem }: Props) =>
 
     const renderHeader = () => (
         <View style={styles.headerRow}>
-            {['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật'].map((dayName, index) => (
+            {[t('common.monday'), t('common.tuesday'), t('common.wednesday'), t('common.thursday'), t('common.friday'), t('common.saturday'), t('common.sunday')].map((dayName, index) => (
                 <View key={index} style={[
                     styles.headerCell,
                     needsHorizontalScroll ? styles.headerCellScrollable : styles.headerCellFlex
@@ -208,7 +257,7 @@ const CalenderMonthComponent = ({ selectedDate, onPressScheduleItem }: Props) =>
                                 )}
                                 {day.events.length > 3 && (
                                     <TextFieldLabel style={styles.moreEventsText}>
-                                        +{day.events.length - 3} sự kiện
+                                        +{day.events.length - 3} {t('common.events')}
                                     </TextFieldLabel>
                                 )}
                             </View>
@@ -286,7 +335,7 @@ const $styles = (colors: Colors, isTablet: boolean) => StyleSheet.create({
         borderColor: colors.borderTable,
     },
     headerCellScrollable: {
-        minWidth: 120,
+        minWidth: 160,
     },
     headerCellFlex: {
         flex: 1,
@@ -304,7 +353,7 @@ const $styles = (colors: Colors, isTablet: boolean) => StyleSheet.create({
     },
     weekRow: {
         flexDirection: 'row',
-        minHeight: 120,
+        minHeight: 160,
         borderBottomWidth: 1,
         borderColor: colors.borderTable,
     },
@@ -313,10 +362,13 @@ const $styles = (colors: Colors, isTablet: boolean) => StyleSheet.create({
         borderColor: colors.borderTable,
         backgroundColor: colors.backgroundTable,
         padding: 6,
-        minHeight: 120,
+        minHeight: 160,
+        maxWidth: 160,
+        height: isTablet ? 160 : 140,
+        overflow: 'hidden',
     },
     dayCellScrollable: {
-        minWidth: 120,
+        minWidth: 160,
     },
     dayCellFlex: {
         flex: 1,

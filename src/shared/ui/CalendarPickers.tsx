@@ -499,15 +499,6 @@ export const CalendarMonthPickerModal: React.FC<CalendarMonthPickerModalProps> =
         setMode('month');
     }, [visible, selectedDate]);
 
-    const handleConfirm = useCallback(() => {
-        onConfirm(new Date(displayYear, displayMonth, 1));
-        onClose();
-    }, [displayYear, displayMonth, onConfirm, onClose]);
-
-    if (!visible) {
-        return null;
-    }
-
     const years = useMemo(() => getYearsInRange(), []);
     const localeToUse = locale || 'vi-VN';
     const monthLabels = useMemo(() => {
@@ -519,6 +510,15 @@ export const CalendarMonthPickerModal: React.FC<CalendarMonthPickerModalProps> =
             }
         });
     }, [localeToUse]);
+
+    const handleConfirm = useCallback(() => {
+        onConfirm(new Date(displayYear, displayMonth, 1));
+        onClose();
+    }, [displayYear, displayMonth, onConfirm, onClose]);
+
+    if (!visible) {
+        return null;
+    }
 
     return (
         <Modal

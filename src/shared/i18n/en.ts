@@ -82,7 +82,7 @@ const en: Translations = {
         pickDate: 'Select date',
     },
     bottomNavigator: {
-        bookingManage: 'Booking Management',
+        bookingManage: 'Booking',
         report: 'Report',
         system: 'System',
         settings: 'Settings',
@@ -301,6 +301,16 @@ const en: Translations = {
     birthday: 'Birthday',
     birthdayPlaceholder: 'Select birthday',
     saveButton: 'Save',
+  },
+  common: {
+    monday: 'Monday',
+    tuesday: 'Tuesday',
+    wednesday: 'Wednesday',
+    thursday: 'Thursday',
+    friday: 'Friday',
+    saturday: 'Saturday',
+    sunday: 'Sunday',
+    events: 'events',
   },
 };
 

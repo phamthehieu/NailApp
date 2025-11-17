@@ -185,13 +185,13 @@ const CalendarHeader = ({ selectedDate, onChange, onChangeRange, viewMode: propV
                                 setSearchText(text);
                             }}
                             inputWrapperStyle={styles.searchBox}
-                            RightAccessory={() => (
-                                searchText ? (
-                                    <TouchableOpacity onPress={() => setSearchText('')} style={styles.iconButton}>
-                                        <X size={iconSize} color={colors.text} />
-                                    </TouchableOpacity>
-                                ) : null
-                            )}
+                             RightAccessory={() => (
+                                        searchText ? (
+                                            <TouchableOpacity onPress={() => setSearchText('')} style={styles.iconButton}>
+                                                <X size={iconSize} color={colors.text} />
+                                            </TouchableOpacity>
+                                        ) : null
+                                    )}
                         />
                     )}
 

@@ -215,7 +215,11 @@ const BookingManageScreen = ({ navigation }: RootScreenProps<Paths.BookingManage
             } else if (viewMode === 'Tuần') {
                 getListBookingManagerByRange(activeRange?.start, activeRange?.end, debouncedSearchText, selectedUserId);
             } else if (viewMode === 'Tháng') {
-                getListBookingManagerByDate(anchorDate, debouncedSearchText);
+                const startDate = new Date(anchorDate.getFullYear(), anchorDate.getMonth(), 1);
+                startDate.setHours(0, 0, 0, 0);
+                const endDate = new Date(anchorDate.getFullYear(), anchorDate.getMonth() + 1, 0);
+                endDate.setHours(23, 59, 59, 999);
+                getListBookingManagerByRange(startDate, endDate, debouncedSearchText);
             }
         }
         if (activeTab.value === 2) {
