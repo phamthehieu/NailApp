@@ -4,13 +4,14 @@ import UserAvatar from './UserAvatar';
 import CurrentTimeLine from './CurrentTimeLine';
 import { users } from '../../../data/users';
 import { timeSlots } from '../../../data/TimeSlots';
-import { scheduleItems } from '../../../data/scheduleItems';
+import { ScheduleItem } from '../../../data/scheduleItems';
 import { isWorkingHours, getScheduleBlocksForHour } from '../../../api/schedule';
+import { BookingManagerItem } from '../../../api/types';
 import { Colors, useAppTheme } from '@/shared/theme';
 import { useIsTablet } from '@/shared/lib/useIsTablet';
 import { TextFieldLabel } from '@/shared/ui/Text';
 import { useSelector } from 'react-redux';
-import { RootState } from '@/app/store';
+import { RootState, useAppSelector } from '@/app/store';
 import { useStaffForm } from '@/features/manage/hooks/useStaffForm';
 import { useTranslation } from 'react-i18next';
 
@@ -23,6 +24,7 @@ const CalenderDayComponent = ({ selectedDate: _selectedDate, onPressScheduleItem
     const { theme: { colors } } = useAppTheme();
     const { getListStaff, getListBookingHour } = useStaffForm();
     const { t } = useTranslation();
+    const listBookingManagerByDate = useAppSelector((state) => state.booking.listBookingManagerByDate);
     const timeScrollRef = useRef<ScrollView>(null);
     const headerScrollRef = useRef<ScrollView>(null);
     const bodyScrollRef = useRef<ScrollView>(null);
@@ -113,10 +115,70 @@ const CalenderDayComponent = ({ selectedDate: _selectedDate, onPressScheduleItem
 
     const styles = $styles(colors, timeSlotWidth, isTablet);
 
+    const { convertedScheduleItems, bookingDataMap } = useMemo(() => {
+        const items: ScheduleItem[] = [];
+        const bookingMap = new Map<string, BookingManagerItem>();
+
+        listBookingManagerByDate.forEach((booking: BookingManagerItem) => {
+            if (!booking.services || booking.services.length === 0) return;
+
+            const bookingHoursParts = booking.bookingHours.split(':');
+            const bookingHour = parseInt(bookingHoursParts[0]);
+            const bookingMinute = parseInt(bookingHoursParts[1]);
+
+            const baseDate = new Date();
+            baseDate.setHours(bookingHour, bookingMinute, 0, 0);
+
+            let accumulatedMinutes = 0;
+
+            booking.services.forEach((service, serviceIndex) => {
+                if (!service.staff || !service.staff.id) return;
+
+                const serviceStartDate = new Date(baseDate.getTime() + accumulatedMinutes * 60 * 1000);
+                const serviceStartHour = serviceStartDate.getHours();
+                const serviceStartMinute = serviceStartDate.getMinutes();
+                const startTimeHHmm = `${String(serviceStartHour).padStart(2, '0')}${String(serviceStartMinute).padStart(2, '0')}`;
+
+                const serviceEndDate = new Date(serviceStartDate.getTime() + service.serviceTime * 60 * 1000);
+                const serviceEndHour = serviceEndDate.getHours();
+                const serviceEndMinute = serviceEndDate.getMinutes();
+                const endTimeHHmm = `${String(serviceEndHour).padStart(2, '0')}${String(serviceEndMinute).padStart(2, '0')}`;
+
+                accumulatedMinutes += service.serviceTime;
+
+                const getColorByStatus = (status: number) => {
+                    switch (status) {
+                        case 1: // CheckIn
+                            return { color: '#E1F5FE', borderColor: '#4FC3F7' };
+                        case 2: // Có thể là status khác
+                            return { color: '#E8F5E9', borderColor: '#66BB6A' };
+                        default:
+                            return { color: '#FFF3E0', borderColor: '#FFB74D' };
+                    }
+                };
+
+                const { color, borderColor } = getColorByStatus(booking.status);
+
+                const itemId = `${booking.id}-${service.id}-${serviceIndex}`;
+                items.push({
+                    id: itemId,
+                    userId: service.staff.id.toString(),
+                    startTime: startTimeHHmm,
+                    endTime: endTimeHHmm,
+                    title: service.serviceName || 'Dịch vụ',
+                    color,
+                    borderColor,
+                });
+
+                bookingMap.set(itemId, booking);
+            });
+        });
+
+        return { convertedScheduleItems: items, bookingDataMap: bookingMap };
+    }, [listBookingManagerByDate]);
 
     const renderScheduleItem = (userId: string, timeSlot: string) => {
-        const blocks = getScheduleBlocksForHour(scheduleItems, userId, timeSlot);
-
+        const blocks = getScheduleBlocksForHour(convertedScheduleItems, userId, timeSlot);
         return blocks.map(({ item, index, heightInPixels }) => {
             const startHours = parseInt(item.startTime.substring(0, 2));
             const startMinutes = parseInt(item.startTime.substring(2, 4));
@@ -136,10 +198,12 @@ const CalenderDayComponent = ({ selectedDate: _selectedDate, onPressScheduleItem
             const showTitle = widthInPixels >= 28 && heightInPixels >= 18;
             const showTime = widthInPixels >= 56 && heightInPixels >= 22;
 
+            const originalBooking = bookingDataMap.get(item.id);
+
             return (
                 <Pressable
                     onPress={() => {
-                        onPressScheduleItem(item);
+                        onPressScheduleItem(originalBooking || item);
                     }}
                     key={`${item.id}-${index}`}
                     style={[
@@ -192,7 +256,7 @@ const CalenderDayComponent = ({ selectedDate: _selectedDate, onPressScheduleItem
 
     useEffect(() => {
         getListStaff();
-        getListBookingHour();
+        // getListBookingHour();
     }, []);
 
     return (
@@ -334,16 +398,16 @@ const CalenderDayComponent = ({ selectedDate: _selectedDate, onPressScheduleItem
                                                     const slotHour = parseInt(slot.time.substring(0, 2));
                                                     const slotMinutes = parseInt(slot.time.substring(2, 4));
 
-                                                    const working = hasWorkingHours
-                                                        ? isWorkingHours(slot.time, staffHoursStart, staffMinutesStart, staffHoursEnd, staffMinutesEnd)
-                                                        : false;
+                                                    // const working = hasWorkingHours
+                                                    //     ? isWorkingHours(slot.time, staffHoursStart, staffMinutesStart, staffHoursEnd, staffMinutesEnd)
+                                                    //     : false;
 
                                                     return (
                                                         <View
                                                             key={`${slot.time}-${staff.id}`}
                                                             style={[
                                                                 styles.scheduleCell,
-                                                                !working && styles.nonWorkingHoursCell
+                                                                // !working && styles.nonWorkingHoursCell
                                                             ]}
                                                         >
                                                             {renderQuarterHourLines()}

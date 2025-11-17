@@ -1,19 +1,23 @@
 import React, { useRef, useState, useMemo } from 'react';
 import { View, StyleSheet, ScrollView, Pressable } from 'react-native';
 import { Dropdown } from 'react-native-element-dropdown';
-import { users } from '../../../data/users';
 import { timeSlots } from '../../../data/TimeSlots';
-import { scheduleItemsWeek } from '../../../data/scheduleItems';
+import { ScheduleItem } from '../../../data/scheduleItems';
 import { isWorkingHours, getScheduleBlocksForHour } from '../../../api/schedule';
 import { Colors, useAppTheme } from '@/shared/theme';
 import { useIsTablet } from '@/shared/lib/useIsTablet';
 import CurrentTimeLine from '../calender_day/CurrentTimeLine';
 import { TextFieldLabel } from '@/shared/ui/Text';
+import { useSelector } from 'react-redux';
+import { RootState, useAppSelector } from '@/app/store';
+import { BookingManagerItem } from '../../../api/types';
 
 type Props = {
     selectedDate: Date;
     dateRange?: { start: Date; end: Date } | null;
     onPressScheduleItem: (item: any) => void;
+    selectedUserId: number;
+    setSelectedUserId: (userId: number) => void;
 };
 
 type DayInfo = {
@@ -21,19 +25,17 @@ type DayInfo = {
     label: string;
 };
 
-const CalenderWeedComponent = ({ selectedDate, dateRange, onPressScheduleItem }: Props) => {
+const CalenderWeedComponent = ({ selectedDate, dateRange, onPressScheduleItem, selectedUserId, setSelectedUserId }: Props) => {
     const { theme: { colors } } = useAppTheme();
+    const { listStaff } = useSelector((state: RootState) => state.staff);
+    const listBookingManagerByRange = useAppSelector((state) => state.booking.listBookingManagerByRange);
     const timeScrollRef = useRef<ScrollView>(null);
     const headerScrollRef = useRef<ScrollView>(null);
     const bodyScrollRef = useRef<ScrollView>(null);
-    const [hoursStart, setHoursStart] = useState(8);
-    const [minutesStart, setMinutesStart] = useState(15);
-    const [hoursEnd, setHoursEnd] = useState(22);
-    const [minutesEnd, setMinutesEnd] = useState(30);
-    const [selectedUserId, setSelectedUserId] = useState<string>(users[0]?.id || '');
+
     const timeSlotWidth = 200;
-    const minVisibleHour = 8;
-    const maxVisibleHour = 22;
+    const minVisibleHour = 0;
+    const maxVisibleHour = 23;
     const displayTimeSlots = useMemo(() => {
         return timeSlots.filter(slot => {
             const h = parseInt(slot.time.substring(0, 2));
@@ -45,12 +47,6 @@ const CalenderWeedComponent = ({ selectedDate, dateRange, onPressScheduleItem }:
 
     const styles = $styles(colors, timeSlotWidth, isTablet);
 
-    const userDropdownData = useMemo(() => {
-        return users.map(user => ({
-            label: user.name,
-            value: user.id
-        }));
-    }, []);
 
     const getStartOfWeek = (date: Date) => {
         const d = new Date(date);
@@ -72,8 +68,6 @@ const CalenderWeedComponent = ({ selectedDate, dateRange, onPressScheduleItem }:
 
     const selectedDays = useMemo(() => {
         const days: DayInfo[] = [];
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
 
         if (dateRange) {
             const start = new Date(dateRange.start);
@@ -83,12 +77,10 @@ const CalenderWeedComponent = ({ selectedDate, dateRange, onPressScheduleItem }:
 
             const currentDay = new Date(start);
             while (currentDay <= end) {
-                if (currentDay <= today) {
-                    days.push({
-                        date: new Date(currentDay),
-                        label: formatDayLabel(currentDay)
-                    });
-                }
+                days.push({
+                    date: new Date(currentDay),
+                    label: formatDayLabel(currentDay)
+                });
                 currentDay.setDate(currentDay.getDate() + 1);
             }
         } else {
@@ -99,12 +91,10 @@ const CalenderWeedComponent = ({ selectedDate, dateRange, onPressScheduleItem }:
                 currentDay.setDate(startOfCurrentWeek.getDate() + i);
                 currentDay.setHours(0, 0, 0, 0);
 
-                if (currentDay <= today) {
-                    days.push({
-                        date: new Date(currentDay),
-                        label: formatDayLabel(currentDay)
-                    });
-                }
+                days.push({
+                    date: new Date(currentDay),
+                    label: formatDayLabel(currentDay)
+                });
             }
         }
 
@@ -122,11 +112,10 @@ const CalenderWeedComponent = ({ selectedDate, dateRange, onPressScheduleItem }:
     };
 
     const renderScheduleItem = (userId: string, timeSlot: string, day: Date) => {
-        // Lọc scheduleItemsWeek theo ngày
-        const itemsForDay = scheduleItemsWeek.filter(item => 
+        const itemsForDay = convertedScheduleItems.filter(item =>
             item.date && isSameDay(item.date, day)
         );
-        
+
         const blocks = getScheduleBlocksForHour(itemsForDay, userId, timeSlot);
 
         return blocks.map(({ item, index, heightInPixels }) => {
@@ -212,17 +201,82 @@ const CalenderWeedComponent = ({ selectedDate, dateRange, onPressScheduleItem }:
         );
     };
 
+    const convertedScheduleItems = useMemo(() => {
+        const items: ScheduleItem[] = [];
+
+        listBookingManagerByRange.forEach((booking: BookingManagerItem) => {
+            if (!booking.services || booking.services.length === 0) return;
+
+            const bookingDate = new Date(booking.bookingDate);
+            bookingDate.setHours(0, 0, 0, 0);
+
+            const bookingHoursParts = booking.bookingHours.split(':');
+            const bookingHour = parseInt(bookingHoursParts[0]);
+            const bookingMinute = parseInt(bookingHoursParts[1]);
+
+            const baseDate = new Date(bookingDate);
+            baseDate.setHours(bookingHour, bookingMinute, 0, 0);
+
+            let accumulatedMinutes = 0;
+
+            booking.services.forEach((service, serviceIndex) => {
+                if (!service.staff || !service.staff.id) return;
+
+                const serviceStartDate = new Date(baseDate.getTime() + accumulatedMinutes * 60 * 1000);
+                const serviceStartHour = serviceStartDate.getHours();
+                const serviceStartMinute = serviceStartDate.getMinutes();
+                const startTimeHHmm = `${String(serviceStartHour).padStart(2, '0')}${String(serviceStartMinute).padStart(2, '0')}`;
+
+                const serviceEndDate = new Date(serviceStartDate.getTime() + service.serviceTime * 60 * 1000);
+                const serviceEndHour = serviceEndDate.getHours();
+                const serviceEndMinute = serviceEndDate.getMinutes();
+                const endTimeHHmm = `${String(serviceEndHour).padStart(2, '0')}${String(serviceEndMinute).padStart(2, '0')}`;
+
+                accumulatedMinutes += service.serviceTime;
+
+                const getColorByStatus = (status: number) => {
+                    switch (status) {
+                        case 1: // CheckIn
+                            return { color: '#E1F5FE', borderColor: '#4FC3F7' };
+                        case 2: // Có thể là status khác
+                            return { color: '#E8F5E9', borderColor: '#66BB6A' };
+                        default:
+                            return { color: '#FFF3E0', borderColor: '#FFB74D' };
+                    }
+                };
+
+                const { color, borderColor } = getColorByStatus(booking.status);
+
+                const itemId = `${booking.id}-${service.id}-${serviceIndex}`;
+                items.push({
+                    id: itemId,
+                    userId: service.staff.id.toString(),
+                    startTime: startTimeHHmm,
+                    endTime: endTimeHHmm,
+                    title: service.serviceName || 'Dịch vụ',
+                    color,
+                    borderColor,
+                    date: new Date(bookingDate),
+                });
+            });
+        });
+
+        return items;
+    }, [listBookingManagerByRange]);
     return (
         <View style={styles.mainContainer}>
             <View style={styles.fixedUserColumn}>
                 <View style={styles.userColumnHeader}>
                     <Dropdown
-                        data={userDropdownData}
+                        data={listStaff.map(user => ({
+                            label: user.displayName,
+                            value: user.id.toString()
+                        }))}
                         labelField="label"
                         valueField="value"
-                        value={selectedUserId}
+                        value={selectedUserId.toString()}
                         onChange={(item) => {
-                            setSelectedUserId(item.value);
+                            setSelectedUserId(parseInt(item.value));
                         }}
                         style={styles.dropdown}
                         containerStyle={styles.dropdownContainer}
@@ -303,28 +357,28 @@ const CalenderWeedComponent = ({ selectedDate, dateRange, onPressScheduleItem }:
                     >
                         <View style={styles.container}>
                             <View style={styles.userRowsContainer}>
-                                <CurrentTimeLine scheduleHeight={selectedDays.length * 100} timeSlotWidth={timeSlotWidth} hours={hoursStart} minutes={minutesStart} type={'start'} baseHourOffset={minVisibleHour} />
+                                {/* <CurrentTimeLine scheduleHeight={selectedDays.length * 100} timeSlotWidth={timeSlotWidth} hours={hoursStart} minutes={minutesStart} type={'start'} baseHourOffset={minVisibleHour} /> */}
                                 {/* <CurrentTimeLine scheduleHeight={selectedDays.length * 100} timeSlotWidth={timeSlotWidth} hours={hoursNow} minutes={minutesNow} type={'now'} /> */}
-                                <CurrentTimeLine scheduleHeight={selectedDays.length * 100} timeSlotWidth={timeSlotWidth} hours={hoursEnd} minutes={minutesEnd} type={'end'} baseHourOffset={minVisibleHour} />
+                                {/* <CurrentTimeLine scheduleHeight={selectedDays.length * 100} timeSlotWidth={timeSlotWidth} hours={hoursEnd} minutes={minutesEnd} type={'end'} baseHourOffset={minVisibleHour} /> */}
                                 {selectedDays.map((day, dayIndex) => (
                                     <View key={`day-row-${dayIndex}`} style={styles.userRow}>
                                         {displayTimeSlots.map((slot) => {
                                             const slotHour = parseInt(slot.time.substring(0, 2));
                                             const slotMinutes = parseInt(slot.time.substring(2, 4));
-                                            const working = isWorkingHours(slot.time, hoursStart, minutesStart, hoursEnd, minutesEnd);
+                                            // const working = isWorkingHours(slot.time, hoursStart, minutesStart, hoursEnd, minutesEnd);
 
                                             return (
                                                 <View
                                                     key={`${slot.time}-day-${dayIndex}`}
                                                     style={[
                                                         styles.scheduleCell,
-                                                        !working && styles.nonWorkingHoursCell
+                                                        // !working && styles.nonWorkingHoursCell
                                                     ]}
                                                 >
                                                     {renderQuarterHourLines()}
-                                                    {users.flatMap((user) => renderScheduleItem(user.id, slot.time, day.date))}
+                                                    {renderScheduleItem(selectedUserId.toString(), slot.time, day.date)}
 
-                                                    {slotHour === hoursStart && slotMinutes === 0 && minutesStart > 0 && (
+                                                    {/* {slotHour === hoursStart && slotMinutes === 0 && minutesStart > 0 && (
                                                         <View style={[
                                                             styles.partialOverlay,
                                                             {
@@ -345,7 +399,7 @@ const CalenderWeedComponent = ({ selectedDate, dateRange, onPressScheduleItem }:
                                                                 opacity: 0.8
                                                             }
                                                         ]} />
-                                                    )}
+                                                    )} */}
                                                 </View>
                                             );
                                         })}

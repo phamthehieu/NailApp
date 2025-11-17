@@ -1,10 +1,12 @@
 
 
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { BookingManagerItem, DetailBookingItemResponse, ListBookingManagerResponse, ListBookingStatusResponse } from "../api/types";
+import { BookingManagerItem, DetailBookingItemResponse, HistoryBookingItemResponse, ListBookingManagerResponse, ListBookingStatusResponse } from "../api/types";
 
 interface BookingListState {
     listBookingManager: BookingManagerItem[];
+    listBookingManagerByDate: BookingManagerItem[];
+    listBookingManagerByRange: BookingManagerItem[];
     pageIndex: number;
     totalItems: number;
     pageSize: number;
@@ -13,10 +15,13 @@ interface BookingListState {
     error: string | null;
     listBookingStatus: ListBookingStatusResponse | null;
     detailBookingItem: DetailBookingItemResponse | null;
+    historyBookingItem: HistoryBookingItemResponse | null;
 }
 
 const initialState: BookingListState = {
     listBookingManager: [],
+    listBookingManagerByDate: [],
+    listBookingManagerByRange: [],
     pageIndex: 0,
     totalItems: 0,
     pageSize: 0,
@@ -25,6 +30,7 @@ const initialState: BookingListState = {
     error: null,
     listBookingStatus: null,
     detailBookingItem: null,
+    historyBookingItem: null,
 };
 
 const bookingSlice = createSlice({
@@ -33,6 +39,8 @@ const bookingSlice = createSlice({
     reducers: {
         setListBookingManager(state, action: PayloadAction<ListBookingManagerResponse>) {
             state.listBookingManager = action.payload.items;
+            state.listBookingManagerByDate = action.payload.items;
+            state.listBookingManagerByRange = action.payload.items;
             state.pageIndex = action.payload.pageIndex;
             state.totalItems = action.payload.totalItems;
             state.pageSize = action.payload.pageSize;
@@ -81,6 +89,22 @@ const bookingSlice = createSlice({
         setDetailBookingItem(state, action: PayloadAction<DetailBookingItemResponse>) {
             state.detailBookingItem = action.payload;
         },
+        setHistoryBookingItem(state, action: PayloadAction<HistoryBookingItemResponse>) {
+            state.historyBookingItem = action.payload;
+        },
+        appendHistoryBookingItem(state, action: PayloadAction<HistoryBookingItemResponse>) {
+            if (state.historyBookingItem) {
+                state.historyBookingItem.items = [...state.historyBookingItem.items, ...action.payload.items];
+                state.historyBookingItem.pageIndex = action.payload.pageIndex;
+                state.historyBookingItem.totalItems = action.payload.totalItems;
+                state.historyBookingItem.pageSize = action.payload.pageSize;
+                if (action.payload.totalPages > state.historyBookingItem.totalPages) {
+                    state.historyBookingItem.totalPages = action.payload.totalPages;
+                }
+            } else {
+                state.historyBookingItem = action.payload;
+            }
+        },
     },
 });
 
@@ -93,6 +117,8 @@ export const {
     appendListBookingManager,
     resetPageIndex,
     setDetailBookingItem,
+    setHistoryBookingItem,
+    appendHistoryBookingItem,
 } = bookingSlice.actions;
 
 export default bookingSlice.reducer;

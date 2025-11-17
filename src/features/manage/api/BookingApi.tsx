@@ -4,7 +4,8 @@ import type {
     ListBookingHourResponse,
     ListBookingManagerResponse,
     ListBookingStatusResponse,
-    DetailBookingItemResponse
+    DetailBookingItemResponse,
+    HistoryBookingItemResponse
 } from "./types";
 
 export type {
@@ -46,8 +47,8 @@ const formatDateParam = (date: Date) => {
 };
 
 export const getlistBookingManagerApi = async (
-    dateFrom: Date | null,
-    dateTo: Date | null,
+    dateFrom?: Date | null,
+    dateTo?: Date | null,
     bookingDate?: Date | null,
     status?: string,
     bookingCode?: string,
@@ -58,6 +59,7 @@ export const getlistBookingManagerApi = async (
     pageIndex?: number,
     pageSize?: number,
     sortType?: string,
+    staffId?: number,
 ) => {
     const params = new URLSearchParams();
 
@@ -98,7 +100,9 @@ export const getlistBookingManagerApi = async (
     if (sortType) {
         params.append('SortType', sortType);
     }
-
+    if (staffId) {
+        params.append('StaffId', staffId.toString());
+    }
     return http.get<ListBookingManagerResponse>(`/api/Booking/List?${params.toString()}`);
 }
 
@@ -108,4 +112,27 @@ export const getListBookingStatusApi = async () => {
 
 export const getDetailBookingItemApi = async (bookingCode: string) => {
     return http.get<DetailBookingItemResponse>(`/api/Booking/Get/${bookingCode}`);
+}
+
+export const getHistoryBookingItemApi = async (CustomerId?: string, Search?: string, SortBy?: string,PageIndex?: number, PageSize?: number, SortType?: string) => {
+    const params = new URLSearchParams();
+    if (CustomerId) {
+        params.append('CustomerId', CustomerId);
+    }
+    if (Search) {
+        params.append('Search', Search);
+    }
+    if (SortBy) {
+        params.append('SortBy', SortBy);
+    }
+    if (PageIndex) {
+        params.append('PageIndex', PageIndex.toString());
+    }
+    if (PageSize) {
+        params.append('PageSize', PageSize.toString());
+    }
+    if (SortType) {
+        params.append('SortType', SortType);
+    }
+    return http.get<HistoryBookingItemResponse>(`/api/Booking/HistoryBooking?${params.toString()}`);
 }

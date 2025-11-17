@@ -29,12 +29,12 @@ const BookingListComponent = ({ navigation }: BookingListComponentProps) => {
     const isTablet = useIsTablet();
     const styles = $styles(colors, isTablet);
     const { t } = useTranslation();
-    const { getListBookingManager, loadMoreBookings, loading, loadingMore, resetPagination, getDetailBookingItem } = useBookingForm();
+    const { getListBookingManager, loadMoreBookings, loading, loadingMore, resetPagination, getDetailBookingItem, getHistoryBookingItem } = useBookingForm();
     const { listBookingManager, pageIndex, totalPages } = useAppSelector((state) => state.booking);
 
-    useEffect(() => {
-        getListBookingManager();
-    }, []);
+    // useEffect(() => {
+    //     getListBookingManager();
+    // }, [navigation]);
 
     const [isBookingConfirmationModalVisible, setIsBookingConfirmationModalVisible] = useState(false);
     const [refreshing, setRefreshing] = useState(false);
@@ -67,6 +67,7 @@ const BookingListComponent = ({ navigation }: BookingListComponentProps) => {
 
     const handleView = (item: any) => {
         getDetailBookingItem(item.id);
+        getHistoryBookingItem(item.customer.id);
         navigation.navigate(Paths.DetailBookingItem, { bookingId: item.id });
     };
 

@@ -5,6 +5,8 @@ import { users } from '../../../data/users';
 import { Colors, useAppTheme } from '@/shared/theme';
 import { useIsTablet } from '@/shared/lib/useIsTablet';
 import { TextFieldLabel } from '@/shared/ui/Text';
+import { useSelector } from 'react-redux';
+import { RootState } from '@/app/store';
 
 type Props = {
     selectedDate: Date;

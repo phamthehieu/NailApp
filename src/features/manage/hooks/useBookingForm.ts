@@ -1,7 +1,7 @@
 import { useAppDispatch, useAppSelector } from "@/app/store";
 import { useCallback, useState } from "react";
-import { getDetailBookingItemApi, getlistBookingManagerApi, getListBookingStatusApi } from "../api/BookingApi";
-import { setListBookingManager, setListBookingStatus, appendListBookingManager, resetPageIndex, setDetailBookingItem } from "../model/bookingSlice";
+import { getDetailBookingItemApi, getHistoryBookingItemApi, getlistBookingManagerApi, getListBookingStatusApi } from "../api/BookingApi";
+import { setListBookingManager, setListBookingStatus, appendListBookingManager, resetPageIndex, setDetailBookingItem, setHistoryBookingItem, appendHistoryBookingItem } from "../model/bookingSlice";
 import { alertService } from "@/services/alertService";
 import { useTranslation } from "react-i18next";
 
@@ -9,7 +9,7 @@ import { useTranslation } from "react-i18next";
 export function useBookingForm() {
     const dispatch = useAppDispatch();
     const { t } = useTranslation();
-    const { pageIndex: reduxPageIndex } = useAppSelector((state) => state.booking);
+    const { pageIndex: reduxPageIndex, historyBookingItem } = useAppSelector((state) => state.booking);
     const [dateFrom, setDateFrom] = useState<Date | null>(null);
     const [dateTo, setDateTo] = useState<Date | null>(null);
     const [bookingDate, setBookingDate] = useState<Date | null>(null);
@@ -54,6 +54,46 @@ export function useBookingForm() {
         }
     }, [dateFrom, dateTo, bookingDate, status, bookingCode, customerName, phone, search, sortBy, reduxPageIndex, pageSize, sortType, dispatch]);
 
+    const getListBookingManagerByDate = useCallback(async (bookingDate: Date, searchText: string) => {
+        try {
+            if (loading) return;
+            setLoading(true);
+            const pageSizeDate = 10000;
+            const response = await getlistBookingManagerApi(undefined, undefined, bookingDate, undefined, undefined, undefined, undefined, searchText, undefined, undefined, pageSizeDate, undefined);
+            dispatch(setListBookingManager(response));
+        } catch (error) {
+            console.error(error);
+            alertService.showAlert({
+                title: t('bookingList.errorTitle'),
+                message: t('bookingList.errorMessage'),
+                typeAlert: 'Error',
+                onConfirm: () => {},
+            });
+        } finally {
+            setLoading(false);
+        }
+    }, [dispatch, t, loading]);
+
+    const getListBookingManagerByRange = useCallback(async (startDate?: Date | null, endDate?: Date | null, searchText?: string, staffId?: number) => {
+        try {
+            if (loading) return;
+            setLoading(true);
+            const pageSizeDate = 10000;
+            const response = await getlistBookingManagerApi(startDate, endDate, undefined, undefined, undefined, undefined, undefined, searchText, undefined, undefined, pageSizeDate, undefined, staffId);
+            dispatch(setListBookingManager(response));
+        } catch (error) {
+            console.error(error);
+            alertService.showAlert({
+                title: t('bookingList.errorTitle'),
+                message: t('bookingList.errorMessage'),
+                typeAlert: 'Error',
+                onConfirm: () => {},
+            });
+        } finally {
+            setLoading(false);
+        }
+    }, [dispatch, t, loading]);
+
     const loadMoreBookings = useCallback(async () => {
         await getListBookingManager(true);
     }, [getListBookingManager]);
@@ -87,8 +127,14 @@ export function useBookingForm() {
             dispatch(setListBookingStatus(response));
         } catch (error) {
             console.error(error);
+            alertService.showAlert({
+                title: t('bookingList.errorTitle'),
+                message: t('bookingList.errorMessage'),
+                typeAlert: 'Error',
+                onConfirm: () => {},
+            });
         }
-    }, []);
+    }, [dispatch, t]);
 
     const getDetailBookingItem = useCallback(async (bookingCode: string) => {
         try {
@@ -96,8 +142,47 @@ export function useBookingForm() {
             dispatch(setDetailBookingItem(response));
         } catch (error) {
             console.error(error);
+            alertService.showAlert({
+                title: t('bookingList.errorTitle'),
+                message: t('bookingList.errorMessage'),
+                typeAlert: 'Error',
+                onConfirm: () => {},
+            });
         }
-    }, []);
+    }, [dispatch, t]);
+
+    const getHistoryBookingItem = useCallback(async (CustomerId?: string, Search?: string, SortBy?: string, PageIndex?: number, PageSize?: number, SortType?: string, isLoadMore: boolean = false) => {
+        try {
+            if (loading && !isLoadMore) return;
+            if (isLoadMore) {
+                setLoadingMore(true);
+            } else {
+                setLoading(true);
+            }
+            const response = await getHistoryBookingItemApi(CustomerId, Search, SortBy, PageIndex, PageSize, SortType);
+            if (isLoadMore) {
+                dispatch(appendHistoryBookingItem(response));
+            } else {
+                dispatch(setHistoryBookingItem(response));
+            }
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setLoading(false);
+            setLoadingMore(false);
+        }
+    }, [dispatch, loading]);
+
+    const loadMoreHistoryBookings = useCallback(async (CustomerId?: string, Search?: string, SortBy?: string, PageSize?: number, SortType?: string) => {
+        if (!historyBookingItem || loadingMore) return;
+
+        const currentPageIndex = historyBookingItem.pageIndex || 0;
+        const totalPages = historyBookingItem.totalPages || 0;
+
+        if (currentPageIndex >= totalPages - 1) return;
+
+        await getHistoryBookingItem(CustomerId, Search, SortBy, currentPageIndex + 1, PageSize, SortType, true);
+    }, [historyBookingItem, loadingMore, getHistoryBookingItem]);
     return {
         getListBookingManager,
         getListBookingStatus,
@@ -127,6 +212,10 @@ export function useBookingForm() {
         loading,
         setLoading,
         loadingMore,
-        getDetailBookingItem
+        getDetailBookingItem,
+        getListBookingManagerByDate,
+        getHistoryBookingItem,
+        loadMoreHistoryBookings,
+        getListBookingManagerByRange
     }
 }

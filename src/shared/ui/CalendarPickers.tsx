@@ -40,11 +40,10 @@ export const CalendarDayPickerModal: React.FC<CalendarDayPickerModalProps> = ({
     useEffect(() => {
         if (!visible) { return; }
         const normalized = startOfDay(selectedDate);
-        const resolved = normalized > today ? today : normalized;
-        setDisplayYear(resolved.getFullYear());
-        setDisplayMonth(resolved.getMonth());
-        setTempSelectedDate(resolved);
-    }, [visible, selectedDate, today]);
+        setDisplayYear(normalized.getFullYear());
+        setDisplayMonth(normalized.getMonth());
+        setTempSelectedDate(normalized);
+    }, [visible, selectedDate]);
 
     const handlePrev = useCallback(() => {
         const prev = new Date(displayYear, displayMonth - 1, 1);
@@ -63,7 +62,6 @@ export const CalendarDayPickerModal: React.FC<CalendarDayPickerModalProps> = ({
 
     const handleNext = useCallback(() => {
         const next = new Date(displayYear, displayMonth + 1, 1);
-        if (next > today) { return; }
         setDisplayYear(next.getFullYear());
         setDisplayMonth(next.getMonth());
         setTempSelectedDate((prevSelected) => {
@@ -73,9 +71,9 @@ export const CalendarDayPickerModal: React.FC<CalendarDayPickerModalProps> = ({
                 new Date(next.getFullYear(), next.getMonth() + 1, 0).getDate(),
             );
             const candidate = startOfDay(new Date(next.getFullYear(), next.getMonth(), day));
-            return candidate > today ? today : candidate;
+            return candidate;
         });
-    }, [displayYear, displayMonth, selectedDate, today]);
+    }, [displayYear, displayMonth, selectedDate]);
 
     const handleConfirm = useCallback(() => {
         if (!tempSelectedDate) {
@@ -123,7 +121,6 @@ export const CalendarDayPickerModal: React.FC<CalendarDayPickerModalProps> = ({
                     <View style={styles.monthGrid}>
                         {matrix.map((d, idx) => {
                             const inMonth = d.getMonth() === displayMonth;
-                            const isFuture = d > today;
                             const isTodayCell = isSameDay(d, today);
                             const selected = tempSelectedDate ? isSameDay(d, tempSelectedDate) : false;
                             return (
@@ -134,12 +131,9 @@ export const CalendarDayPickerModal: React.FC<CalendarDayPickerModalProps> = ({
                                         !inMonth && styles.outMonthDay,
                                         selected && styles.dayCellSelected,
                                         isTodayCell && !selected && styles.todayOutline,
-                                        isFuture && styles.disabledDay,
                                     ]}
-                                    activeOpacity={isFuture ? 1 : 0.8}
-                                    disabled={isFuture}
+                                    activeOpacity={0.8}
                                     onPress={() => {
-                                        if (isFuture) { return; }
                                         setTempSelectedDate(startOfDay(new Date(d)));
                                     }}
                                 >
@@ -202,9 +196,7 @@ export const CalendarWeekPickerModal: React.FC<CalendarWeekPickerModalProps> = (
     useEffect(() => {
         if (!visible) { return; }
 
-        const baseToday = startOfDay(new Date());
         const normalizedSelected = startOfDay(selectedDate);
-        const baseDate = normalizedSelected > baseToday ? baseToday : normalizedSelected;
 
         if (committedRange) {
             const start = startOfDay(committedRange.start);
@@ -221,18 +213,13 @@ export const CalendarWeekPickerModal: React.FC<CalendarWeekPickerModalProps> = (
         }
 
         setRangeMode(false);
-        setDisplayYear(baseDate.getFullYear());
-        setDisplayMonth(baseDate.getMonth());
+        setDisplayYear(normalizedSelected.getFullYear());
+        setDisplayMonth(normalizedSelected.getMonth());
 
-        const weeks = getWeeksOfMonth(baseDate.getFullYear(), baseDate.getMonth());
-        let idx = weeks.findIndex((w) => baseDate >= w.start && baseDate <= w.end);
+        const weeks = getWeeksOfMonth(normalizedSelected.getFullYear(), normalizedSelected.getMonth());
+        let idx = weeks.findIndex((w) => normalizedSelected >= w.start && normalizedSelected <= w.end);
         if (idx === -1) {
-            for (let i = weeks.length - 1; i >= 0; i -= 1) {
-                if (weeks[i].start <= baseToday) {
-                    idx = i;
-                    break;
-                }
-            }
+            idx = 0;
         }
         idx = Math.max(0, idx);
         setTempWeekIndex(idx);
@@ -261,7 +248,6 @@ export const CalendarWeekPickerModal: React.FC<CalendarWeekPickerModalProps> = (
     const handleNextMonth = useCallback(() => {
         const d = new Date(displayYear, displayMonth, 1);
         d.setMonth(d.getMonth() + 1);
-        if (startOfDay(d) > today) { return; }
         setDisplayYear(d.getFullYear());
         setDisplayMonth(d.getMonth());
         setTempWeekIndex(0);
@@ -269,18 +255,11 @@ export const CalendarWeekPickerModal: React.FC<CalendarWeekPickerModalProps> = (
             setTempStartDate(null);
             setTempEndDate(null);
         }
-    }, [displayYear, displayMonth, rangeMode, today]);
+    }, [displayYear, displayMonth, rangeMode]);
 
     const handleConfirm = useCallback(() => {
         const weeks = getWeeksOfMonth(displayYear, displayMonth);
-        let maxIdx = weeks.length - 1;
-        for (let i = weeks.length - 1; i >= 0; i -= 1) {
-            if (weeks[i].start <= today) {
-                maxIdx = i;
-                break;
-            }
-        }
-        const usedIdx = Math.min(tempWeekIndex, Math.max(0, maxIdx));
+        const usedIdx = Math.min(tempWeekIndex, weeks.length - 1);
         const chosen = weeks[usedIdx];
 
         if (!rangeMode) {
@@ -310,7 +289,7 @@ export const CalendarWeekPickerModal: React.FC<CalendarWeekPickerModalProps> = (
             onConfirmWeek(new Date(chosen.start));
         }
         onClose();
-    }, [displayYear, displayMonth, tempWeekIndex, rangeMode, tempStartDate, tempEndDate, onConfirmWeek, onConfirmRange, onClose, today]);
+    }, [displayYear, displayMonth, tempWeekIndex, rangeMode, tempStartDate, tempEndDate, onConfirmWeek, onConfirmRange, onClose]);
 
     const handleSwitchToWeek = useCallback(() => {
         setRangeMode(false);
@@ -327,28 +306,16 @@ export const CalendarWeekPickerModal: React.FC<CalendarWeekPickerModalProps> = (
         const normalizedTarget = startOfDay(targetDate);
         let newWeekIndex = weeks.findIndex((w) => normalizedTarget >= w.start && normalizedTarget <= w.end);
         if (newWeekIndex === -1) {
-            for (let i = weeks.length - 1; i >= 0; i -= 1) {
-                if (weeks[i].start <= today) {
-                    newWeekIndex = i;
-                    break;
-                }
-            }
+            newWeekIndex = 0;
         }
-        let maxIdx = weeks.length - 1;
-        for (let i = weeks.length - 1; i >= 0; i -= 1) {
-            if (weeks[i].start <= today) {
-                maxIdx = i;
-                break;
-            }
-        }
-        const validIndex = Math.max(0, Math.min(newWeekIndex >= 0 ? newWeekIndex : 0, maxIdx));
+        const validIndex = Math.max(0, Math.min(newWeekIndex, weeks.length - 1));
         setTempWeekIndex(validIndex);
         const chosen = weeks[validIndex];
         if (chosen) {
             setTempStartDate(new Date(chosen.start));
             setTempEndDate(new Date(chosen.end));
         }
-    }, [displayYear, displayMonth, selectedDate, tempStartDate, onClearRange, today]);
+    }, [displayYear, displayMonth, selectedDate, tempStartDate, onClearRange]);
 
     const handleSwitchToRange = useCallback(() => {
         setRangeMode(true);
@@ -418,7 +385,6 @@ export const CalendarWeekPickerModal: React.FC<CalendarWeekPickerModalProps> = (
                         {matrix.map((d, idx) => {
                             const inMonth = d.getMonth() === displayMonth;
                             const isInChosenWeek = !rangeMode && chosen && d >= chosen.start && d <= chosen.end;
-                            const isFuture = d > today;
                             const isTodayCell = d.getTime() === today.getTime();
                             const isInRangeSelected = rangeMode && !!(tempStartDate && tempEndDate && d >= tempStartDate && d <= tempEndDate);
                             const dNormalized = new Date(d.getFullYear(), d.getMonth(), d.getDate());
@@ -439,10 +405,8 @@ export const CalendarWeekPickerModal: React.FC<CalendarWeekPickerModalProps> = (
                                         !rangeMode && isInChosenWeek && styles.dayCellSelected,
                                         isTodayCell && !isInChosenWeek && styles.todayOutline,
                                         isTodayCell && isInChosenWeek && styles.todayInWeek,
-                                        isFuture && styles.disabledDay,
                                     ]}
-                                    activeOpacity={isFuture ? 1 : 0.8}
-                                    disabled={isFuture}
+                                    activeOpacity={0.8}
                                     onPress={() => {
                                         const currentWeeks = getWeeksOfMonth(displayYear, displayMonth);
                                         const weekIdx = currentWeeks.findIndex((w) => d >= w.start && d <= w.end);

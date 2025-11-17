@@ -12,7 +12,7 @@ export type ScheduleItem = {
 export const scheduleItems: ScheduleItem[] = [
   {
     id: '1',
-    userId: '1',
+    userId: '25',
     startTime: '0900',
     endTime: '0930',
     title: 'Chăm sóc móng',
@@ -21,7 +21,7 @@ export const scheduleItems: ScheduleItem[] = [
   },
   {
     id: '1',
-    userId: '1',
+    userId: '19',
     startTime: '1300',
     endTime: '1430',
     title: 'Làm móng tay',

@@ -9,24 +9,40 @@ import { useTranslation } from 'react-i18next';
 import Loader from '@/shared/ui/Loader';
 import MHeader from '@/shared/ui/MHeader';
 import { Funnel, Store } from 'lucide-react-native';
-import { DrawerActions } from '@react-navigation/native';
 import ModalFliterComponent from '../components/ModalFliterComponent';
 import CalendarHeader from '../components/CalenderHeader';
 import { CalenderDayComponent, CalenderWeedComponent, CalenderMonthComponent } from './schedule';
 import TabComponent from '@/shared/ui/TabComponent';
 import BookingListComponent from './list/BookingListComponent';
-import { useStaffForm } from '../hooks/useStaffForm';
 import { useBookingForm } from '../hooks/useBookingForm';
+import { RootState } from '@/app/store';
+import { useSelector } from 'react-redux';
 
 type TabType = { label: string; value: number }
+
+const getCurrentWeekRange = (): { start: Date; end: Date } => {
+    const today = new Date();
+    const day = today.getDay();
+    const diff = day === 0 ? -6 : 1 - day; 
+    const start = new Date(today);
+    start.setDate(start.getDate() + diff);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(start);
+    end.setDate(end.getDate() + 6);
+    end.setHours(23, 59, 59, 999);
+    return { start, end };
+};
 
 const BookingManageScreen = ({ navigation }: RootScreenProps<Paths.BookingManage>) => {
     const { t } = useTranslation();
     const { theme: { colors } } = useAppTheme();
+    const { listStaff } = useSelector((state: RootState) => state.staff);
     const [viewMode, setViewMode] = useState<'Ngày' | 'Tuần' | 'Tháng'>('Ngày');
     const [anchorDate, setAnchorDate] = useState<Date>(new Date());
-    const [activeRange, setActiveRange] = useState<{ start: Date; end: Date } | null>(null);
-    const [loading, setLoading] = useState(false);
+    const [searchText, setSearchText] = useState<string>('');
+    const [debouncedSearchText, setDebouncedSearchText] = useState<string>('');
+    const [selectedUserId, setSelectedUserId] = useState<number>(listStaff[0]?.id || 0);
+    const [activeRange, setActiveRange] = useState<{ start: Date; end: Date } | null>(getCurrentWeekRange());
     const [showAdvanced, setShowAdvanced] = useState(false);
     const [activeTab, setActiveTab] = useState<TabType>({ label: t('calenderDashboard.calenderTab.schedule'), value: 1 });
     const [form, setForm] = useState({
@@ -39,8 +55,7 @@ const BookingManageScreen = ({ navigation }: RootScreenProps<Paths.BookingManage
         status: '',
     });
     const styles = $styles(colors);
-    const { getListBookingStatus } = useBookingForm();
-    // Animation values
+    const { getListBookingStatus, getListBookingManagerByDate, getListBookingManager, getListBookingManagerByRange, loading } = useBookingForm();
     const tab1Opacity = useRef(new Animated.Value(1)).current;
     const tab1TranslateX = useRef(new Animated.Value(0)).current;
     const tab2Opacity = useRef(new Animated.Value(0)).current;
@@ -101,12 +116,12 @@ const BookingManageScreen = ({ navigation }: RootScreenProps<Paths.BookingManage
             const e = new Date(s);
             e.setDate(e.getDate() + 6);
             e.setHours(23, 59, 59, 999);
+            setActiveRange({ start: s, end: e });
         }
     }, [viewMode, anchorDate, activeRange]);
 
     useEffect(() => {
         if (activeTab.value === 1) {
-            // Tab 1 (Calendar) hiển thị
             Animated.parallel([
                 Animated.timing(tab1Opacity, {
                     toValue: 1,
@@ -130,7 +145,6 @@ const BookingManageScreen = ({ navigation }: RootScreenProps<Paths.BookingManage
                 }),
             ]).start();
         } else {
-            // Tab 2 (List) hiển thị
             Animated.parallel([
                 Animated.timing(tab1Opacity, {
                     toValue: 0,
@@ -165,7 +179,7 @@ const BookingManageScreen = ({ navigation }: RootScreenProps<Paths.BookingManage
             return <CalenderDayComponent selectedDate={anchorDate} onPressScheduleItem={handlePressScheduleItem} />;
         }
         if (viewMode === 'Tuần') {
-            return <CalenderWeedComponent selectedDate={anchorDate} dateRange={activeRange} onPressScheduleItem={handlePressScheduleItem} />;
+            return <CalenderWeedComponent selectedDate={anchorDate} dateRange={activeRange} onPressScheduleItem={handlePressScheduleItem} selectedUserId={selectedUserId} setSelectedUserId={setSelectedUserId} />;
         }
         if (viewMode === 'Tháng') {
             return <CalenderMonthComponent selectedDate={anchorDate} onPressScheduleItem={handlePressScheduleItem} />;
@@ -176,6 +190,38 @@ const BookingManageScreen = ({ navigation }: RootScreenProps<Paths.BookingManage
     useEffect(() => {
         getListBookingStatus();
     }, []);
+
+    useEffect(() => {
+        if (listStaff.length > 0 && selectedUserId === 0 && listStaff[0]?.id) {
+            setSelectedUserId(listStaff[0].id);
+        }
+    }, [listStaff, selectedUserId]);
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebouncedSearchText(searchText);
+        }, 500);
+
+        return () => {
+            clearTimeout(timer);
+        };
+    }, [searchText]);
+
+    useEffect(() => {
+
+        if (activeTab.value === 1) {
+            if (viewMode === 'Ngày') {
+                getListBookingManagerByDate(anchorDate, debouncedSearchText);
+            } else if (viewMode === 'Tuần') {
+                getListBookingManagerByRange(activeRange?.start, activeRange?.end, debouncedSearchText, selectedUserId);
+            } else if (viewMode === 'Tháng') {
+                getListBookingManagerByDate(anchorDate, debouncedSearchText);
+            }
+        }
+        if (activeTab.value === 2) {
+            getListBookingManager();
+        }
+    }, [anchorDate, viewMode, activeTab, debouncedSearchText, activeRange, selectedUserId]);
 
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
@@ -188,7 +234,7 @@ const BookingManageScreen = ({ navigation }: RootScreenProps<Paths.BookingManage
                 showIconLeft={true}
                 iconLeft={<Store size={24} color={colors.background} />}
                 bgColor={colors.yellow}
-                showIconRight={true}
+                showIconRight={activeTab.value === 2 ? true : false}
                 iconRight={<Funnel size={24} color={colors.background} />}
                 onPressIconRight={() => setShowAdvanced(true)}
             />
@@ -229,13 +275,23 @@ const BookingManageScreen = ({ navigation }: RootScreenProps<Paths.BookingManage
                     pointerEvents={activeTab.value === 1 ? 'auto' : 'none'}
                 >
                     <CalendarHeader
+                        searchText={searchText}
+                        setSearchText={setSearchText}
                         selectedDate={anchorDate}
                         onChange={handleDateChange}
                         onChangeRange={handleRangeChange}
                         viewMode={viewMode}
                         onViewModeChange={(mode) => {
                             setViewMode(mode);
-                            setActiveRange(null);
+                            if (mode === 'Tuần') {
+                                const start = getStartOfWeek(anchorDate);
+                                const end = new Date(start);
+                                end.setDate(end.getDate() + 6);
+                                end.setHours(23, 59, 59, 999);
+                                setActiveRange({ start, end });
+                            } else {
+                                setActiveRange(null);
+                            }
                         }}
                     />
 

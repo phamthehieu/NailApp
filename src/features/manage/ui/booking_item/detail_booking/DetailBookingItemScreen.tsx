@@ -121,6 +121,7 @@ const DetailBookingItem = ({ navigation, route }: RootScreenProps<Paths.DetailBo
             ]).start();
         }
     }, [activeTab.value]);
+
     return (
         <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
 

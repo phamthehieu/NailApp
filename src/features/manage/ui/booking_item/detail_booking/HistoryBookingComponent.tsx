@@ -1,10 +1,12 @@
-import React, { useMemo } from "react";
-import { View, StyleSheet, ScrollView } from "react-native";
+import React, { useMemo, useRef, useCallback } from "react";
+import { View, StyleSheet, ScrollView, NativeScrollEvent, NativeSyntheticEvent, ActivityIndicator } from "react-native";
 import { User, Phone, Calendar } from "lucide-react-native";
 import { Colors, useAppTheme } from "@/shared/theme";
 import { useTranslation } from "react-i18next";
 import { TextFieldLabel } from "@/shared/ui/Text";
-import { scheduleItemsList } from "@/features/manage/data/scheduleItems";
+import { useAppSelector } from "@/app/store";
+import { useBookingForm } from "@/features/manage/hooks/useBookingForm";
+import Loader from "@/shared/ui/Loader";
 
 interface HistoryBookingComponentProps {
     bookingId?: number | string;
@@ -14,28 +16,22 @@ const HistoryBookingComponent = ({ bookingId }: HistoryBookingComponentProps) =>
     const { theme: { colors } } = useAppTheme();
     const styles = $styles(colors);
     const { t } = useTranslation();
+    const { historyBookingItem, detailBookingItem } = useAppSelector((state) => state.booking);
+    const { loadMoreHistoryBookings, loadingMore } = useBookingForm();
+    const scrollViewRef = useRef<ScrollView>(null);
 
-    const booking = useMemo(() => {
-        if (!bookingId) return null;
-        return scheduleItemsList.find(item => item.id === bookingId);
-    }, [bookingId]);
-
+    const customer = detailBookingItem?.customer;
 
     const historyBookings = useMemo(() => {
-        if (!booking) return [];
+        if (!historyBookingItem?.items || historyBookingItem.items.length === 0) return [];
 
-        return scheduleItemsList
-            .filter(item => 
-                (item.user === booking.user || item.phone === booking.phone) &&
-                (item.status === "Đã hoàn thành" || item.status === "Hoàn tất")
-            )
+        return [...historyBookingItem.items]
             .sort((a, b) => {
-                // Sắp xếp theo ngày giảm dần (mới nhất trước)
-                const dateA = new Date(a.date).getTime();
-                const dateB = new Date(b.date).getTime();
+                const dateA = new Date(a.dateUsed).getTime();
+                const dateB = new Date(b.dateUsed).getTime();
                 return dateB - dateA;
             });
-    }, [booking]);
+    }, [historyBookingItem]);
 
     const formatDate = (dateString: string) => {
         const date = new Date(dateString);
@@ -45,13 +41,45 @@ const HistoryBookingComponent = ({ bookingId }: HistoryBookingComponentProps) =>
         return `${day}/${month}/${year}`;
     };
 
-    const formatDateTime = (dateString: string, time: string, endTime?: string) => {
-        const date = formatDate(dateString);
-        const timeStr = endTime ? `${time} - ${endTime}` : time;
-        return `${date} ${timeStr}`;
+    const formatTime = (dateString: string) => {
+        const date = new Date(dateString);
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        return `${hours}:${minutes}`;
     };
 
-    if (!booking) {
+    const calculateEndTime = (startDate: string, serviceTimeMinutes: number) => {
+        const startDateObj = new Date(startDate);
+        const endDateObj = new Date(startDateObj.getTime() + serviceTimeMinutes * 60000);
+        return formatTime(endDateObj.toISOString());
+    };
+
+    const formatDateTime = (dateString: string, serviceTimeMinutes: number) => {
+        const date = formatDate(dateString);
+        const startTime = formatTime(dateString);
+        const endTime = calculateEndTime(dateString, serviceTimeMinutes);
+        return `${date} ${startTime} - ${endTime}`;
+    };
+
+    const hasMorePages = useMemo(() => {
+        if (!historyBookingItem) return false;
+        const currentPageIndex = historyBookingItem.pageIndex || 0;
+        const totalPages = historyBookingItem.totalPages || 0;
+        return currentPageIndex < totalPages - 1;
+    }, [historyBookingItem]);
+
+    const handleScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
+
+        const { layoutMeasurement, contentOffset, contentSize } = event.nativeEvent;
+        const paddingToBottom = 20;
+        const isCloseToBottom = layoutMeasurement.height + contentOffset.y >= contentSize.height - paddingToBottom;
+
+        if (isCloseToBottom && hasMorePages && !loadingMore && customer?.id) {
+            loadMoreHistoryBookings(customer.id.toString());
+        }
+    }, [hasMorePages, loadingMore, customer?.id, loadMoreHistoryBookings]);
+
+    if (!customer) {
         return (
             <View style={styles.container}>
                 <TextFieldLabel style={styles.emptyText}>{t('bookingInformation.noData')}</TextFieldLabel>
@@ -60,12 +88,14 @@ const HistoryBookingComponent = ({ bookingId }: HistoryBookingComponentProps) =>
     }
 
     return (
-        <ScrollView 
+        <ScrollView
+            ref={scrollViewRef}
             style={styles.container}
             contentContainerStyle={styles.scrollContent}
             showsVerticalScrollIndicator={false}
+            onScroll={handleScroll}
+            scrollEventThrottle={400}
         >
-            {/* Thông tin khách hàng */}
             <View style={styles.section}>
                 <TextFieldLabel style={styles.sectionTitle}>{t('bookingInformation.customerInfo')}</TextFieldLabel>
                 <View style={styles.card}>
@@ -74,19 +104,18 @@ const HistoryBookingComponent = ({ bookingId }: HistoryBookingComponentProps) =>
                             <User size={20} color={colors.yellow} />
                             <TextFieldLabel style={styles.infoLabel}>{t('bookingInformation.customerName')}</TextFieldLabel>
                         </View>
-                        <TextFieldLabel style={styles.infoValue}>{booking.user || '-'}</TextFieldLabel>
+                        <TextFieldLabel style={styles.infoValue}>{customer.name || '-'}</TextFieldLabel>
                     </View>
                     <View style={styles.infoRow}>
                         <View style={styles.infoLeft}>
                             <Phone size={20} color={colors.yellow} />
                             <TextFieldLabel style={styles.infoLabel}>{t('bookingInformation.phone')}</TextFieldLabel>
                         </View>
-                        <TextFieldLabel style={styles.infoValue}>{booking.phone || '-'}</TextFieldLabel>
+                        <TextFieldLabel style={styles.infoValue}>{customer.phoneNumber || '-'}</TextFieldLabel>
                     </View>
                 </View>
             </View>
 
-            {/* Lịch sử sử dụng dịch vụ */}
             <View style={styles.section}>
                 <TextFieldLabel style={styles.sectionTitle}>{t('historyBooking.serviceHistory')}</TextFieldLabel>
                 <View style={styles.card}>
@@ -94,19 +123,19 @@ const HistoryBookingComponent = ({ bookingId }: HistoryBookingComponentProps) =>
                         <TextFieldLabel style={styles.emptyHistoryText}>{t('historyBooking.noHistory')}</TextFieldLabel>
                     ) : (
                         historyBookings.map((item, index) => (
-                            <View key={item.id || index} style={[styles.historyItem, index < historyBookings.length - 1 && styles.historyItemBorder]}>
+                            <View key={`${item.id}-${item.dateUsed}-${index}`} style={[styles.historyItem, index < historyBookings.length - 1 && styles.historyItemBorder]}>
                                 <View style={styles.historyRow}>
                                     <Calendar size={20} color={colors.yellow} />
                                     <View style={styles.historyContent}>
                                         <TextFieldLabel style={styles.historyDateTime}>
-                                            {item.date && item.time 
-                                                ? formatDateTime(item.date, item.time, item.endTime)
+                                            {item.dateUsed
+                                                ? formatDateTime(item.dateUsed, item.serviceTime)
                                                 : '-'
                                             }
                                         </TextFieldLabel>
                                         <TextFieldLabel style={styles.historyService}>
-                                            {item.note || item.service || '-'}
-                                            {item.staff && ` - ${item.staff}`}
+                                            {item.serviceName || '-'}
+                                            {item.staff?.displayName && ` - ${item.staff.displayName}`}
                                         </TextFieldLabel>
                                     </View>
                                 </View>
@@ -115,6 +144,8 @@ const HistoryBookingComponent = ({ bookingId }: HistoryBookingComponentProps) =>
                     )}
                 </View>
             </View>
+
+            <Loader loading={loadingMore} />
         </ScrollView>
     );
 };
@@ -208,6 +239,10 @@ const $styles = (colors: Colors) => StyleSheet.create({
         color: colors.placeholderTextColor,
         textAlign: 'center',
         paddingVertical: 16,
+    },
+    loadingContainer: {
+        paddingVertical: 16,
+        alignItems: 'center',
     },
 });
 

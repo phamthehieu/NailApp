@@ -14,14 +14,16 @@ type Props = {
     onChangeRange?: (range: { start: Date; end: Date } | null) => void;
     viewMode?: 'Ngày' | 'Tuần' | 'Tháng';
     onViewModeChange?: (mode: 'Ngày' | 'Tuần' | 'Tháng') => void;
+    searchText: string;
+    setSearchText: (text: string) => void;
 };
 
-const CalendarHeader = ({ selectedDate, onChange, onChangeRange, viewMode: propViewMode, onViewModeChange }: Props) => {
+const CalendarHeader = ({ selectedDate, onChange, onChangeRange, viewMode: propViewMode, onViewModeChange, searchText, setSearchText }: Props) => {
     const { theme: { colors } } = useAppTheme();
     const { t, i18n } = useTranslation();
     const currentLanguage = i18n.language;
     const { width } = useWindowDimensions();
-    const isSmall = width < 420; // phone screens
+    const isSmall = width < 420;
     const styles = $styles(colors, isSmall);
     const iconSize = isSmall ? 16 : 18;
     const [internalViewMode, setInternalViewMode] = useState<'Ngày' | 'Tuần' | 'Tháng'>('Ngày');
@@ -152,14 +154,19 @@ const CalendarHeader = ({ selectedDate, onChange, onChangeRange, viewMode: propV
                     {isSmall ? (
                         isSearchActive ? (
                             <>
-                                <TouchableOpacity onPress={() => setIsSearchActive(false)} style={styles.iconButton}>
+                                <TouchableOpacity onPress={() => {
+                                    setIsSearchActive(false);
+                                    setSearchText('');
+                                }} style={styles.iconButton}>
                                     <X size={iconSize} color={colors.text} />
                                 </TouchableOpacity>
                                 <TextField
+                                    value={searchText}
                                     autoFocus
                                     LeftAccessory={(props) => <Search size={isSmall ? 18 : 16} color={props.editable ? colors.text : colors.placeholderTextColor} />}
                                     placeholder={t('calenderDashboard.calenderHeader.searchPlaceholder') || 'Search...'}
                                     onChangeText={(text) => {
+                                        setSearchText(text);
                                     }}
                                     inputWrapperStyle={[styles.searchBox]}
                                 />
@@ -171,11 +178,20 @@ const CalendarHeader = ({ selectedDate, onChange, onChangeRange, viewMode: propV
                         )
                     ) : (
                         <TextField
+                            value={searchText}
                             LeftAccessory={(props) => <Search size={isSmall ? 18 : 16} color={props.editable ? colors.text : colors.placeholderTextColor} />}
                             placeholder={t('calenderDashboard.calenderHeader.searchPlaceholder') || 'Search...'}
                             onChangeText={(text) => {
+                                setSearchText(text);
                             }}
                             inputWrapperStyle={styles.searchBox}
+                            RightAccessory={() => (
+                                searchText ? (
+                                    <TouchableOpacity onPress={() => setSearchText('')} style={styles.iconButton}>
+                                        <X size={iconSize} color={colors.text} />
+                                    </TouchableOpacity>
+                                ) : null
+                            )}
                         />
                     )}
 
