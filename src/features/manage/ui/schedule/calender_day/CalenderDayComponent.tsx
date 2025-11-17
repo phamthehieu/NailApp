@@ -22,14 +22,14 @@ type Props = {
 
 const CalenderDayComponent = ({ selectedDate: _selectedDate, onPressScheduleItem }: Props) => {
     const { theme: { colors } } = useAppTheme();
-    const { getListStaff, getListBookingHour } = useStaffForm();
+    const { getListStaff } = useStaffForm();
     const { t } = useTranslation();
     const listBookingManagerByDate = useAppSelector((state) => state.booking.listBookingManagerByDate);
     const timeScrollRef = useRef<ScrollView>(null);
     const headerScrollRef = useRef<ScrollView>(null);
     const bodyScrollRef = useRef<ScrollView>(null);
     const verticalScrollRef = useRef<ScrollView>(null);
-    const { listStaff, listBookingHour } = useSelector((state: RootState) => state.staff);
+    const { listStaff, listBookingHourSetting } = useSelector((state: RootState) => state.staff);
     const timeSlotWidth = 200;
     const [hideStaffWithoutWorkingHours, setHideStaffWithoutWorkingHours] = useState(false);
 
@@ -39,7 +39,7 @@ const CalenderDayComponent = ({ selectedDate: _selectedDate, onPressScheduleItem
     };
 
     const getWorkingHoursForStaff = useCallback((staffId: number, dayOfWeek: string) => {
-        const bookingHour = listBookingHour.find(
+        const bookingHour = listBookingHourSetting.find(
             item => item.staffId === staffId &&
                 item.dayOfTheWeek === dayOfWeek &&
                 item.active === true
@@ -58,7 +58,7 @@ const CalenderDayComponent = ({ selectedDate: _selectedDate, onPressScheduleItem
         const endMinute = parseInt(endTime.substring(3, 5));
 
         return { startHour, startMinute, endHour, endMinute };
-    }, [listBookingHour]);
+    }, [listBookingHourSetting]);
 
     const dayOfWeek = getDayOfWeek(_selectedDate);
 
@@ -72,11 +72,55 @@ const CalenderDayComponent = ({ selectedDate: _selectedDate, onPressScheduleItem
         });
     }, [listStaff, hideStaffWithoutWorkingHours, dayOfWeek, getWorkingHoursForStaff]);
 
-    const { minVisibleHour, maxVisibleHour } = useMemo(() => {
-        if (filteredListStaff.length === 0 || listBookingHour.length === 0) {
-            return { minVisibleHour: 0, maxVisibleHour: 23 };
+    const selectedDayWorkingRange = useMemo(() => {
+        const activeEntries = listBookingHourSetting.filter(
+            (item) => item.dayOfTheWeek === dayOfWeek && item.active
+        );
+
+        if (activeEntries.length === 0) {
+            return null;
         }
 
+        const parseTimeToMinutes = (time?: string) => {
+            if (!time) return null;
+            const [hourString, minuteString] = time.split(':');
+            const hour = parseInt(hourString ?? '0', 10);
+            const minute = parseInt(minuteString ?? '0', 10);
+            if (Number.isNaN(hour) || Number.isNaN(minute)) {
+                return null;
+            }
+            return hour * 60 + minute;
+        };
+
+        let minMinutes: number | null = null;
+        let maxMinutes: number | null = null;
+
+        activeEntries.forEach((entry) => {
+            const startMinutes = parseTimeToMinutes(entry.startTime);
+            const endMinutes = parseTimeToMinutes(entry.endTime);
+
+            if (startMinutes !== null) {
+                minMinutes = minMinutes === null ? startMinutes : Math.min(minMinutes, startMinutes);
+            }
+
+            if (endMinutes !== null) {
+                maxMinutes = maxMinutes === null ? endMinutes : Math.max(maxMinutes, endMinutes);
+            }
+        });
+
+        if (minMinutes === null || maxMinutes === null) {
+            return null;
+        }
+
+        return {
+            startHour: Math.floor(minMinutes / 60),
+            startMinute: minMinutes % 60,
+            endHour: Math.floor(maxMinutes / 60),
+            endMinute: maxMinutes % 60
+        };
+    }, [listBookingHourSetting, dayOfWeek]);
+
+    const { minVisibleHour, maxVisibleHour } = useMemo(() => {
         let minHour = 24;
         let maxHour = 0;
         let hasAnyWorkingHours = false;
@@ -93,6 +137,12 @@ const CalenderDayComponent = ({ selectedDate: _selectedDate, onPressScheduleItem
             }
         });
 
+        if (!hasAnyWorkingHours && selectedDayWorkingRange) {
+            hasAnyWorkingHours = true;
+            minHour = selectedDayWorkingRange.startHour;
+            maxHour = selectedDayWorkingRange.endHour;
+        }
+
         if (!hasAnyWorkingHours) {
             return { minVisibleHour: 0, maxVisibleHour: 23 };
         }
@@ -102,7 +152,7 @@ const CalenderDayComponent = ({ selectedDate: _selectedDate, onPressScheduleItem
         const finalMaxHour = Math.min(23, maxHour + paddingHour);
 
         return { minVisibleHour: finalMinHour, maxVisibleHour: finalMaxHour };
-    }, [filteredListStaff, listBookingHour, dayOfWeek, getWorkingHoursForStaff]);
+    }, [filteredListStaff, selectedDayWorkingRange, dayOfWeek, getWorkingHoursForStaff]);
 
     const displayTimeSlots = useMemo(() => {
         return timeSlots.filter(slot => {
@@ -114,6 +164,13 @@ const CalenderDayComponent = ({ selectedDate: _selectedDate, onPressScheduleItem
     const isTablet = useIsTablet();
 
     const styles = $styles(colors, timeSlotWidth, isTablet);
+
+    const scheduleHeight = filteredListStaff.length * 100;
+    const hasDayWorkingHours = Boolean(selectedDayWorkingRange);
+    const dayHoursStart = selectedDayWorkingRange?.startHour ?? 0;
+    const dayMinutesStart = selectedDayWorkingRange?.startMinute ?? 0;
+    const dayHoursEnd = selectedDayWorkingRange?.endHour ?? 0;
+    const dayMinutesEnd = selectedDayWorkingRange?.endMinute ?? 0;
 
     const { convertedScheduleItems, bookingDataMap } = useMemo(() => {
         const items: ScheduleItem[] = [];
@@ -256,8 +313,9 @@ const CalenderDayComponent = ({ selectedDate: _selectedDate, onPressScheduleItem
 
     useEffect(() => {
         getListStaff();
-        // getListBookingHour();
     }, []);
+
+    console.log('listBookingHourSetting', listBookingHourSetting);
 
     return (
         <View style={styles.mainContainer}>
@@ -267,13 +325,13 @@ const CalenderDayComponent = ({ selectedDate: _selectedDate, onPressScheduleItem
 
                     <View style={styles.filterContainer}>
 
-                        <Switch
+                        {/* <Switch
                             value={hideStaffWithoutWorkingHours}
                             onValueChange={setHideStaffWithoutWorkingHours}
                             trackColor={{ false: colors.backgroundDisabled, true: colors.yellow + '80' }}
                             thumbColor={hideStaffWithoutWorkingHours ? colors.yellow : colors.primary}
                             ios_backgroundColor={colors.backgroundDisabled}
-                        />
+                        /> */}
 
                         {isTablet ? <TextFieldLabel style={styles.filterLabel} numberOfLines={1} ellipsizeMode="tail">{t('calenderDashboard.calenderHeader.hideStaffWithoutWorkingHours')}</TextFieldLabel> : null}
 
@@ -357,6 +415,26 @@ const CalenderDayComponent = ({ selectedDate: _selectedDate, onPressScheduleItem
                     >
                         <View style={styles.container}>
                             <View style={styles.userRowsContainer}>
+                                {selectedDayWorkingRange && (
+                                    <>
+                                        <CurrentTimeLine
+                                            scheduleHeight={scheduleHeight}
+                                            timeSlotWidth={timeSlotWidth}
+                                            hours={selectedDayWorkingRange.startHour}
+                                            minutes={selectedDayWorkingRange.startMinute}
+                                            type={'start'}
+                                            baseHourOffset={minVisibleHour}
+                                        />
+                                        <CurrentTimeLine
+                                            scheduleHeight={scheduleHeight}
+                                            timeSlotWidth={timeSlotWidth}
+                                            hours={selectedDayWorkingRange.endHour}
+                                            minutes={selectedDayWorkingRange.endMinute}
+                                            type={'end'}
+                                            baseHourOffset={minVisibleHour}
+                                        />
+                                    </>
+                                )}
                                 {filteredListStaff.map((staff, index) => {
                                     const staffWorkingHours = getWorkingHoursForStaff(staff.id, dayOfWeek);
                                     const hasWorkingHours = staffWorkingHours !== null;
@@ -393,21 +471,22 @@ const CalenderDayComponent = ({ selectedDate: _selectedDate, onPressScheduleItem
                                                     </View>
                                                 </>
                                             )}
+
                                             <View style={styles.userRow}>
                                                 {displayTimeSlots.map((slot) => {
                                                     const slotHour = parseInt(slot.time.substring(0, 2));
                                                     const slotMinutes = parseInt(slot.time.substring(2, 4));
 
-                                                    // const working = hasWorkingHours
-                                                    //     ? isWorkingHours(slot.time, staffHoursStart, staffMinutesStart, staffHoursEnd, staffMinutesEnd)
-                                                    //     : false;
+                                                    const working = hasDayWorkingHours
+                                                        ? isWorkingHours(slot.time, dayHoursStart, dayMinutesStart, dayHoursEnd, dayMinutesEnd)
+                                                        : false;
 
                                                     return (
                                                         <View
                                                             key={`${slot.time}-${staff.id}`}
                                                             style={[
                                                                 styles.scheduleCell,
-                                                                // !working && styles.nonWorkingHoursCell
+                                                                !working && styles.nonWorkingHoursCell
                                                             ]}
                                                         >
                                                             {renderQuarterHourLines()}

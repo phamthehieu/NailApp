@@ -17,13 +17,14 @@ import BookingListComponent from './list/BookingListComponent';
 import { useBookingForm } from '../hooks/useBookingForm';
 import { RootState } from '@/app/store';
 import { useSelector } from 'react-redux';
+import { useStaffForm } from '../hooks/useStaffForm';
 
 type TabType = { label: string; value: number }
 
 const getCurrentWeekRange = (): { start: Date; end: Date } => {
     const today = new Date();
     const day = today.getDay();
-    const diff = day === 0 ? -6 : 1 - day; 
+    const diff = day === 0 ? -6 : 1 - day;
     const start = new Date(today);
     start.setDate(start.getDate() + diff);
     start.setHours(0, 0, 0, 0);
@@ -45,6 +46,7 @@ const BookingManageScreen = ({ navigation }: RootScreenProps<Paths.BookingManage
     const [activeRange, setActiveRange] = useState<{ start: Date; end: Date } | null>(getCurrentWeekRange());
     const [showAdvanced, setShowAdvanced] = useState(false);
     const [activeTab, setActiveTab] = useState<TabType>({ label: t('calenderDashboard.calenderTab.schedule'), value: 1 });
+    const { getListBookingHourSetting } = useStaffForm();
     const [form, setForm] = useState({
         fromDate: '',
         toDate: '',
@@ -189,6 +191,7 @@ const BookingManageScreen = ({ navigation }: RootScreenProps<Paths.BookingManage
 
     useEffect(() => {
         getListBookingStatus();
+        getListBookingHourSetting();
     }, []);
 
     useEffect(() => {

@@ -108,18 +108,26 @@ export interface ListBookingStatusResponse {
 
 // ==================== Booking Hour Types ====================
 
-export interface ListBookingHourResponse extends BaseEntity {
-    tenantId: number;
-    staffId: number;
+export interface ListBookingHourSettingResponse extends BaseEntity {
+    tenantId: number,
+    staffId: number,
+    dayId: number,
     dayOfTheWeek: string;
     startTime: string;
     endTime: string;
     active: boolean;
     isValidated: boolean;
+    createdAt: string;
     creatorId: number;
+    creator: string | null;
+    lastModifiedAt: string;
     lastModifierId: number;
+    informations: string | null;
+    warnings: string | null;
+    errors: string | null;
+    id: number;
     code: string | null;
-    name: string | null;
+    name: string | null
 }
 
 // ==================== Booking Manager Types ====================

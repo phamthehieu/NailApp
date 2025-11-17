@@ -1,6 +1,6 @@
 import { useCallback } from "react";
-import { getListBookingHourApi, getListStaffApi } from "../api/BookingApi";
-import { setListBookingHour, setListStaff } from "../model/staffSlice";
+import { getListBookingHourSettingApi, getListStaffApi } from "../api/BookingApi";
+import { setListBookingHourSetting, setListStaff } from "../model/staffSlice";
 import { useAppDispatch } from "@/app/store";
 
 
@@ -15,16 +15,16 @@ export function useStaffForm() {
         }
     }, []);
 
-    const getListBookingHour = useCallback(async () => {
+    const getListBookingHourSetting = useCallback(async () => {
         try {
-            const response = await getListBookingHourApi();
-            dispatch(setListBookingHour(response));
+            const response = await getListBookingHourSettingApi();
+            dispatch(setListBookingHourSetting(response));
         } catch (error) {
             console.error(error);
         }
     }, []);
     return {
         getListStaff,
-        getListBookingHour,
-    }
+        getListBookingHourSetting,
+    };
 }

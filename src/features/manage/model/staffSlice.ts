@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { ListBookingHourResponse, ListStaffResponse, StaffItem } from "../api/types";
+import { ListBookingHourSettingResponse, ListStaffResponse, StaffItem } from "../api/types";
 
 interface StaffState {
     listStaff: StaffItem[];
@@ -10,7 +10,7 @@ interface StaffState {
     loading: boolean;
     error: string | null;
     selectedStaff: StaffItem | null;
-    listBookingHour: ListBookingHourResponse[];
+    listBookingHourSetting: ListBookingHourSettingResponse[];
 }
 
 const initialState: StaffState = {
@@ -22,7 +22,7 @@ const initialState: StaffState = {
     loading: false,
     error: null,
     selectedStaff: null,
-    listBookingHour: [],
+    listBookingHourSetting: [],
 };
 
 const staffSlice = createSlice({
@@ -55,8 +55,8 @@ const staffSlice = createSlice({
             state.error = null;
             state.selectedStaff = null;
         },
-        setListBookingHour(state, action: PayloadAction<ListBookingHourResponse[]>) {
-            state.listBookingHour = action.payload;
+        setListBookingHourSetting(state, action: PayloadAction<ListBookingHourSettingResponse[]>) {
+            state.listBookingHourSetting = action.payload;
         },
     },
 });
@@ -66,7 +66,7 @@ export const {
     setLoading,
     setError,
     clearStaffState,
-    setListBookingHour,
+    setListBookingHourSetting,
 } = staffSlice.actions;
 
 export default staffSlice.reducer;

@@ -1,7 +1,7 @@
 import { http } from "@/services/api/http";
 import type {
     ListStaffResponse,
-    ListBookingHourResponse,
+    ListBookingHourSettingResponse,
     ListBookingManagerResponse,
     ListBookingStatusResponse,
     DetailBookingItemResponse,
@@ -10,7 +10,7 @@ import type {
 
 export type {
     ListStaffResponse,
-    ListBookingHourResponse,
+    ListBookingHourSettingResponse,
     ListBookingManagerResponse,
     ListBookingStatusResponse,
     BookingManagerItem,
@@ -30,8 +30,8 @@ export const getListStaffApi = async () => {
     return http.getPortal<ListStaffResponse>('/api/Staff/List');
 }
 
-export const getListBookingHourApi = async () => {
-    return http.getPortal<ListBookingHourResponse[]>('/api/BookingHours/List');
+export const getListBookingHourSettingApi = async () => {
+    return http.getPortal<ListBookingHourSettingResponse[]>('/api/BookingHours/ListSetting');
 }
 
 const pad = (value: number) => value.toString().padStart(2, '0');
@@ -136,3 +136,4 @@ export const getHistoryBookingItemApi = async (CustomerId?: string, Search?: str
     }
     return http.get<HistoryBookingItemResponse>(`/api/Booking/HistoryBooking?${params.toString()}`);
 }
+

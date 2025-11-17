@@ -236,9 +236,9 @@ const CalenderWeedComponent = ({ selectedDate, dateRange, onPressScheduleItem, s
 
                 const getColorByStatus = (status: number) => {
                     switch (status) {
-                        case 1: // CheckIn
+                        case 1:
                             return { color: '#E1F5FE', borderColor: '#4FC3F7' };
-                        case 2: // Có thể là status khác
+                        case 2:
                             return { color: '#E8F5E9', borderColor: '#66BB6A' };
                         default:
                             return { color: '#FFF3E0', borderColor: '#FFB74D' };
@@ -365,8 +365,6 @@ const CalenderWeedComponent = ({ selectedDate, dateRange, onPressScheduleItem, s
                                         {displayTimeSlots.map((slot) => {
                                             const slotHour = parseInt(slot.time.substring(0, 2));
                                             const slotMinutes = parseInt(slot.time.substring(2, 4));
-                                            // const working = isWorkingHours(slot.time, hoursStart, minutesStart, hoursEnd, minutesEnd);
-
                                             return (
                                                 <View
                                                     key={`${slot.time}-day-${dayIndex}`}
