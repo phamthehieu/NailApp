@@ -2,6 +2,7 @@ import { useCallback } from "react";
 import { getListBookingHourSettingApi, getListBookingHourSettingByStaffIdApi, getListStaffApi } from "../api/BookingApi";
 import { setListBookingHourSetting, setListBookingHourSettingByStaffId, setListStaff } from "../model/staffSlice";
 import { useAppDispatch } from "@/app/store";
+import { setListService } from "../model/editBookingSlice";
 
 
 export function useStaffForm() {

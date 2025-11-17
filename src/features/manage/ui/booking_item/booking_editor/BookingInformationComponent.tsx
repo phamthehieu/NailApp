@@ -5,9 +5,12 @@ import { Colors, useAppTheme } from "@/shared/theme";
 import { TextField } from "@/shared/ui/TextField";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import DateTimePicker from "@/shared/ui/DatePicker";
+import TimePickerModal from "@/shared/ui/TimePickerModal";
+import { CalendarDayPickerModal } from "@/shared/ui/CalendarPickers";
 import { useTranslation } from "react-i18next";
 import ServiceListComponent, { ServiceItem } from "./components/ServiceListComponent";
 import PeriodicSettingsComponent, { PeriodicSettings } from "./components/PeriodicSettingsComponent";
+import { RootState, useAppSelector } from "@/app/store";
 
 export interface BookingInformationData {
     bookingDate: Date | null;
@@ -27,12 +30,34 @@ interface BookingInformationComponentProps {
     onChange?: (data: BookingInformationData) => void;
 }
 
+const clamp = (value: number, min: number, max: number) => {
+    if (Number.isNaN(value)) { return min; }
+    return Math.min(Math.max(value, min), max);
+};
+
+const parseSlotSteps = (slot?: string) => {
+    const defaults = { hourStep: 1, minuteStep: 1, secondStep: 1 };
+    if (!slot) { return defaults; }
+    const parts = slot.split(':');
+    if (parts.length !== 3) { return defaults; }
+    const [hRaw, mRaw, sRaw] = parts;
+    const hours = clamp(parseInt(hRaw, 10) || 0, 0, 12);
+    const minutes = clamp(parseInt(mRaw, 10) || 0, 0, 60);
+    const seconds = clamp(parseInt(sRaw, 10) || 0, 0, 60);
+    return {
+        hourStep: hours > 0 ? Math.max(1, hours) : 1,
+        minuteStep: minutes > 0 ? Math.max(1, minutes) : 1,
+        secondStep: seconds > 0 ? Math.max(1, seconds) : 1,
+    };
+};
+
 const BookingInformationComponent = ({ value, onChange }: BookingInformationComponentProps) => {
     const { theme: { colors } } = useAppTheme();
     const { width } = useWindowDimensions();
     const isWide = width >= 700;
     const styles = $styles(colors, isWide);
     const insets = useSafeAreaInsets();
+    const listBookingSetting = useAppSelector((state: RootState) => state.editBooking.listBookingSetting);
     const { t } = useTranslation();
 
     const initialValue = value || {
@@ -50,6 +75,7 @@ const BookingInformationComponent = ({ value, onChange }: BookingInformationComp
     const inputPositionsRef = useRef<Record<"note", number>>({
         note: 0,
     });
+
     const [keyboardHeight, setKeyboardHeight] = useState(0);
     const [isPeriodic, setIsPeriodic] = useState(initialValue.isPeriodic);
     const [periodicSettings, setPeriodicSettings] = useState<PeriodicSettings>({
@@ -73,10 +99,6 @@ const BookingInformationComponent = ({ value, onChange }: BookingInformationComp
             hideSub.remove();
         };
     }, []);
-
-
-
-
 
     const safeScrollToInput = useCallback((key: "note") => {
         const y = inputPositionsRef.current[key] ?? 0;
@@ -174,6 +196,25 @@ const BookingInformationComponent = ({ value, onChange }: BookingInformationComp
             } : undefined,
         };
     }, [selectedDate, selectedTime, serviceItems, note, isPeriodic, periodicSettings]);
+
+    const bookingDateMaximum = useMemo(() => {
+        if (!listBookingSetting) return undefined;
+        const months = listBookingSetting.bookingTimeRangeMonths ?? 0;
+        const weeks = listBookingSetting.bookingTimeRangeWeeks ?? 0;
+        const days = listBookingSetting.bookingTimeRangeDays ?? 0;
+
+        const totalDays = (months * 30) + (weeks * 7) + days;
+        if (totalDays <= 0) return undefined;
+
+        const maxDate = new Date();
+        maxDate.setHours(23, 59, 59, 999);
+        maxDate.setDate(maxDate.getDate() + totalDays);
+        return maxDate;
+    }, [listBookingSetting]);
+
+    const timePickerSteps = useMemo(() => {
+        return parseSlotSteps(listBookingSetting?.bookingSlotSize);
+    }, [listBookingSetting?.bookingSlotSize]);
 
     useEffect(() => {
         onChange?.(bookingData);
@@ -273,24 +314,30 @@ const BookingInformationComponent = ({ value, onChange }: BookingInformationComp
                 </View>
             </ScrollView>
 
-            <DateTimePicker
+            <CalendarDayPickerModal
                 visible={showDatePicker}
-                value={selectedDate || new Date()}
-                mode="date"
-                onChange={handleDateChange}
+                selectedDate={selectedDate || new Date()}
+                minimumDate={new Date()}
+                maximumDate={bookingDateMaximum}
+                hideOutOfRangeDates
+                onConfirm={handleDateChange}
                 onClose={() => setShowDatePicker(false)}
-                title={t('bookingInformation.bookingDatePickerTitle')}
-                allowPastDates={false}
             />
 
-            <DateTimePicker
+            <TimePickerModal
                 visible={showTimePicker}
-                value={selectedTime || new Date()}
-                mode="time"
-                onChange={handleTimeChange}
-                onClose={() => setShowTimePicker(false)}
+                initialDate={selectedTime || new Date()}
                 title={t('bookingInformation.bookingTimePickerTitle')}
+                cancelText={t('calenderDashboard.calenderHeader.cancel')}
+                confirmText={t('calenderDashboard.calenderHeader.confirm')}
+                showSeconds={false}
+                hourStep={timePickerSteps.hourStep}
+                minuteStep={timePickerSteps.minuteStep}
+                secondStep={timePickerSteps.secondStep}
+                onConfirm={handleTimeChange}
+                onClose={() => setShowTimePicker(false)}
             />
+
         </KeyboardAvoidingView>
     )
 }

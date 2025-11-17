@@ -5,7 +5,9 @@ import type {
     ListBookingManagerResponse,
     ListBookingStatusResponse,
     DetailBookingItemResponse,
-    HistoryBookingItemResponse
+    HistoryBookingItemResponse,
+    ListBookingSettingResponse,
+    ListServiceResponse
 } from "./types";
 
 export type {
@@ -141,3 +143,29 @@ export const getListBookingHourSettingByStaffIdApi = async (staffId: number) => 
     return http.getPortal<ListBookingHourSettingResponse[]>(`/api/BookingHours/ListBookingHoursByStaffId?staffId=${staffId}`);
 }
 
+export const getListBookingSettingApi = async () => {
+    return http.get<ListBookingSettingResponse>('/api/Booking/GetBookingSetting');
+}
+
+export const getListServiceApi = async (SystemCatalogId?: number, Search?: string, SortBy?: number, PageIndex?: number, PageSize?: number, SortType?: string) => {
+    const params = new URLSearchParams();
+    if (SystemCatalogId) {
+        params.append('SystemCatalogId', SystemCatalogId.toString());
+    }
+    if (Search) {
+        params.append('Search', Search);
+    }
+    if (SortBy) {
+        params.append('SortBy', SortBy.toString());
+    }
+    if (PageIndex) {
+        params.append('PageIndex', PageIndex.toString());
+    }
+    if (PageSize) {
+        params.append('PageSize', PageSize.toString());
+    }
+    if (SortType) {
+        params.append('SortType', SortType);
+    }
+    return http.getPortal<ListServiceResponse>(`/api/ServiceManagement/List?${params.toString()}`);
+}

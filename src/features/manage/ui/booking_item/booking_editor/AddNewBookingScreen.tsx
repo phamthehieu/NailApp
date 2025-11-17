@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 import { ArrowLeft, Info, UserRound } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
@@ -13,11 +13,14 @@ import { Button } from "@/shared/ui/Button";
 import CustomerInformationComponent, { CustomerState } from "./CustomerInformationComponent";
 import BookingInformationComponent, { BookingInformationData } from "./BookingInformationComponent";
 import { TextFieldLabel } from "@/shared/ui/Text";
+import { useEditBookingForm } from "@/features/manage/hooks/useEditBookingForm";
+import Loader from "@/shared/ui/Loader";
 
 const AddNewBookingScreen = ({ navigation }: RootScreenProps<Paths.AddNewBooking>) => {
     const { theme: { colors } } = useAppTheme();
     const styles = $styles(colors);
     const { t } = useTranslation();
+    const { getListBookingSetting, loading } = useEditBookingForm();
 
     const steps = useMemo(() => ([
         { label: t('bookingInformation.customerInfo'), icon: UserRound },
@@ -43,8 +46,13 @@ const AddNewBookingScreen = ({ navigation }: RootScreenProps<Paths.AddNewBooking
         periodicSettings: undefined,
     });
 
+    useEffect(() => {
+        getListBookingSetting();
+    }, []);
+
     return (
         <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+
             <StatusBarComponent backgroundColor={colors.yellow} />
 
             <MHeader
@@ -133,6 +141,8 @@ const AddNewBookingScreen = ({ navigation }: RootScreenProps<Paths.AddNewBooking
                     textStyle={{ color: colors.black }}
                 />
             </View>
+
+            <Loader loading={loading} />
         </SafeAreaView>
     );
 };

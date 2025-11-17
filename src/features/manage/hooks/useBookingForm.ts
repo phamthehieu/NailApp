@@ -183,6 +183,8 @@ export function useBookingForm() {
 
         await getHistoryBookingItem(CustomerId, Search, SortBy, currentPageIndex + 1, PageSize, SortType, true);
     }, [historyBookingItem, loadingMore, getHistoryBookingItem]);
+
+    
     return {
         getListBookingManager,
         getListBookingStatus,

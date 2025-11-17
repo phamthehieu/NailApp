@@ -16,6 +16,9 @@ export type CalendarDayPickerModalProps = BaseModalProps & {
     selectedDate: Date;
     onConfirm: (date: Date) => void;
     locale?: string;
+    minimumDate?: Date;
+    maximumDate?: Date;
+    hideOutOfRangeDates?: boolean;
 };
 
 export const CalendarDayPickerModal: React.FC<CalendarDayPickerModalProps> = ({
@@ -24,6 +27,9 @@ export const CalendarDayPickerModal: React.FC<CalendarDayPickerModalProps> = ({
     selectedDate,
     onConfirm,
     locale = 'vi-VN',
+    minimumDate,
+    maximumDate,
+    hideOutOfRangeDates = false,
 }) => {
     const { theme: { colors } } = useAppTheme();
     const { t } = useTranslation();
@@ -32,6 +38,18 @@ export const CalendarDayPickerModal: React.FC<CalendarDayPickerModalProps> = ({
     const styles = useMemo(() => createStyles(colors, isSmall), [colors, isSmall]);
     const iconSize = isSmall ? 16 : 18;
     const today = useMemo(() => startOfDay(new Date()), []);
+    const normalizedMin = useMemo(() => (minimumDate ? startOfDay(minimumDate) : null), [minimumDate]);
+    const normalizedMax = useMemo(() => (maximumDate ? endOfDay(maximumDate) : null), [maximumDate]);
+    const clampToRange = useCallback((date: Date) => {
+        let next = startOfDay(date);
+        if (normalizedMin && next < normalizedMin) {
+            next = new Date(normalizedMin);
+        }
+        if (normalizedMax && next > normalizedMax) {
+            next = startOfDay(normalizedMax);
+        }
+        return next;
+    }, [normalizedMin, normalizedMax]);
 
     const [displayYear, setDisplayYear] = useState<number>(selectedDate.getFullYear());
     const [displayMonth, setDisplayMonth] = useState<number>(selectedDate.getMonth());
@@ -39,13 +57,37 @@ export const CalendarDayPickerModal: React.FC<CalendarDayPickerModalProps> = ({
 
     useEffect(() => {
         if (!visible) { return; }
-        const normalized = startOfDay(selectedDate);
+        const normalized = clampToRange(selectedDate);
         setDisplayYear(normalized.getFullYear());
         setDisplayMonth(normalized.getMonth());
         setTempSelectedDate(normalized);
-    }, [visible, selectedDate]);
+    }, [visible, selectedDate, clampToRange]);
+
+    const earliestMonth = useMemo(() => {
+        if (!normalizedMin) { return null; }
+        return new Date(normalizedMin.getFullYear(), normalizedMin.getMonth(), 1);
+    }, [normalizedMin]);
+
+    const latestMonth = useMemo(() => {
+        if (!normalizedMax) { return null; }
+        return new Date(normalizedMax.getFullYear(), normalizedMax.getMonth(), 1);
+    }, [normalizedMax]);
+
+    const canGoPrev = useMemo(() => {
+        if (!earliestMonth) { return true; }
+        const current = new Date(displayYear, displayMonth, 1);
+        return current > earliestMonth;
+    }, [earliestMonth, displayYear, displayMonth]);
+
+    const canGoNext = useMemo(() => {
+        if (!latestMonth) { return true; }
+        const current = new Date(displayYear, displayMonth, 1);
+        const latestComparable = new Date(latestMonth.getFullYear(), latestMonth.getMonth(), 1);
+        return current < latestComparable;
+    }, [latestMonth, displayYear, displayMonth]);
 
     const handlePrev = useCallback(() => {
+        if (!canGoPrev) { return; }
         const prev = new Date(displayYear, displayMonth - 1, 1);
         setDisplayYear(prev.getFullYear());
         setDisplayMonth(prev.getMonth());
@@ -58,9 +100,10 @@ export const CalendarDayPickerModal: React.FC<CalendarDayPickerModalProps> = ({
             const candidate = startOfDay(new Date(prev.getFullYear(), prev.getMonth(), day));
             return candidate;
         });
-    }, [displayYear, displayMonth, selectedDate]);
+    }, [displayYear, displayMonth, selectedDate, canGoPrev]);
 
     const handleNext = useCallback(() => {
+        if (!canGoNext) { return; }
         const next = new Date(displayYear, displayMonth + 1, 1);
         setDisplayYear(next.getFullYear());
         setDisplayMonth(next.getMonth());
@@ -73,16 +116,17 @@ export const CalendarDayPickerModal: React.FC<CalendarDayPickerModalProps> = ({
             const candidate = startOfDay(new Date(next.getFullYear(), next.getMonth(), day));
             return candidate;
         });
-    }, [displayYear, displayMonth, selectedDate]);
+    }, [displayYear, displayMonth, selectedDate, canGoNext]);
 
     const handleConfirm = useCallback(() => {
         if (!tempSelectedDate) {
             onClose();
             return;
         }
-        onConfirm(startOfDay(tempSelectedDate));
+        const clamped = clampToRange(tempSelectedDate);
+        onConfirm(startOfDay(clamped));
         onClose();
-    }, [tempSelectedDate, onConfirm, onClose]);
+    }, [tempSelectedDate, onConfirm, onClose, clampToRange]);
 
     if (!visible) {
         return null;
@@ -101,13 +145,23 @@ export const CalendarDayPickerModal: React.FC<CalendarDayPickerModalProps> = ({
             <View style={styles.modalBackdrop}>
                 <View style={styles.modalContainer}>
                     <View style={styles.weekHeaderRow}>
-                        <TouchableOpacity style={styles.iconButton} onPress={handlePrev} activeOpacity={0.7}>
+                        <TouchableOpacity
+                            style={[styles.iconButton, !canGoPrev && styles.iconButtonDisabled]}
+                            onPress={handlePrev}
+                            activeOpacity={0.7}
+                            disabled={!canGoPrev}
+                        >
                             <ChevronLeft size={iconSize} color={colors.text} />
                         </TouchableOpacity>
                         <TextFieldLabel style={styles.monthYearText}>
                             {new Intl.DateTimeFormat(localeToUse, { month: 'long', year: 'numeric' }).format(new Date(displayYear, displayMonth, 1))}
                         </TextFieldLabel>
-                        <TouchableOpacity style={styles.iconButton} onPress={handleNext} activeOpacity={0.7}>
+                        <TouchableOpacity
+                            style={[styles.iconButton, !canGoNext && styles.iconButtonDisabled]}
+                            onPress={handleNext}
+                            activeOpacity={0.7}
+                            disabled={!canGoNext}
+                        >
                             <ChevronRight size={iconSize} color={colors.text} />
                         </TouchableOpacity>
                     </View>
@@ -121,8 +175,17 @@ export const CalendarDayPickerModal: React.FC<CalendarDayPickerModalProps> = ({
                     <View style={styles.monthGrid}>
                         {matrix.map((d, idx) => {
                             const inMonth = d.getMonth() === displayMonth;
+                            const dayStart = startOfDay(d);
+                            const isBeforeMin = normalizedMin && dayStart < normalizedMin;
+                            const isAfterMax = normalizedMax && dayStart > normalizedMax;
+                            const isDisabled = !!(isBeforeMin || isAfterMax);
                             const isTodayCell = isSameDay(d, today);
                             const selected = tempSelectedDate ? isSameDay(d, tempSelectedDate) : false;
+                            if (hideOutOfRangeDates && isDisabled) {
+                                return (
+                                    <View key={`single-day-${idx}`} style={[styles.dayCell, styles.hiddenDay]} />
+                                );
+                            }
                             return (
                                 <TouchableOpacity
                                     key={`single-day-${idx}`}
@@ -131,13 +194,20 @@ export const CalendarDayPickerModal: React.FC<CalendarDayPickerModalProps> = ({
                                         !inMonth && styles.outMonthDay,
                                         selected && styles.dayCellSelected,
                                         isTodayCell && !selected && styles.todayOutline,
+                                        isDisabled && styles.disabledDay,
                                     ]}
                                     activeOpacity={0.8}
                                     onPress={() => {
+                                        if (isDisabled) { return; }
                                         setTempSelectedDate(startOfDay(new Date(d)));
                                     }}
                                 >
-                                    <TextFieldLabel style={[styles.dayNumber, selected && styles.dayNumberSelected]}>
+                                    <TextFieldLabel style={[
+                                        styles.dayNumber,
+                                        selected && styles.dayNumberSelected,
+                                        isDisabled && styles.dayNumberDisabled,
+                                    ]}
+                                    >
                                         {d.getDate()}
                                     </TextFieldLabel>
                                 </TouchableOpacity>
@@ -749,6 +819,9 @@ const createStyles = (colors: any, isSmall: boolean) => StyleSheet.create({
     iconButton: {
         padding: isSmall ? 6 : 8,
     },
+    iconButtonDisabled: {
+        opacity: 0.3,
+    },
     monthYearText: {
         fontSize: isSmall ? 16 : 18,
         fontWeight: '600',
@@ -797,10 +870,17 @@ const createStyles = (colors: any, isSmall: boolean) => StyleSheet.create({
     disabledDay: {
         opacity: 0.35,
     },
+    hiddenDay: {
+        opacity: 0,
+        pointerEvents: 'none',
+    },
     dayNumber: {
         color: colors.text,
         fontSize: isSmall ? 12 : 14,
         fontWeight: '600',
+    },
+    dayNumberDisabled: {
+        opacity: 0.3,
     },
     dayNumberSelected: {
         color: colors.card,

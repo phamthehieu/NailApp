@@ -5,13 +5,14 @@ import authReducer from '@/features/auth/model/authSlice';
 import storeReducer from '@/features/store/model/storeSlice';
 import staffReducer from '@/features/manage/model/staffSlice';
 import bookingReducer from '@/features/manage/model/bookingSlice';
-
+import editBookingReducer from '@/features/manage/model/editBookingSlice';
 export const store = configureStore({
   reducer: {
     auth: authReducer,
     store: storeReducer,
     staff: staffReducer,
     booking: bookingReducer,
+    editBooking: editBookingReducer,
   },
 });
 

@@ -180,9 +180,58 @@ export interface HistoryBookingItem extends BaseEntity {
     errors: any
 }
 
+export interface ListBookingSettingResponse {
+    id: number;
+    bookingPolicy: string;
+    aboutUs: string;
+    appointmentLeadTimeDays: number;
+    appointmentLeadTimeHours: number;
+    appointmentLeadTimeMins: number;
+    bookingTimeRangeMonths: number;
+    bookingTimeRangeWeeks: number;
+    bookingTimeRangeDays: number;
+    bookingSlotSize: string;
+    skipLogin: boolean;
+}
+
 // ==================== Staff List Response ====================
 
 export interface ListStaffResponse extends PaginationResponse<StaffItem> { }
+
+export interface ListServiceResponse extends PaginationResponse<ListServiceResponseItem> {
+    items: ListServiceResponseItem[];
+}
+
+export interface ListServiceResponseItem extends BaseEntity {
+    name: string
+    price: number
+    url: string
+    serviceTime: number
+    bufferTime: number
+    description: string
+    systemCatalogIds: number[]
+    employeeIds: number[]
+    specialists: Specialist[]
+    systemCatalogs: SystemCatalog[]
+    id: number
+    creator: any
+    createdAt: string
+    lastModifiedAt: string
+    informations: any
+    warnings: any
+    errors: any
+}
+
+export interface Specialist extends BaseEntity {
+    serviceManagementId: number
+    employeeId: number
+    employeeName: string
+}
+
+export interface SystemCatalog extends BaseEntity {
+    serviceManagementId: number
+    systemCatalogId: number
+}
 
 // ==================== Legacy Type Exports (for backward compatibility) ====================
 
