@@ -131,6 +131,8 @@ const en: Translations = {
         errorMessage: 'An error occurred. Please try again.',
         noMoreBookings: 'No more bookings',
         noMoreBookingsMessage: 'You have reached the end of the booking list.',
+        checkingBooking: 'Confirm booking',
+        paymentBooking: 'Payment',
     },
   detailBookingItem: {
     title: 'Booking details',
@@ -268,6 +270,12 @@ const en: Translations = {
     subtitle: 'Please check the booking information to complete the booking.',
     close: 'Close',
     confirm: 'Confirm',
+    validationError: 'Error',
+    noServiceError: 'Please add at least one service',
+    errorTitle: 'Error',
+    errorMessage: 'Failed to confirm booking. Please try again.',
+    successTitle: 'Success',
+    successMessage: 'Confirm booking successfully',
   },
   bookingPayment: {
     title: 'Confirm payment',

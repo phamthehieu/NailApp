@@ -129,7 +129,8 @@ const vi = {
     errorMessage: 'Đã xảy ra lỗi. Vui lòng thử lại.',
     noMoreBookings: 'Không có thêm đặt lịch',
     noMoreBookingsMessage: 'Đã đến cuối danh sách đặt lịch.',
-    
+    checkingBooking: 'Xác nhận đặt lịch',
+    paymentBooking: 'Thanh toán',
   },
   detailBookingItem: {
     title: 'Thông tin đặt lịch',
@@ -267,6 +268,12 @@ const vi = {
     subtitle: 'Kiểm tra lại thông tin đặt lịch để hoàn tất booking.',
     close: 'Đóng',
     confirm: 'Xác nhận',
+    validationError: 'Lỗi',
+    noServiceError: 'Vui lòng thêm ít nhất một dịch vụ',
+    errorTitle: 'Lỗi',
+    errorMessage: 'Xác nhận đặt lịch thất bại. Vui lòng thử lại.',
+    successTitle: 'Thành công',
+    successMessage: 'Xác nhận đặt lịch thành công',
   },
   bookingPayment: {
     title: 'Xác nhận thanh toán',

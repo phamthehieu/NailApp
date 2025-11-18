@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback, useRef } from "react";
 import { View, StyleSheet, FlatList, TouchableOpacity, RefreshControl } from "react-native";
-import { Eye, Pencil, Trash2, User, Info, Calendar } from "lucide-react-native";
+import { Eye, Pencil, Trash2, User, Info, Calendar, Ban } from "lucide-react-native";
 import { TextFieldLabel } from "@/shared/ui/Text";
 import { useAppTheme } from "@/shared/theme";
 import { scheduleItemsList } from "../../data/scheduleItems";
@@ -18,7 +18,6 @@ import { useBookingForm } from "../../hooks/useBookingForm";
 import { useAppSelector } from "@/app/store";
 import { BookingManagerItem } from "../../api/types";
 import Loader from "@/shared/ui/Loader";
-import Toast from "react-native-toast-message";
 import { getBookingStatusColor } from "@/features/manage/utils/bookingStatusColor";
 
 interface BookingListComponentProps {
@@ -30,7 +29,7 @@ const BookingListComponent = ({ navigation }: BookingListComponentProps) => {
     const isTablet = useIsTablet();
     const styles = $styles(colors, isTablet);
     const { t } = useTranslation();
-    const { getListBookingManager, loadMoreBookings, loading, loadingMore, resetPagination, getDetailBookingItem, getHistoryBookingItem } = useBookingForm();
+    const { getListBookingManager, loadMoreBookings, loading, loadingMore, resetPagination, getDetailBookingItem, getHistoryBookingItem, postCancelBooking } = useBookingForm();
     const { listBookingManager, pageIndex, totalPages } = useAppSelector((state) => state.booking);
 
     const [isBookingConfirmationModalVisible, setIsBookingConfirmationModalVisible] = useState(false);
@@ -66,7 +65,7 @@ const BookingListComponent = ({ navigation }: BookingListComponentProps) => {
             okText: t('detailBookingItem.deleteBooking.okText'),
             cancelText: t('detailBookingItem.deleteBooking.cancelText'),
             onConfirm: () => {
-                console.log('Cancel booking:');
+                handleCancelBooking(item);
             },
             onCancel: () => {
                 console.log('Cancel booking:');
@@ -74,16 +73,43 @@ const BookingListComponent = ({ navigation }: BookingListComponentProps) => {
         });
     };
 
+    const handleCancelBooking = (item: any) => {
+        postCancelBooking(item.id).then((response) => {
+            if (response) {
+                alertService.showAlert({
+                    title: t('bookingList.successTitle'),
+                    message: t('bookingList.successMessage'),
+                    typeAlert: 'Confirm',
+                    onConfirm: () => { getListBookingManager() },
+                });
+
+            } else {
+                alertService.showAlert({
+                    title: t('bookingList.errorTitle'),
+                    message: t('bookingList.errorMessage'),
+                    typeAlert: 'Error',
+                    onConfirm: () => { },
+                });
+            }
+        });
+    };
+
     const handleMainAction = (item: any) => {
-        if (item.status === 1) {
-            setIsBookingConfirmationModalVisible(true);
-        } else if (item.status === 2) {
+        if (item.status === 0) {
+            getDetailBookingItem(item.id);
             setIsCheckinBookingModalVisible(true);
-        } else if (item.status === 3) {
+        } else if (item.status === 1) {
             setIsBookingPaymentModalVisible(true);
         }
     };
 
+    const nameAction = (status: number) => {
+        if (status === 0) {
+            return t('bookingList.checkingBooking');
+        } else if (status === 1) {
+            return t('bookingList.paymentBooking');
+        }
+    };
     const renderBookingItem = ({ item }: { item: BookingManagerItem }) => {
         const statusColor = getBookingStatusColor(item.status, colors, 'border');
         const formattedDate = formatDate(item.bookingDate);
@@ -129,24 +155,28 @@ const BookingListComponent = ({ navigation }: BookingListComponentProps) => {
                     >
                         <Eye size={18} color={colors.text} />
                     </TouchableOpacity>
-                    <TouchableOpacity
-                        style={styles.iconButton}
-                        onPress={() => handleEdit(item)}
-                    >
-                        <Pencil size={18} color={colors.text} />
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                        style={[styles.iconButton, styles.deleteButton]}
-                        onPress={() => handleDelete(item)}
-                    >
-                        <Trash2 size={18} color={colors.red} />
-                    </TouchableOpacity>
-                    {item.status === 1 && (
+                    {item.status === 0 && (
+                        <React.Fragment>
+                            <TouchableOpacity
+                                style={styles.iconButton}
+                                onPress={() => handleEdit(item)}
+                            >
+                                <Pencil size={18} color={colors.text} />
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={[styles.iconButton, styles.deleteButton]}
+                                onPress={() => handleDelete(item)}
+                            >
+                                <Ban size={18} color={colors.red} />
+                            </TouchableOpacity>
+                        </React.Fragment>
+                    )}
+                    {(item.status === 0 || item.status === 1) && (
                         <TouchableOpacity
-                            style={[styles.mainActionButton, { backgroundColor: colors.yellow }]}
+                            style={[styles.mainActionButton, { backgroundColor: item.status === 0 ? colors.blue : colors.yellow }]}
                             onPress={() => handleMainAction(item)}
                         >
-                            <TextFieldLabel style={styles.mainActionText}>{t('bookingList.confirmBooking')}</TextFieldLabel>
+                            <TextFieldLabel style={[styles.mainActionText, { color: colors.white }]}>{nameAction(item.status)}</TextFieldLabel>
                         </TouchableOpacity>
                     )}
                 </View>
@@ -231,16 +261,19 @@ const BookingListComponent = ({ navigation }: BookingListComponentProps) => {
                     ) : null
                 }
             />
+
             <BookingConfirmationModal
                 visible={isBookingConfirmationModalVisible}
                 onClose={() => setIsBookingConfirmationModalVisible(false)}
                 onConfirm={() => { }}
             />
+
             <CheckinBookingModal
                 visible={isCheckinBookingModalVisible}
                 onClose={() => setIsCheckinBookingModalVisible(false)}
                 onConfirm={() => { }}
             />
+
             <BookingPaymentModal
                 visible={isBookingPaymentModalVisible}
                 onClose={() => setIsBookingPaymentModalVisible(false)}

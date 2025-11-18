@@ -1,6 +1,6 @@
 import { useAppDispatch, useAppSelector } from "@/app/store";
 import { useCallback, useState } from "react";
-import { getDetailBookingItemApi, getHistoryBookingItemApi, getlistBookingManagerApi, getListBookingStatusApi, putEditBookingApi } from "../api/BookingApi";
+import { getDetailBookingItemApi, getHistoryBookingItemApi, getlistBookingManagerApi, getListBookingStatusApi, postCancelBookingApi, putCheckinBookingApi, putEditBookingApi } from "../api/BookingApi";
 import { setListBookingManager, setListBookingStatus, appendListBookingManager, resetPageIndex, setDetailBookingItem, setHistoryBookingItem, appendHistoryBookingItem } from "../model/bookingSlice";
 import { alertService } from "@/services/alertService";
 import { useTranslation } from "react-i18next";
@@ -202,6 +202,41 @@ export function useBookingForm() {
             setLoading(false);
         }
     }, [dispatch, t]);
+
+
+    const postCancelBooking = useCallback(async (bookingId: number) => {
+        try {
+            if (loading) return;
+            setLoading(true);
+            const response = await postCancelBookingApi({bookingId});
+            return response;
+        } catch (error) {
+            console.error(error);
+            alertService.showAlert({
+                title: t('bookingList.errorTitle'),
+                message: t('bookingList.errorMessage'),
+                typeAlert: 'Error',
+                onConfirm: () => {},
+            });
+        } finally {
+            setLoading(false);
+        }
+    }, [dispatch, t]);
+
+
+    const putCheckinBooking = useCallback(async (data: EditBookingRequest) => {
+        try {
+            if (loading) return;
+            setLoading(true);
+            const response = await putCheckinBookingApi(data);
+            return response;
+        } catch (error) {
+            console.error(error);
+        }
+        finally {
+            setLoading(false);
+        }
+    }, [dispatch, t]);
     return {
         getListBookingManager,
         getListBookingStatus,
@@ -237,5 +272,7 @@ export function useBookingForm() {
         loadMoreHistoryBookings,
         getListBookingManagerByRange,
         putEditBooking,
+        postCancelBooking,
+        putCheckinBooking,
     }
 }

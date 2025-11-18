@@ -199,3 +199,11 @@ export const postCreateBookingApi = async (data: CreateBookingRequest) => {
 export const putEditBookingApi = async (data: EditBookingRequest) => {
     return http.put<any>('/api/Booking/Update', data);
 }
+
+export const postCancelBookingApi = async (data: {bookingId: number}) => {
+    return http.post<any>('/api/Booking/Cancel', data);
+}
+
+export const putCheckinBookingApi = async (data: EditBookingRequest) => {
+    return http.put<any>('/api/Booking/CheckIn', data);
+}

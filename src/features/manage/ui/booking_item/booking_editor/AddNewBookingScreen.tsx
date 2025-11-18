@@ -231,7 +231,7 @@ const AddNewBookingScreen = ({ navigation }: RootScreenProps<Paths.AddNewBooking
                         status: 0,
                         description: bookingData?.description ?? null,
                         services: servicesPayload ?? null,
-                        frequency: frequencyPayload ?? null,
+                        frequency: bookingData?.frequency?.frequencyType ? frequencyPayload : null,
                         customer: {
                             id: response.id ?? null,
                             name: customerData.name ?? null,

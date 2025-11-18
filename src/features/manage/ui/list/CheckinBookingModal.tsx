@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { StyleSheet, View, Modal, TouchableOpacity, TouchableWithoutFeedback, ScrollView } from "react-native";
 import { TextFieldLabel } from "@/shared/ui/Text";
 import { Colors, useAppTheme } from "@/shared/theme";
@@ -6,6 +6,10 @@ import { useTranslation } from "react-i18next";
 import { X, ChevronDown } from "lucide-react-native";
 import { Dropdown } from "react-native-element-dropdown";
 import ServiceListComponent, { ServiceItem } from "../booking_item/booking_editor/components/ServiceListComponent";
+import { useAppSelector } from "@/app/store";
+import { EditBookingRequest } from "../../api/types";
+import { alertService } from "@/services/alertService";
+import { useBookingForm } from "../../hooks/useBookingForm";
 
 
 interface CheckinBookingModalProps {
@@ -22,13 +26,74 @@ const CheckinBookingModal = ({
     const { theme: { colors } } = useAppTheme();
     const styles = $styles(colors);
     const { t } = useTranslation();
-    const [serviceItems, setServiceItems] = useState<ServiceItem[]>([
-        { id: 1, name: "remove_gel", duration: "30", staff: "", anyEmployee: false },
-        { id: 2, name: "gel_polish", duration: "45", staff: "", anyEmployee: false },
-    ]);
-    const handleConfirm = () => {
-        onConfirm();
+    const { detailBookingItem } = useAppSelector((state) => state.booking);
+    const { putCheckinBooking, getListBookingManager } = useBookingForm();
+
+    const [dataBookingEdit, setDataBookingEdit] = useState<EditBookingRequest>();
+
+    const validateDataBookingEdit = useCallback(() => {
+        if (!dataBookingEdit?.services || dataBookingEdit.services.length === 0) {
+            alertService.showAlert({
+                title: t('checkinBooking.validationError'),
+                message: t('checkinBooking.noServiceError'),
+                typeAlert: 'Error',
+                onConfirm: () => {},
+            });
+            return false;
+        }
+        return true;
+    }, [dataBookingEdit]);
+
+    const handleConfirm = async () => {
+        if (!validateDataBookingEdit()) {
+            return;
+        }
+
+        if (!dataBookingEdit) {
+            alertService.showAlert({
+                title: t('checkinBooking.errorTitle'),
+                message: t('checkinBooking.errorMessage'),
+                typeAlert: 'Error',
+                onConfirm: () => {},
+            });
+            return;
+        }
+        console.log("dataBookingEdit", dataBookingEdit);
+        const response = await putCheckinBooking(dataBookingEdit);
+        if (response) {
+            alertService.showAlert({
+                title: t('checkinBooking.successTitle'),
+                message: t('checkinBooking.successMessage'),
+                typeAlert: 'Confirm',
+                onConfirm: () => {
+                    getListBookingManager();
+                    onClose();
+                },
+            });
+        } else {
+            alertService.showAlert({
+                title: t('checkinBooking.errorTitle'),
+                message: t('checkinBooking.errorMessage'),
+                typeAlert: 'Error',
+                onConfirm: () => {},
+            });
+        }
     };
+
+    useEffect(() => {
+        if (detailBookingItem) {
+            setDataBookingEdit({
+                id: detailBookingItem.id,
+                status: detailBookingItem.status,
+                services: detailBookingItem.services.map((service) => ({
+                    serviceId: service.id ?? 0,
+                    staffId: service.staff?.id ?? null,
+                    serviceTime: service.serviceTime,
+                })),
+            });
+        }
+    }, [detailBookingItem]);
+
 
     return (
         <Modal
@@ -54,12 +119,15 @@ const CheckinBookingModal = ({
                     </TextFieldLabel>
 
                     <ScrollView style={styles.servicesContainer} contentContainerStyle={styles.servicesContent} showsVerticalScrollIndicator={false}>
-                        <ServiceListComponent
-                            services={serviceItems}
-                            onChange={setServiceItems}
-                        />
-                    </ScrollView>
 
+                        <ServiceListComponent
+                            services={dataBookingEdit?.services?.map((service) => ({ serviceId: service?.serviceId ?? 0, staffId: service?.staffId ?? null, serviceTime: service?.serviceTime ?? 0 })) || []}
+                            onChange={(services) =>
+                                setDataBookingEdit((prev) => (prev ? { ...prev, services } : prev))
+                            }
+                        />
+
+                    </ScrollView>
 
                     <View style={styles.modalActions}>
                         <TouchableOpacity style={styles.closeButtonAction} onPress={onClose}>
@@ -83,8 +151,8 @@ const $styles = (colors: Colors) => StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: 'rgba(0, 0, 0, 0.5)' ,
-        padding: 4,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        padding: 2,
     },
     backdropTouchable: {
         position: 'absolute',
@@ -98,7 +166,7 @@ const $styles = (colors: Colors) => StyleSheet.create({
         maxWidth: 480,
         backgroundColor: colors.card,
         borderRadius: 16,
-        padding: 20,
+        padding: 6,
         borderWidth: 0.3,
         borderColor: colors.border,
     },

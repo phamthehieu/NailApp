@@ -21,8 +21,6 @@
     import { alertService } from "@/services/alertService";
     import Loader from "@/shared/ui/Loader";
 
-    type BookingStatus = 'pending' | 'confirmed' | 'paid' | 'completed';
-
     const EditBookingScreen = ({ navigation }: RootScreenProps<Paths.EditBooking>) => {
         const { theme: { colors } } = useAppTheme();
         const styles = $styles(colors);
@@ -40,16 +38,6 @@
         const statusOptions = Array.isArray(listBookingStatus)
             ? listBookingStatus.map((item) => ({ label: item.name, value: item.id }))
             : listBookingStatus?.items?.map((item) => ({ label: item.name, value: item.id })) ?? [];
-
-        const renderItem = (item: any) => {
-            return (
-                <View style={styles.dropdownItemContainer}>
-                    <TextFieldLabel allowFontScaling={false} style={styles.dropdownSelectedText}>
-                        {item.label}
-                    </TextFieldLabel>
-                </View>
-            );
-        };
 
         const validateDataBookingEdit = useCallback(() => {
             if (!dataBookingEdit?.services || dataBookingEdit.services.length === 0) {
