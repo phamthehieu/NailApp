@@ -5,6 +5,7 @@ import { useIsTablet } from '@/shared/lib/useIsTablet';
 import { TextFieldLabel } from '@/shared/ui/Text';
 import { useTranslation } from 'react-i18next';
 import { useAppSelector } from '@/app/store';
+import { getBookingStatusColor } from '@/features/manage/utils/bookingStatusColor';
 
 type Props = {
     selectedDate: Date;
@@ -96,21 +97,6 @@ const CalenderMonthComponent = ({ selectedDate, onPressScheduleItem }: Props) =>
         );
     };
 
-    const getStatusColor = (status: number) => {
-        switch (status) {
-            case 0:
-                return colors.blue;
-            case 1:
-                return colors.yellow;
-            case 2:
-                return colors.purple;
-            case 3:
-                return colors.green;
-            default:
-                return colors.borderTable;
-        }
-    };
-
     const calendarDays = useMemo(() => {
         const year = selectedDate.getFullYear();
         const month = selectedDate.getMonth();
@@ -143,7 +129,7 @@ const CalenderMonthComponent = ({ selectedDate, onPressScheduleItem }: Props) =>
                 .filter(item => item.bookingDate && isSameDay(new Date(item.bookingDate), dateCopy))
                 .map(item => {
                     const totalServiceMinutes = item.services?.reduce((total, service) => total + (service.serviceTime || 0), 0) || 0;
-                    const color = getStatusColor(item.status);
+                    const color = getBookingStatusColor(item.status, colors, 'borderTable');
                     return {
                         id: String(item.id ?? item.code),
                         userId: String(item.customer?.id ?? ''),

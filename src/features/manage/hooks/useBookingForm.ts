@@ -1,9 +1,10 @@
 import { useAppDispatch, useAppSelector } from "@/app/store";
 import { useCallback, useState } from "react";
-import { getDetailBookingItemApi, getHistoryBookingItemApi, getlistBookingManagerApi, getListBookingStatusApi } from "../api/BookingApi";
+import { getDetailBookingItemApi, getHistoryBookingItemApi, getlistBookingManagerApi, getListBookingStatusApi, putEditBookingApi } from "../api/BookingApi";
 import { setListBookingManager, setListBookingStatus, appendListBookingManager, resetPageIndex, setDetailBookingItem, setHistoryBookingItem, appendHistoryBookingItem } from "../model/bookingSlice";
 import { alertService } from "@/services/alertService";
 import { useTranslation } from "react-i18next";
+import { EditBookingRequest } from "../api/types";
 
 
 export function useBookingForm() {
@@ -138,6 +139,7 @@ export function useBookingForm() {
 
     const getDetailBookingItem = useCallback(async (bookingCode: string) => {
         try {
+            setLoading(true);
             const response = await getDetailBookingItemApi(bookingCode);
             dispatch(setDetailBookingItem(response));
         } catch (error) {
@@ -148,8 +150,10 @@ export function useBookingForm() {
                 typeAlert: 'Error',
                 onConfirm: () => {},
             });
+        } finally {
+            setLoading(false);
         }
-    }, [dispatch, t]);
+    }, [dispatch, t, loading]);
 
     const getHistoryBookingItem = useCallback(async (CustomerId?: string, Search?: string, SortBy?: string, PageIndex?: number, PageSize?: number, SortType?: string, isLoadMore: boolean = false) => {
         try {
@@ -184,7 +188,20 @@ export function useBookingForm() {
         await getHistoryBookingItem(CustomerId, Search, SortBy, currentPageIndex + 1, PageSize, SortType, true);
     }, [historyBookingItem, loadingMore, getHistoryBookingItem]);
 
-    
+    const putEditBooking = useCallback(async (data: EditBookingRequest) => {
+        try {
+            if (loading) return;
+            setLoading(true);
+            const response = await putEditBookingApi(data);
+            return response;
+        }
+        catch (error) {
+            console.error(error);
+        }
+        finally {
+            setLoading(false);
+        }
+    }, [dispatch, t]);
     return {
         getListBookingManager,
         getListBookingStatus,
@@ -218,6 +235,7 @@ export function useBookingForm() {
         getListBookingManagerByDate,
         getHistoryBookingItem,
         loadMoreHistoryBookings,
-        getListBookingManagerByRange
+        getListBookingManagerByRange,
+        putEditBooking,
     }
 }

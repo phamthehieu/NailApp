@@ -77,6 +77,7 @@ export interface ServiceItem extends BaseService {
 
 export interface ServiceDetailBookingItemResponse extends BaseService {
     serviceCode: any;
+    serviceId?: number;
     staff?: StaffDetailBookingItemResponse;
     promotion: any;
 }
@@ -287,4 +288,16 @@ export interface ServiceCreateBookingRequest {
 export interface CustomerCreateBookingRequest {
     id: number | null
     name: string | null
+}
+
+export interface EditBookingRequest {
+    id: number | null
+  status: number | null
+  services: ServiceEditBookingRequest[] | null
+}
+
+export interface ServiceEditBookingRequest {
+    serviceId: number | null
+    staffId: number | null
+    serviceTime: number | null
 }

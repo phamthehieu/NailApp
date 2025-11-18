@@ -14,6 +14,7 @@ import HistoryBookingComponent from './HistoryBookingComponent';
 import { Button } from '@/shared/ui/Button';
 import { alertService } from '@/services/alertService';
 import { useAppSelector } from '@/app/store';
+import { getBookingStatusColor } from '@/features/manage/utils/bookingStatusColor';
 
 type TabType = { label: string; value: number }
 
@@ -30,26 +31,11 @@ const DetailBookingItem = ({ navigation, route }: RootScreenProps<Paths.DetailBo
 
     const [activeTab, setActiveTab] = useState<TabType>({ label: t('calenderDashboard.calenderTab.schedule'), value: 1 });
 
-    const getStatusColor = (status: string) => {
-        switch (status) {
-            case "Chờ xác nhận":
-                return colors.blue;
-            case "Đã xác nhận":
-                return colors.yellow;
-            case "Đang thực hiện":
-                return colors.purple;
-            case "Đã hoàn thành":
-                return colors.green;
-            case "Hoàn tất":
-                return colors.green;
-            case "Đã hủy":
-                return colors.red;
-            default:
-                return colors.yellow;
-        }
-    };
-
-    const statusColor = detailBookingItem ? getStatusColor(detailBookingItem.statusObj?.name) : colors.yellow;
+    const statusColor = getBookingStatusColor(
+        detailBookingItem?.statusObj?.name ?? detailBookingItem?.status,
+        colors,
+        'yellow',
+    );
 
     const handleCancelBooking = () => {
         alertService.showAlert({

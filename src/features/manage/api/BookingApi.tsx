@@ -11,7 +11,8 @@ import type {
     ListBookingFrequencyResponse,
     ListCustomerListResponse,
     CreateUserBookingRequest,
-    CreateBookingRequest
+    CreateBookingRequest,
+    EditBookingRequest
 } from "./types";
 
 export type {
@@ -193,4 +194,8 @@ export const postCreateUserBookingApi = async (data: CreateUserBookingRequest) =
 
 export const postCreateBookingApi = async (data: CreateBookingRequest) => {
     return http.post<any>('/api/Booking/Create', data);
+}
+
+export const putEditBookingApi = async (data: EditBookingRequest) => {
+    return http.put<any>('/api/Booking/Update', data);
 }

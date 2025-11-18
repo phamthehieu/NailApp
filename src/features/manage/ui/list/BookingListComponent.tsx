@@ -19,6 +19,7 @@ import { useAppSelector } from "@/app/store";
 import { BookingManagerItem } from "../../api/types";
 import Loader from "@/shared/ui/Loader";
 import Toast from "react-native-toast-message";
+import { getBookingStatusColor } from "@/features/manage/utils/bookingStatusColor";
 
 interface BookingListComponentProps {
     navigation: RootScreenProps<Paths.BookingManage>['navigation'];
@@ -31,10 +32,6 @@ const BookingListComponent = ({ navigation }: BookingListComponentProps) => {
     const { t } = useTranslation();
     const { getListBookingManager, loadMoreBookings, loading, loadingMore, resetPagination, getDetailBookingItem, getHistoryBookingItem } = useBookingForm();
     const { listBookingManager, pageIndex, totalPages } = useAppSelector((state) => state.booking);
-
-    // useEffect(() => {
-    //     getListBookingManager();
-    // }, [navigation]);
 
     const [isBookingConfirmationModalVisible, setIsBookingConfirmationModalVisible] = useState(false);
     const [refreshing, setRefreshing] = useState(false);
@@ -50,21 +47,6 @@ const BookingListComponent = ({ navigation }: BookingListComponentProps) => {
         return `${day}/${month}/${year}`;
     };
 
-    const getStatusColor = (status: number) => {
-        switch (status) {
-            case 0:
-                return colors.blue;
-            case 1:
-                return colors.yellow;
-            case 2:
-                return colors.purple;
-            case 3:
-                return colors.green;
-            default:
-                return colors.border;
-        }
-    };
-
     const handleView = (item: any) => {
         getDetailBookingItem(item.id);
         getHistoryBookingItem(item.customer.id);
@@ -72,7 +54,8 @@ const BookingListComponent = ({ navigation }: BookingListComponentProps) => {
     };
 
     const handleEdit = (item: any) => {
-        navigation.navigate(Paths.EditBooking, { bookingId: item.id });
+        getDetailBookingItem(item.id);
+        navigation.navigate(Paths.EditBooking);
     };
 
     const handleDelete = (item: any) => {
@@ -102,7 +85,7 @@ const BookingListComponent = ({ navigation }: BookingListComponentProps) => {
     };
 
     const renderBookingItem = ({ item }: { item: BookingManagerItem }) => {
-        const statusColor = getStatusColor(item.status);
+        const statusColor = getBookingStatusColor(item.status, colors, 'border');
         const formattedDate = formatDate(item.bookingDate);
 
         return (

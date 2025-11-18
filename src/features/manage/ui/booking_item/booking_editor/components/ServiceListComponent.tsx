@@ -12,7 +12,7 @@ export type ServiceItem = {
     serviceId: number;
     staffId: number | null;
     serviceTime: number;
-    promotionId: number | null;
+    promotionId?: number | null;
 };
 
 type ServiceListComponentProps = {
@@ -83,7 +83,10 @@ const ServiceListComponent = ({
         <View>
             <View style={styles.row}>
                 <Pressable
-                    style={styles.bookButton}
+                    style={({ pressed }) => [
+                        styles.bookButton,
+                        pressed && styles.bookButtonPressed,
+                    ]}
                     onPress={addService}
                 >
                     <Plus size={18} color={colors.white} />
@@ -211,6 +214,10 @@ const $styles = (colors: Colors, isWide: boolean) => StyleSheet.create({
         paddingHorizontal: 16,
         borderRadius: 12,
         marginHorizontal: 12,
+    },
+    bookButtonPressed: {
+        opacity: 0.85,
+        transform: [{ scale: 0.98 }],
     },
     bookButtonText: {
         color: colors.white,
