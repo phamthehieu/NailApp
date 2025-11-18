@@ -1,12 +1,16 @@
-import { Keyboard, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, TextInput, View, useWindowDimensions } from "react-native";
+import { Keyboard, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, TextInput, TouchableOpacity, View, useWindowDimensions } from "react-native";
 import { useMemo, useRef, useState, useCallback, useReducer, useEffect } from "react";
-import { ChevronDown } from "lucide-react-native";
+import { ChevronDown, X } from "lucide-react-native";
 import { Dropdown, IDropdownRef } from "react-native-element-dropdown";
 import { TextFieldLabel } from "@/shared/ui/Text";
 import { Colors, useAppTheme } from "@/shared/theme";
 import { TextField } from "@/shared/ui/TextField";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
+import { useEditBookingForm } from "@/features/manage/hooks/useEditBookingForm";
+import { useAppSelector } from "@/app/store";
+import { RootState } from "@/app/store";
+import { customerInfo } from "@/features/manage/api/types";
 
 type CustomerInformationProps = {
     showDob?: boolean;
@@ -19,11 +23,12 @@ export type CustomerState = {
     phone: string;
     email: string;
     note: string;
-    dob: Date;
+    dob: Date | null;
+    id: number | null;
 };
 
 type CustomerAction =
-    | { type: "SET_FIELD"; field: keyof CustomerState; value: string | Date }
+    | { type: "SET_FIELD"; field: keyof CustomerState; value: string | Date | number | null }
     | { type: "RESET"; payload?: Partial<CustomerState> };
 
 function customerReducer(state: CustomerState, action: CustomerAction): CustomerState {
@@ -37,6 +42,12 @@ function customerReducer(state: CustomerState, action: CustomerAction): Customer
     }
 }
 
+const getDobParts = (date: Date | null | undefined) => ({
+    day: date ? date.getDate() : null,
+    month: date ? date.getMonth() : null,
+    year: date ? date.getFullYear() : null,
+});
+
 const CustomerInformationComponent = ({ showDob = true, value, onChange }: CustomerInformationProps) => {
     const { theme: { colors } } = useAppTheme();
     const { width } = useWindowDimensions();
@@ -44,7 +55,8 @@ const CustomerInformationComponent = ({ showDob = true, value, onChange }: Custo
     const styles = $styles(colors, isWide);
     const insets = useSafeAreaInsets();
     const { t } = useTranslation();
-
+    const { getListCustomerList } = useEditBookingForm();
+    const listCustomerList = useAppSelector((state: RootState) => state.editBooking.listCustomerList);
     const scrollRef = useRef<ScrollView>(null);
     const phoneRef = useRef<TextInput>(null);
     const emailRef = useRef<TextInput>(null);
@@ -61,11 +73,15 @@ const CustomerInformationComponent = ({ showDob = true, value, onChange }: Custo
         phone: "",
         email: "",
         note: "",
-        dob: new Date(),
+        dob: null,
+        id: null,
     };
 
     const [customer, dispatchCustomer] = useReducer(customerReducer, initialState);
     const { name, phone, email, note, dob } = customer;
+    const [dobParts, setDobParts] = useState<{ day: number | null; month: number | null; year: number | null }>(() =>
+        getDobParts(initialState.dob),
+    );
     const setName = useCallback((value: string) => {
         dispatchCustomer({ type: "SET_FIELD", field: "name", value });
     }, []);
@@ -78,13 +94,67 @@ const CustomerInformationComponent = ({ showDob = true, value, onChange }: Custo
     const setNote = useCallback((value: string) => {
         dispatchCustomer({ type: "SET_FIELD", field: "note", value });
     }, []);
-    const setDob = useCallback((value: Date) => {
+    const setDobValue = useCallback((value: Date | null, syncParts: boolean = true) => {
         dispatchCustomer({ type: "SET_FIELD", field: "dob", value });
+        if (syncParts) {
+            setDobParts(getDobParts(value));
+        }
     }, []);
 
     const [showSuggest, setShowSuggest] = useState(false);
     const [keyboardHeight, setKeyboardHeight] = useState(0);
     const previousValueRef = useRef<CustomerState | undefined>(value);
+    const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const lastEmittedCustomerRef = useRef<CustomerState | undefined>(undefined);
+
+    const parseDateOfBirth = useCallback((customer: customerInfo): Date | null => {
+        const currentYear = new Date().getFullYear();
+
+        if (customer.dateOfBirth && customer.dateOfBirth !== "0001-01-01T00:00:00") {
+            const parsedDate = new Date(customer.dateOfBirth);
+            if (!isNaN(parsedDate.getTime())) {
+                const month = parsedDate.getMonth();
+                const day = parsedDate.getDate();
+                return new Date(currentYear, month, day);
+            }
+        }
+
+        if (customer.monthBirth && customer.monthBirth > 0 && customer.dayBirth && customer.dayBirth > 0) {
+            const month = customer.monthBirth - 1;
+            const day = customer.dayBirth;
+            return new Date(currentYear, month, day);
+        }
+
+        return null;
+    }, []);
+
+    const handleSelectCustomer = useCallback((item: customerInfo) => {
+        const parsedDob = parseDateOfBirth(item);
+
+        dispatchCustomer({ type: "SET_FIELD", field: "name", value: item.name || "" });
+        dispatchCustomer({ type: "SET_FIELD", field: "phone", value: item.phoneNumber || "" });
+        dispatchCustomer({ type: "SET_FIELD", field: "email", value: item.email || "" });
+        dispatchCustomer({ type: "SET_FIELD", field: "note", value: item.description || "" });
+        setDobValue(parsedDob);
+        dispatchCustomer({ type: "SET_FIELD", field: "id", value: item.id });
+
+        setShowSuggest(false);
+    }, [parseDateOfBirth]);
+
+    const clearCustomerData = useCallback(() => {
+        dispatchCustomer({
+            type: "RESET", payload: {
+                name: "",
+                phone: "",
+                email: "",
+                note: "",
+                dob: null,
+                id: null,
+            }
+        });
+        setDobParts(getDobParts(null));
+        setShowSuggest(false);
+    }, []);
 
     useEffect(() => {
         if (value) {
@@ -94,17 +164,34 @@ const CustomerInformationComponent = ({ showDob = true, value, onChange }: Custo
                 prevValue.phone !== value.phone ||
                 prevValue.email !== value.email ||
                 prevValue.note !== value.note ||
-                prevValue.dob.getTime() !== value.dob.getTime();
+                prevValue.id !== value.id ||
+                (prevValue.dob?.getTime() !== value.dob?.getTime());
 
             if (hasChanged) {
                 dispatchCustomer({ type: "RESET", payload: value });
+                setDobParts(getDobParts(value.dob));
                 previousValueRef.current = value;
+                lastEmittedCustomerRef.current = value;
             }
         }
     }, [value]);
 
     useEffect(() => {
-        onChange?.(customer);
+        if (!onChange) return;
+
+        const lastEmitted = lastEmittedCustomerRef.current;
+        const hasChanged = !lastEmitted ||
+            lastEmitted.name !== customer.name ||
+            lastEmitted.phone !== customer.phone ||
+            lastEmitted.email !== customer.email ||
+            lastEmitted.note !== customer.note ||
+            lastEmitted.id !== customer.id ||
+            (lastEmitted.dob?.getTime() !== customer.dob?.getTime());
+
+        if (hasChanged) {
+            lastEmittedCustomerRef.current = customer;
+            onChange(customer);
+        }
     }, [customer, onChange]);
 
     useMemo(() => {
@@ -130,25 +217,14 @@ const CustomerInformationComponent = ({ showDob = true, value, onChange }: Custo
         }, delay);
     }, [insets.top, keyboardHeight]);
 
-    const suggestionData = [
-        "Huyền Anh",
-        "Huyền Trang",
-        "Ngọc Anh",
-        "Minh Anh",
-        "Lan Anh",
-        "Khánh Huyền",
-        "Thu Huyền",
-    ];
-    const filtered = name
-        ? suggestionData.filter((s) => s.toLowerCase().includes(name.toLowerCase())).slice(0, 6)
-        : [];
-
-    const selectedDay = dob.getDate();
-    const selectedMonth = dob.getMonth();
-    const selectedYear = dob.getFullYear();
+    const selectedDay = dobParts.day;
+    const selectedMonth = dobParts.month;
+    const selectedYear = dobParts.year;
 
     const daysInMonth = useMemo(() => {
-        return new Date(selectedYear, selectedMonth + 1, 0).getDate();
+        const year = selectedYear ?? new Date().getFullYear();
+        const month = selectedMonth ?? new Date().getMonth();
+        return new Date(year, month + 1, 0).getDate();
     }, [selectedYear, selectedMonth]);
 
     const dayOptions = useMemo(
@@ -182,15 +258,46 @@ const CustomerInformationComponent = ({ showDob = true, value, onChange }: Custo
 
     const updateDob = useCallback(
         (next: Partial<{ day: number; month: number; year: number }>) => {
-            const day = next.day ?? selectedDay;
-            const month = next.month ?? selectedMonth;
-            const year = next.year ?? selectedYear;
-            const maxDay = new Date(year, month + 1, 0).getDate();
-            const safeDay = Math.min(day, maxDay);
-            setDob(new Date(year, month, safeDay));
+            const currentDate = new Date();
+            setDobParts((prev) => {
+                const updated = {
+                    day: next.day ?? prev.day,
+                    month: next.month ?? prev.month,
+                    year: next.year ?? prev.year,
+                };
+
+                if (updated.day == null || updated.month == null) {
+                    setDobValue(null, false);
+                    return updated;
+                }
+
+                const year =
+                    updated.year ??
+                    selectedYear ??
+                    currentDate.getFullYear();
+
+                const maxDay = new Date(year, updated.month + 1, 0).getDate();
+                const safeDay = Math.min(updated.day, maxDay);
+                const nextDate = new Date(year, updated.month, safeDay);
+
+                setDobValue(nextDate, false);
+
+                return { day: safeDay, month: updated.month, year };
+            });
         },
-        [selectedDay, selectedMonth, selectedYear],
+        [selectedYear, setDobValue],
     );
+
+    const rightAccessory = useMemo(() => {
+        if (customer.id !== null) {
+            return () => (
+                <TouchableOpacity onPress={clearCustomerData} style={styles.searchIconButton}>
+                    <X size={20} color={colors.red} />
+                </TouchableOpacity>
+            );
+        }
+        return undefined;
+    }, [customer.id, clearCustomerData, colors.red]);
 
     const renderItem = (item: any) => {
         return (
@@ -201,6 +308,29 @@ const CustomerInformationComponent = ({ showDob = true, value, onChange }: Custo
             </View>
         );
     };
+
+    useEffect(() => {
+        if (searchTimeoutRef.current) {
+            clearTimeout(searchTimeoutRef.current);
+        }
+
+        if (!name.trim()) {
+            searchTimeoutRef.current = setTimeout(() => {
+                getListCustomerList();
+            }, 300);
+            return;
+        }
+
+        searchTimeoutRef.current = setTimeout(() => {
+            getListCustomerList(name.trim());
+        }, 300);
+
+        return () => {
+            if (searchTimeoutRef.current) {
+                clearTimeout(searchTimeoutRef.current);
+            }
+        };
+    }, [name]);
 
     return (
         <KeyboardAvoidingView
@@ -235,6 +365,7 @@ const CustomerInformationComponent = ({ showDob = true, value, onChange }: Custo
                             onChangeText={(text) => {
                                 setName(text);
                                 setShowSuggest(!!text);
+                                dispatchCustomer({ type: "SET_FIELD", field: "id", value: null });
                             }}
                             keyboardType="default"
                             returnKeyType="next"
@@ -243,20 +374,18 @@ const CustomerInformationComponent = ({ showDob = true, value, onChange }: Custo
                                 safeScrollToInput("name");
                             }}
                             onSubmitEditing={() => phoneRef.current?.focus()}
+                            RightAccessory={rightAccessory}
                         />
 
-                        {!!filtered.length && showSuggest && (
+                        {!!listCustomerList?.items.length && showSuggest && (
                             <View style={styles.suggestionPopover}>
-                                {filtered.map((item) => (
+                                {listCustomerList?.items.map((item) => (
                                     <Pressable
-                                        key={item}
-                                        onPress={() => {
-                                            setName(item);
-                                            setShowSuggest(false);
-                                        }}
+                                        key={item.id}
+                                        onPress={() => handleSelectCustomer(item)}
                                         style={({ pressed }) => [styles.suggestionItem, pressed && { opacity: 0.8 }]}
                                     >
-                                        <TextFieldLabel text={item} />
+                                        <TextFieldLabel text={item.name} />
                                     </Pressable>
                                 ))}
                             </View>
@@ -276,7 +405,10 @@ const CustomerInformationComponent = ({ showDob = true, value, onChange }: Custo
                                 required={true}
                                 placeholder={t('bookingInformation.phonePlaceholder')}
                                 value={phone}
-                                onChangeText={setPhone}
+                                onChangeText={(text) => {
+                                    setPhone(text);
+                                    dispatchCustomer({ type: "SET_FIELD", field: "id", value: null });
+                                }}
                                 keyboardType="numeric"
                                 returnKeyType="next"
                                 onFocus={() => safeScrollToInput("phone")}
@@ -295,7 +427,10 @@ const CustomerInformationComponent = ({ showDob = true, value, onChange }: Custo
                                 label={t('bookingInformation.email')}
                                 placeholder={t('bookingInformation.emailPlaceholder')}
                                 value={email}
-                                onChangeText={setEmail}
+                                onChangeText={(text) => {
+                                    setEmail(text);
+                                    dispatchCustomer({ type: "SET_FIELD", field: "id", value: null });
+                                }}
                                 keyboardType="email-address"
                                 returnKeyType="next"
                                 onFocus={() => safeScrollToInput("email")}
@@ -323,6 +458,7 @@ const CustomerInformationComponent = ({ showDob = true, value, onChange }: Custo
                                         showsVerticalScrollIndicator={false}
                                         itemTextStyle={{ color: colors.text }}
                                         placeholderStyle={styles.dropdownSelectedText}
+                                        placeholder={selectedDay ? undefined : ""}
                                         renderRightIcon={() => <ChevronDown size={16} color={colors.placeholderTextColor} />}
                                         maxHeight={220}
                                         activeColor={colors.backgroundDisabled}
@@ -339,7 +475,7 @@ const CustomerInformationComponent = ({ showDob = true, value, onChange }: Custo
                                         data={monthOptions}
                                         labelField="label"
                                         valueField="value"
-                                        value={selectedMonth + 1}
+                                        value={selectedMonth !== null ? selectedMonth + 1 : null}
                                         onChange={({ value }) => updateDob({ month: value - 1 })}
                                         style={styles.dropdown}
                                         containerStyle={styles.dropdownContainer}
@@ -348,6 +484,7 @@ const CustomerInformationComponent = ({ showDob = true, value, onChange }: Custo
                                         showsVerticalScrollIndicator={false}
                                         itemTextStyle={{ color: colors.text }}
                                         placeholderStyle={styles.dropdownSelectedText}
+                                        placeholder={selectedMonth !== null ? undefined : ""}
                                         renderRightIcon={() => <ChevronDown size={16} color={colors.placeholderTextColor} />}
                                         maxHeight={220}
                                         activeColor={colors.backgroundDisabled}
@@ -372,6 +509,7 @@ const CustomerInformationComponent = ({ showDob = true, value, onChange }: Custo
                                         showsVerticalScrollIndicator={false}
                                         itemTextStyle={{ color: colors.text }}
                                         placeholderStyle={styles.dropdownSelectedText}
+                                        placeholder={selectedYear ? undefined : ""}
                                         renderRightIcon={() => <ChevronDown size={16} color={colors.placeholderTextColor} />}
                                         maxHeight={250}
                                         activeColor={colors.backgroundDisabled}
@@ -403,6 +541,7 @@ const CustomerInformationComponent = ({ showDob = true, value, onChange }: Custo
                                     showsVerticalScrollIndicator={false}
                                     itemTextStyle={{ color: colors.text }}
                                     placeholderStyle={styles.dropdownSelectedText}
+                                    placeholder={selectedDay ? undefined : ""}
                                     renderRightIcon={() => <ChevronDown size={16} color={colors.placeholderTextColor} />}
                                     maxHeight={220}
                                     activeColor={colors.backgroundDisabled}
@@ -419,7 +558,7 @@ const CustomerInformationComponent = ({ showDob = true, value, onChange }: Custo
                                     data={monthOptions}
                                     labelField="label"
                                     valueField="value"
-                                    value={selectedMonth + 1}
+                                    value={selectedMonth !== null ? selectedMonth + 1 : null}
                                     onChange={({ value }) => updateDob({ month: value - 1 })}
                                     style={styles.dropdown}
                                     containerStyle={styles.dropdownContainer}
@@ -428,32 +567,9 @@ const CustomerInformationComponent = ({ showDob = true, value, onChange }: Custo
                                     showsVerticalScrollIndicator={false}
                                     itemTextStyle={{ color: colors.text }}
                                     placeholderStyle={styles.dropdownSelectedText}
+                                    placeholder={selectedMonth !== null ? undefined : ""}
                                     renderRightIcon={() => <ChevronDown size={16} color={colors.placeholderTextColor} />}
                                     maxHeight={220}
-                                    activeColor={colors.backgroundDisabled}
-                                    selectedTextProps={{ allowFontScaling: false }}
-                                    renderItem={renderItem}
-                                />
-                            </View>
-                            <View style={styles.colDob}>
-                                <View style={styles.labelRow}>
-                                    <TextFieldLabel text={t('bookingInformation.dobYear')} style={styles.labelText} />
-                                </View>
-                                <Dropdown
-                                    data={yearOptions}
-                                    labelField="label"
-                                    valueField="value"
-                                    value={selectedYear}
-                                    onChange={({ value }) => updateDob({ year: value })}
-                                    style={styles.dropdown}
-                                    containerStyle={styles.dropdownContainer}
-                                    itemContainerStyle={styles.dropdownItem}
-                                    selectedTextStyle={styles.dropdownSelectedText}
-                                    showsVerticalScrollIndicator={false}
-                                    itemTextStyle={{ color: colors.text }}
-                                    placeholderStyle={styles.dropdownSelectedText}
-                                    renderRightIcon={() => <ChevronDown size={16} color={colors.placeholderTextColor} />}
-                                    maxHeight={250}
                                     activeColor={colors.backgroundDisabled}
                                     selectedTextProps={{ allowFontScaling: false }}
                                     renderItem={renderItem}
@@ -605,6 +721,11 @@ const $styles = (colors: Colors, isWide: boolean) => StyleSheet.create({
         paddingVertical: 8,
         paddingHorizontal: 12,
         color: colors.text,
+    },
+    searchIconButton: {
+        paddingHorizontal: 12,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
 });
 

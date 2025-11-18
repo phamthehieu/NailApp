@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 import { ArrowLeft, Info, UserRound } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
+import { useLanguage } from "@/shared/lib/useLanguage";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { Colors, useAppTheme } from "@/shared/theme";
@@ -15,12 +16,17 @@ import BookingInformationComponent, { BookingInformationData } from "./BookingIn
 import { TextFieldLabel } from "@/shared/ui/Text";
 import { useEditBookingForm } from "@/features/manage/hooks/useEditBookingForm";
 import Loader from "@/shared/ui/Loader";
+import { RootState, useAppSelector } from "@/app/store";
+import { alertService } from "@/services/alertService";
+import { CreateBookingRequest } from "@/features/manage/api/types";
 
 const AddNewBookingScreen = ({ navigation }: RootScreenProps<Paths.AddNewBooking>) => {
     const { theme: { colors } } = useAppTheme();
     const styles = $styles(colors);
-    const { t } = useTranslation();
-    const { getListBookingSetting, loading, getListService } = useEditBookingForm();
+    const { t, i18n } = useTranslation();
+    const { currentLanguage } = useLanguage();
+    const { getListBookingSetting, loading, getListService, getListBookingFrequency, postCreateUserBooking, postCreateBooking } = useEditBookingForm();
+    const listBookingSetting = useAppSelector((state: RootState) => state.editBooking.listBookingSetting);
 
     const steps = useMemo(() => ([
         { label: t('bookingInformation.customerInfo'), icon: UserRound },
@@ -34,22 +40,236 @@ const AddNewBookingScreen = ({ navigation }: RootScreenProps<Paths.AddNewBooking
         phone: "",
         email: "",
         note: "",
-        dob: new Date(),
+        dob: null,
+        id: null,
     });
 
-    const [bookingData, setBookingData] = useState<BookingInformationData>({
-        bookingDate: null,
-        bookingTime: null,
-        services: [],
-        note: "",
-        isPeriodic: false,
-        periodicSettings: undefined,
-    });
+    const [bookingData, setBookingData] = useState<BookingInformationData>();
 
     useEffect(() => {
         getListBookingSetting();
         getListService();
+        getListBookingFrequency();
     }, []);
+
+    const validateBookingData = () => {
+        if (!bookingData?.bookingDate || !bookingData?.bookingHours) {
+            alertService.showAlert({
+                title: t('addNewBooking.validationError'),
+                message: t('addNewBooking.requiredFields'),
+                typeAlert: 'Error',
+                onConfirm: () => { },
+            });
+            return false;
+        }
+
+        const now = new Date();
+        let minDateTime = new Date(now);
+        if (listBookingSetting) {
+            const leadTimeDays = listBookingSetting.appointmentLeadTimeDays ?? 0;
+            const leadTimeHours = listBookingSetting.appointmentLeadTimeHours ?? 0;
+            const leadTimeMins = listBookingSetting.appointmentLeadTimeMins ?? 0;
+
+            minDateTime.setDate(minDateTime.getDate() + leadTimeDays);
+            minDateTime.setHours(minDateTime.getHours() + leadTimeHours);
+            minDateTime.setMinutes(minDateTime.getMinutes() + leadTimeMins);
+            minDateTime.setSeconds(0, 0);
+        }
+
+        const bookingDate = bookingData.bookingDate;
+        const bookingHoursParts = bookingData.bookingHours.split(':');
+        if (bookingHoursParts.length < 2) {
+            alertService.showAlert({
+                title: t('addNewBooking.validationError'),
+                message: t('addNewBooking.invalidTime'),
+                typeAlert: 'Error',
+                onConfirm: () => { },
+            });
+            return false;
+        }
+
+        const bookingDateTime = new Date(bookingDate);
+        bookingDateTime.setHours(
+            parseInt(bookingHoursParts[0], 10),
+            parseInt(bookingHoursParts[1], 10),
+            bookingHoursParts.length > 2 ? parseInt(bookingHoursParts[2], 10) : 0,
+            0
+        );
+
+        if (bookingDateTime < minDateTime) {
+            const locale = currentLanguage === 'vi' ? 'vi-VN' : 'en-AU';
+            const minDateStr = minDateTime.toLocaleDateString(locale, {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+            });
+            const minTimeStr = `${minDateTime.getHours().toString().padStart(2, '0')}:${minDateTime.getMinutes().toString().padStart(2, '0')}`;
+
+            alertService.showAlert({
+                title: t('addNewBooking.validationError'),
+                message: t('addNewBooking.minimumTimeError', {
+                    date: minDateStr,
+                    time: minTimeStr,
+                }),
+                typeAlert: 'Error',
+                onConfirm: () => { },
+            });
+            return false;
+        }
+
+        if (!bookingData?.services || bookingData.services.length === 0) {
+            alertService.showAlert({
+                title: t('addNewBooking.validationError'),
+                message: t('addNewBooking.noServiceError'),
+                typeAlert: 'Error',
+                onConfirm: () => { },
+            });
+            return false;
+        }
+
+        const invalidService = bookingData.services.find(
+            (service) => !service.serviceId || service.serviceId === 0 || !service.serviceTime || service.serviceTime === 0
+        );
+
+        if (invalidService) {
+            alertService.showAlert({
+                title: t('addNewBooking.validationError'),
+                message: t('addNewBooking.invalidServiceError'),
+                typeAlert: 'Error',
+                onConfirm: () => { },
+            });
+            return false;
+        }
+
+        if (bookingData.frequency.frequencyType !== null && (!bookingData.frequency.fromDate || !bookingData.frequency.endDate)) {
+            alertService.showAlert({
+                title: t('addNewBooking.validationError'),
+                message: t('addNewBooking.repeatValueError'),
+                typeAlert: 'Error',
+                onConfirm: () => { },
+            });
+            return false;
+        }
+
+        return true;
+    }
+
+    const validateCustomerData = () => {
+        if (!customerData.name || !customerData.phone || !customerData.email || !customerData.dob) {
+            alertService.showAlert({
+                title: t('addNewBooking.validationError'),
+                message: t('addNewBooking.customerInfoError'),
+                typeAlert: 'Error',
+            });
+            return false;
+        }
+        return true;
+    }
+
+    const handleButtonPress = async () => {
+        if (activeStep === 0) {
+            if (!validateCustomerData()) {
+                return;
+            }
+            setActiveStep(1);
+            return;
+        }
+
+        if (activeStep === 1) {
+            if (!validateBookingData()) {
+                return;
+            }
+            if (!validateCustomerData()) {
+                alertService.showAlert({
+                    title: t('addNewBooking.validationError'),
+                    message: t('addNewBooking.customerInfoError'),
+                    typeAlert: 'Error',
+                });
+                setActiveStep(0);
+                return;
+            }
+
+            let formData: CreateBookingRequest;
+
+            if (customerData.id === null) {
+                const dataUserBooking = {
+                    id: 0,
+                    code: "",
+                    name: customerData.name,
+                    phoneNumber: customerData.phone,
+                    email: customerData.email,
+                    dateOfBirth: customerData.dob?.toISOString() || "",
+                    yearOfBirth: null,
+                    gender: null,
+                    systemCatalogId: null,
+                    address: "",
+                    description: "",
+                    staffNote: "",
+                    dayBirth: customerData.dob?.getDate() || 0,
+                    monthBirth: customerData.dob?.getMonth() ? customerData.dob.getMonth() + 1 : 0,
+                    password: "",
+                }
+                const response = await postCreateUserBooking(dataUserBooking);
+                if (response) {
+                    const formatDateString = (date?: Date | null) => (date ? date.toISOString() : null);
+                    const servicesPayload = (bookingData?.services ?? []).map((service) => ({
+                        serviceId: service.serviceId,
+                        staffId: service.staffId ?? null,
+                        serviceTime: service.serviceTime,
+                        promotionId: service.promotionId ?? null,
+                    }));
+
+                    const frequencyPayload = {
+                        frequencyType: bookingData?.frequency?.frequencyType ?? null,
+                        fromDate: formatDateString(bookingData?.frequency?.fromDate ?? null),
+                        endDate: formatDateString(bookingData?.frequency?.endDate ?? null),
+                    }
+
+                    formData = {
+                        bookingDate: formatDateString(bookingData?.bookingDate ?? null),
+                        bookingHours: bookingData?.bookingHours ?? null,
+                        status: 0,
+                        description: bookingData?.description ?? null,
+                        services: servicesPayload ?? null,
+                        frequency: frequencyPayload ?? null,
+                        customer: {
+                            id: response.id ?? null,
+                            name: customerData.name ?? null,
+                        }
+                    }
+                    console.log("formData", formData);
+                    const responseBooking = await postCreateBooking(formData);
+                    if (responseBooking) {
+                        alertService.showAlert({
+                            title: t('addNewBooking.success'),
+                            message: t('addNewBooking.bookingCreatedSuccessfully'),
+                            typeAlert: 'Confirm',
+                            onConfirm: () => {
+                                navigation.goBack();
+                            },
+                        });
+                    } else {
+                        alertService.showAlert({
+                            title: t('addNewBooking.validationError'),
+                            message: t('addNewBooking.errorCreateBooking'),
+                            typeAlert: 'Error',
+                            onConfirm: () => {
+                                setActiveStep(0);
+                            },
+                        });
+                        return;
+                    }
+                } else {
+                    alertService.showAlert({
+                        title: t('addNewBooking.validationError'),
+                        message: t('addNewBooking.errorCreateUserBooking'),
+                        typeAlert: 'Error',
+                    });
+                    return;
+                }
+            }
+        }
+    }
 
     return (
         <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
@@ -77,7 +297,7 @@ const AddNewBookingScreen = ({ navigation }: RootScreenProps<Paths.AddNewBooking
                             <React.Fragment key={step.label}>
                                 <Pressable
                                     style={styles.stepItem}
-                                    onPress={() => setActiveStep(index)}
+                                // onPress={() => setActiveStep(index)}
                                 >
                                     <View style={[
                                         styles.stepCircle,
@@ -120,7 +340,28 @@ const AddNewBookingScreen = ({ navigation }: RootScreenProps<Paths.AddNewBooking
                     />
                 ) : (
                     <BookingInformationComponent
-                        value={bookingData}
+                        value={bookingData ? {
+                            ...bookingData,
+                            customer: {
+                                id: customerData.id ?? 0,
+                                name: customerData.name || "",
+                            },
+                        } : {
+                            bookingDate: null,
+                            bookingHours: null,
+                            status: 0,
+                            description: "",
+                            services: [],
+                            frequency: {
+                                frequencyType: null,
+                                fromDate: null,
+                                endDate: null,
+                            },
+                            customer: {
+                                id: customerData.id ?? 0,
+                                name: customerData.name || "",
+                            },
+                        }}
                         onChange={setBookingData}
                     />
                 )}
@@ -136,7 +377,7 @@ const AddNewBookingScreen = ({ navigation }: RootScreenProps<Paths.AddNewBooking
                 />
                 <Button
                     text={activeStep === steps.length - 1 ? t('addNewBooking.done') : t('addNewBooking.next')}
-                    onPress={() => setActiveStep((prev) => Math.min(steps.length - 1, prev + 1))}
+                    onPress={() => handleButtonPress()}
                     style={[styles.footerButton, styles.footerButtonPrimary]}
                     pressedTextStyle={{ color: colors.black }}
                     textStyle={{ color: colors.black }}

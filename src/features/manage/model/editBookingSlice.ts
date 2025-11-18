@@ -1,9 +1,11 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { ListBookingSettingResponse, ListServiceResponse } from "../api/types"
+import { ListBookingFrequencyResponse, ListBookingSettingResponse, ListCustomerListResponse, ListServiceResponse } from "../api/types"
 
 interface EditBookingState {
     listBookingSetting: ListBookingSettingResponse | null;
     listService: ListServiceResponse | null;
+    listBookingFrequency: ListBookingFrequencyResponse[] | null;
+    listCustomerList: ListCustomerListResponse | null;
     loading: boolean;
     error: string | null;
 }
@@ -11,6 +13,8 @@ interface EditBookingState {
 const initialState: EditBookingState = {
     listBookingSetting: null,
     listService: null,
+    listBookingFrequency: [],
+    listCustomerList: null,
     loading: false,
     error: null,
 
@@ -25,6 +29,12 @@ const editBookingSlice = createSlice({
         },
         setListService(state, action: PayloadAction<ListServiceResponse>) {
             state.listService = action.payload;
+        },
+        setListBookingFrequency(state, action: PayloadAction<ListBookingFrequencyResponse[]>) {
+            state.listBookingFrequency = action.payload;
+        },
+        setListCustomerList(state, action: PayloadAction<ListCustomerListResponse>) {
+            state.listCustomerList = action.payload;
         },
         setLoading(state, action: PayloadAction<boolean>) {
             state.loading = action.payload;
@@ -44,6 +54,8 @@ const editBookingSlice = createSlice({
 export const {
     setListBookingSetting,
     setListService,
+    setListBookingFrequency,
+    setListCustomerList,
     setLoading,
     setError,
     clearEditBookingState,

@@ -7,7 +7,11 @@ import type {
     DetailBookingItemResponse,
     HistoryBookingItemResponse,
     ListBookingSettingResponse,
-    ListServiceResponse
+    ListServiceResponse,
+    ListBookingFrequencyResponse,
+    ListCustomerListResponse,
+    CreateUserBookingRequest,
+    CreateBookingRequest
 } from "./types";
 
 export type {
@@ -20,10 +24,8 @@ export type {
     ServiceItem,
     StaffItem,
     DetailBookingItemResponse,
-    StatusObjDetailBookingItemR,
     ServiceDetailBookingItemResponse,
     StaffDetailBookingItemResponse,
-    RoleObjDetailBookingItemResponse,
     Frequency,
     Customer
 } from "./types";
@@ -168,4 +170,27 @@ export const getListServiceApi = async (SystemCatalogId?: number, Search?: strin
         params.append('SortType', SortType);
     }
     return http.get<ListServiceResponse>(`/api/ServiceManagement/List?${params.toString()}`);
+}
+
+export const getListBookingFrequencyApi = async () => {
+    return http.get<ListBookingFrequencyResponse[]>('/api/Booking/ListBookingFrequecy');
+}
+
+export const getListCustomerListApi = async (PageSize?: number, name?: string) => {
+    const params = new URLSearchParams();
+    if (PageSize) {
+        params.append('PageSize', PageSize.toString());
+    }
+    if (name) {
+        params.append('Name', name);
+    }
+    return http.get<ListCustomerListResponse>(`/api/Customer/List?${params.toString()}`);
+}
+
+export const postCreateUserBookingApi = async (data: CreateUserBookingRequest) => {
+    return http.post<any>('/api/Customer/Create', data);
+}
+
+export const postCreateBookingApi = async (data: CreateBookingRequest) => {
+    return http.post<any>('/api/Booking/Create', data);
 }

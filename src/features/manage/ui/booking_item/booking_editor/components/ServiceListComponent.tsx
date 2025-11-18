@@ -9,10 +9,10 @@ import { useTranslation } from "react-i18next";
 import { RootState, useAppSelector } from "@/app/store";
 
 export type ServiceItem = {
-    id: number;
-    name: string;
+    serviceId: number;
+    staffId: number | null;
     serviceTime: number;
-    employeeIds: number[];
+    promotionId: number | null;
 };
 
 type ServiceListComponentProps = {
@@ -21,7 +21,7 @@ type ServiceListComponentProps = {
 };
 
 const ServiceListComponent = ({
-    services, 
+    services,
     onChange,
 }: ServiceListComponentProps) => {
     const { theme: { colors } } = useAppTheme();
@@ -39,28 +39,34 @@ const ServiceListComponent = ({
         })) || [];
     }, [listService]);
 
-    const staffOptions = useMemo(() => {
-        const options =
-            listStaff?.map((item) => ({
-                label: item.displayName,
-                value: item.id.toString(),
-            })) || [];
-        return [
-            { label: t('bookingInformation.anyEmployee'), value: '0' },
-            ...options,
-        ];
-    }, [listStaff, t]);
+    const baseStaffOptions = useMemo(() => {
+        return listStaff?.map((item) => ({
+            label: item.displayName,
+            value: item.id.toString(),
+        })) || [];
+    }, [listStaff]);
+
+    const getStaffOptionsForItem = useCallback((staffId: number | null) => {
+        const isAnyEmployee = staffId === null || staffId === 0;
+        if (isAnyEmployee) {
+            return [
+                { label: t('bookingInformation.anyEmployee'), value: 'null' },
+                ...baseStaffOptions,
+            ];
+        }
+        return baseStaffOptions;
+    }, [baseStaffOptions, t]);
 
     const addService = useCallback(() => {
-        onChange([...services, { id: Date.now(), name: "", serviceTime: 0, employeeIds: [] }]);
+        onChange([...services, { serviceId: 0, staffId: null, serviceTime: 0, promotionId: null }]);
     }, [services, onChange]);
 
-    const updateService = useCallback((id: number, patch: Partial<ServiceItem>) => {
-        onChange(services.map((s) => (s.id === id ? { ...s, ...patch } : s)));
+    const updateService = useCallback((index: number, patch: Partial<ServiceItem>) => {
+        onChange(services.map((s, i) => (i === index ? { ...s, ...patch } : s)));
     }, [services, onChange]);
 
-    const removeService = useCallback((id: number) => {
-        onChange(services.filter((s) => s.id !== id));
+    const removeService = useCallback((index: number) => {
+        onChange(services.filter((_, i) => i !== index));
     }, [services, onChange]);
 
     const renderItem = (item: any) => {
@@ -86,7 +92,7 @@ const ServiceListComponent = ({
             </View>
 
             {services.map((item, index) => (
-                <View key={item.id} style={styles.serviceRow}>
+                <View key={`service-${index}-${item.serviceId}`} style={styles.serviceRow}>
                     <View style={styles.field}>
                         <View style={styles.labelRow}>
                             <TextFieldLabel text={t('bookingInformation.serviceLabel', { index: index + 1 })} />
@@ -96,11 +102,11 @@ const ServiceListComponent = ({
                             data={serviceOptions}
                             labelField="label"
                             valueField="value"
-                            value={item.name}
+                            value={item.serviceId.toString()}
                             onChange={({ value }) => {
                                 const selected = serviceOptions.find((option) => option.value === value);
-                                updateService(item.id, { 
-                                    name: value as string,
+                                updateService(index, {
+                                    serviceId: Number(value),
                                     serviceTime: selected?.serviceTime ?? 0,
                                 });
                             }}
@@ -127,25 +133,27 @@ const ServiceListComponent = ({
                             placeholder={t('bookingInformation.durationPlaceholder')}
                             keyboardType="number-pad"
                             value={item.serviceTime.toString()}
-                            onChangeText={(text) => updateService(item.id, { serviceTime: parseInt(text) })}
+                            onChangeText={(text) => updateService(index, { serviceTime: parseInt(text) || 0 })}
                         />
                     </View>
+
                     <View style={styles.field}>
                         <View style={styles.labelRow}>
                             <TextFieldLabel text={t('bookingInformation.staff')} />
                             <TextFieldLabel text={t('bookingInformation.requiredMark')} style={styles.requiredMark} />
                         </View>
                         <Dropdown
-                            data={staffOptions}
+                            data={getStaffOptionsForItem(item.staffId)}
                             labelField="label"
                             valueField="value"
-                            value={item.employeeIds?.join(',') ?? ''}
-                            onChange={({ value }) => updateService(item.id, { employeeIds: [Number(value)] })}
-                            style={[styles.dropdown]}
+                            value={item.staffId === null ? 'null' : item.staffId.toString()}
+                            onChange={({ value }) => updateService(index, { staffId: value === 'null' ? null : Number(value) })}
+                            style={[styles.dropdown, (item.staffId === null) && styles.dropdownDisabled]}
+                            disable={item.staffId === null}
                             showsVerticalScrollIndicator={false}
                             containerStyle={styles.dropdownContainer}
                             itemContainerStyle={styles.dropdownItem}
-                            selectedTextStyle={styles.dropdownSelectedText}
+                            selectedTextStyle={[styles.dropdownSelectedText, (item.staffId === null) && styles.dropdownTextDisabled]}
                             itemTextStyle={{ color: colors.text }}
                             placeholderStyle={styles.dropdownSelectedText}
                             placeholder={t('bookingInformation.staffPlaceholder')}
@@ -158,17 +166,28 @@ const ServiceListComponent = ({
                     </View>
 
                     <View style={styles.actions}>
-                        {/* <View style={styles.anyWrap}>
+                        <View style={styles.anyWrap}>
+
                             <Switch
-                                value={item.anyEmployee}
-                                onValueChange={(val) => updateService(item.id, { anyEmployee: val, staff: val ? 'any' : item.staff })}
-                                thumbColor={item.anyEmployee ? colors.yellow : colors.primary}
+                                value={item.staffId === null}
+                                onValueChange={(val) => {
+                                    if (val) {
+                                        updateService(index, { staffId: null });
+                                    } else {
+                                        const currentStaffId = item.staffId !== null && item.staffId !== 0
+                                            ? item.staffId
+                                            : (baseStaffOptions.length > 0 ? Number(baseStaffOptions[0].value) : null);
+                                        updateService(index, { staffId: currentStaffId });
+                                    }
+                                }}
+                                thumbColor={item.staffId === null ? colors.yellow : colors.primary}
                                 trackColor={{ true: colors.yellow + "55", false: colors.border }}
                             />
-                            <TextFieldLabel text={t('bookingInformation.anyEmployee')} />
-                        </View> */}
 
-                        <Pressable onPress={() => removeService(item.id)} style={styles.deleteBtn}>
+                            <TextFieldLabel text={t('bookingInformation.anyEmployee')} />
+                        </View>
+
+                        <Pressable onPress={() => removeService(index)} style={styles.deleteBtn}>
                             <Trash2 size={16} color={colors.error} />
                             <TextFieldLabel text={t('bookingInformation.delete')} style={styles.deleteText} />
                         </Pressable>
@@ -277,6 +296,13 @@ const $styles = (colors: Colors, isWide: boolean) => StyleSheet.create({
         paddingVertical: 8,
         paddingHorizontal: 12,
         color: colors.text,
+    },
+    dropdownDisabled: {
+        opacity: 0.5,
+        backgroundColor: colors.backgroundDisabled,
+    },
+    dropdownTextDisabled: {
+        color: colors.placeholderTextColor,
     },
 });
 

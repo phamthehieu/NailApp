@@ -1,6 +1,4 @@
-// ==================== Common Base Types ====================
 
-/** Base entity fields that appear in most responses */
 export interface BaseEntity {
     id: number;
     creator: string | null;
@@ -10,8 +8,7 @@ export interface BaseEntity {
     warnings: string | null;
     errors: string | null;
 }
-
-/** Common pagination response structure */
+    
 export interface PaginationResponse<T> {
     pageIndex: number;
     totalItems: number;
@@ -20,13 +17,11 @@ export interface PaginationResponse<T> {
     items: T[];
 }
 
-/** Common ID-Name pair used for roles, statuses, etc. */
 export interface IdNamePair {
     id: number;
     name: string;
 }
 
-/** Customer information */
 export interface Customer {
     id: number;
     name: string;
@@ -34,16 +29,12 @@ export interface Customer {
     email: string;
 }
 
-/** Frequency information */
 export interface Frequency {
-    frequencyType: number;
-    fromDate: string;
-    endDate: string;
+    frequencyType: number | null;
+    fromDate: string | null;
+    endDate: string | null;
 }
 
-// ==================== Staff Types ====================
-
-/** Base staff information (minimal) */
 export interface BaseStaff {
     id: number;
     username: string;
@@ -54,7 +45,6 @@ export interface BaseStaff {
     roleObj: IdNamePair;
 }
 
-/** Full staff information with all fields */
 export interface StaffItem extends BaseStaff, BaseEntity {
     description: string | null;
     tenantId: number;
@@ -66,17 +56,12 @@ export interface StaffItem extends BaseStaff, BaseEntity {
     avatarUrl: string | null;
 }
 
-/** Staff in service context (simplified) */
 export interface StaffItemInService extends BaseStaff { }
 
-/** Staff in detail booking response */
 export interface StaffDetailBookingItemResponse extends BaseStaff {
-    email: any; // Note: API returns any for email in detail response
+    email: any;
 }
 
-// ==================== Service Types ====================
-
-/** Base service information */
 export interface BaseService {
     id: number;
     serviceName: string;
@@ -84,29 +69,23 @@ export interface BaseService {
     serviceTime: number;
 }
 
-/** Service item in booking manager */
 export interface ServiceItem extends BaseService {
     serviceCode: string | null;
     staff: StaffItemInService | null;
     promotion: any | null;
 }
 
-/** Service in detail booking response */
 export interface ServiceDetailBookingItemResponse extends BaseService {
     serviceCode: any;
     staff?: StaffDetailBookingItemResponse;
     promotion: any;
 }
 
-// ==================== Booking Status Types ====================
-
 export interface BookingStatusItem extends IdNamePair { }
 
 export interface ListBookingStatusResponse {
     items: BookingStatusItem[];
 }
-
-// ==================== Booking Hour Types ====================
 
 export interface ListBookingHourSettingResponse extends BaseEntity {
     tenantId: number,
@@ -130,8 +109,6 @@ export interface ListBookingHourSettingResponse extends BaseEntity {
     name: string | null
 }
 
-// ==================== Booking Manager Types ====================
-
 export interface BookingManagerItem extends BaseEntity {
     code: string;
     bookingDate: string;
@@ -146,8 +123,6 @@ export interface BookingManagerItem extends BaseEntity {
 
 export interface ListBookingManagerResponse extends PaginationResponse<BookingManagerItem> { }
 
-// ==================== Detail Booking Types ====================
-
 export interface DetailBookingItemResponse extends BaseEntity {
     code: string;
     bookingDate: string;
@@ -158,7 +133,7 @@ export interface DetailBookingItemResponse extends BaseEntity {
     services: ServiceDetailBookingItemResponse[];
     frequency: Frequency;
     customer: Customer;
-    creator: any; // Note: API returns any for creator in detail response
+    creator: any;
 }
 
 export interface HistoryBookingItemResponse extends PaginationResponse<HistoryBookingItem> {
@@ -193,8 +168,6 @@ export interface ListBookingSettingResponse {
     bookingSlotSize: string;
     skipLogin: boolean;
 }
-
-// ==================== Staff List Response ====================
 
 export interface ListStaffResponse extends PaginationResponse<StaffItem> { }
 
@@ -233,10 +206,85 @@ export interface SystemCatalog extends BaseEntity {
     systemCatalogId: number
 }
 
-// ==================== Legacy Type Exports (for backward compatibility) ====================
+export interface ListBookingFrequencyResponse extends IdNamePair {}
 
-/** @deprecated Use IdNamePair instead */
-export type StatusObjDetailBookingItemR = IdNamePair;
+export interface ListCustomerListResponse extends PaginationResponse<customerInfo> {
+    items: customerInfo[];
+}
 
-/** @deprecated Use IdNamePair instead */
-export type RoleObjDetailBookingItemResponse = IdNamePair;
+export interface customerInfo {
+    code: string
+    name: string
+    phoneNumber: string
+    email: string
+    dateOfBirth: string
+    yearOfBirth?: number
+    appUserId: any
+    appUserObj: any
+    tenantId: number
+    tenantObj: any
+    gender: number
+    genderObj: IdNamePair
+    systemCatalogId: any
+    systemCatalogObj: any
+    address?: string
+    description?: string
+    staffNote?: string
+    status: number
+    statusObj: IdNamePair
+    totalExpense: number
+    timesOfServiceUsage: number
+    avatarUrl: string
+    isNewAvatar: boolean
+    monthBirth?: number
+    dayBirth?: number
+    isSendReview: boolean
+    historyUsageService: any[]
+    id: number
+    creator: any
+    createdAt: string
+    lastModifiedAt: string
+    informations: any
+    warnings: any
+    errors: any
+}
+
+export interface CreateUserBookingRequest {
+    id: number | null
+    code: string | null
+    name: string | null
+    phoneNumber: string | null
+    email: string | null
+    dateOfBirth: string | null
+    yearOfBirth: number | null
+    gender: number | null
+    systemCatalogId: number | null
+    address: string | null
+    description: string | null
+    staffNote: string | null
+    dayBirth: number | null
+    monthBirth: number | null
+    password: string | null
+}
+
+export interface CreateBookingRequest {
+ bookingDate: string | null
+  bookingHours: string | null
+  status: number | null
+  description: string | null
+  services: ServiceCreateBookingRequest[]
+  frequency: Frequency | null
+  customer: CustomerCreateBookingRequest | null
+}
+
+export interface ServiceCreateBookingRequest {
+    serviceId: number | null
+    staffId: number | null
+    serviceTime: number
+    promotionId: number | null
+}
+
+export interface CustomerCreateBookingRequest {
+    id: number | null
+    name: string | null
+}

@@ -14,17 +14,24 @@ import { RootState, useAppSelector } from "@/app/store";
 
 export interface BookingInformationData {
     bookingDate: Date | null;
-    bookingTime: Date | null;
+    bookingHours: string | null;
+    status: number;
+    description: string;
     services: ServiceItem[];
-    note: string;
-    isPeriodic: boolean;
-    periodicSettings?: {
-        repeatBy: string;
-        repeatValue: string;
-        endDate: string;
-    };
+    frequency: Frequency;
+    customer: Customer;
 }
 
+export interface Frequency {
+    frequencyType: number | null;
+    fromDate: Date | null;
+    endDate: Date | null;
+}
+
+export interface Customer {
+    id: number;
+    name: string;
+}
 interface BookingInformationComponentProps {
     value?: BookingInformationData;
     onChange?: (data: BookingInformationData) => void;
@@ -60,36 +67,31 @@ const BookingInformationComponent = ({ value, onChange }: BookingInformationComp
     const listBookingSetting = useAppSelector((state: RootState) => state.editBooking.listBookingSetting);
     const { t } = useTranslation();
 
-    const initialValue = value || {
-        bookingDate: null,
-        bookingTime: null,
-        services: [],
-        note: "",
-        isPeriodic: false,
-        periodicSettings: undefined,
-    };
-
-    const [serviceItems, setServiceItems] = useState<ServiceItem[]>(initialValue.services);
-    const [note, setNote] = useState(initialValue.note);
+    const [serviceItems, setServiceItems] = useState<ServiceItem[]>();
+    const [description, setDescription] = useState<string>();
     const scrollRef = useRef<ScrollView>(null);
     const inputPositionsRef = useRef<Record<"note", number>>({
         note: 0,
     });
 
     const [keyboardHeight, setKeyboardHeight] = useState(0);
-    const [isPeriodic, setIsPeriodic] = useState(initialValue.isPeriodic);
-    const [periodicSettings, setPeriodicSettings] = useState<PeriodicSettings>({
-        repeatBy: initialValue.periodicSettings?.repeatBy || "",
-        repeatValue: initialValue.periodicSettings?.repeatValue || "",
-        endDate: initialValue.periodicSettings?.endDate || "",
-    });
-    const [selectedDate, setSelectedDate] = useState<Date | null>(initialValue.bookingDate);
-    const [selectedTime, setSelectedTime] = useState<Date | null>(initialValue.bookingTime);
+    const [frequency, setFrequency] = useState<Frequency>();
+    const [selectedDate, setSelectedDate] = useState<Date | null>();
+    const [selectedTime, setSelectedTime] = useState<Date | null>();
+    const [bookingHoursString, setBookingHoursString] = useState<string | null>(null);
     const [showDatePicker, setShowDatePicker] = useState(false);
     const [showTimePicker, setShowTimePicker] = useState(false);
     const previousValueRef = useRef<BookingInformationData | undefined>(value);
+    const onChangeRef = useRef(onChange);
+    const isInitialMountRef = useRef(true);
+    const lastEmittedDataRef = useRef<BookingInformationData | null>(null);
+    const isUpdatingFromParentRef = useRef(false);
 
-    useMemo(() => {
+    useEffect(() => {
+        onChangeRef.current = onChange;
+    }, [onChange]);
+
+    useEffect(() => {
         const showSub = Keyboard.addListener("keyboardDidShow", (e) => {
             setKeyboardHeight(e.endCoordinates.height);
         });
@@ -127,6 +129,26 @@ const BookingInformationComponent = ({ value, onChange }: BookingInformationComp
         return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
     }, []);
 
+    const formatTimeToString = useCallback((date: Date | null): string | null => {
+        if (!date) return null;
+        const hours = date.getHours();
+        const minutes = date.getMinutes();
+        const seconds = date.getSeconds();
+        return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    }, []);
+
+    const parseTimeString = useCallback((timeString: string | null): Date | null => {
+        if (!timeString) return null;
+        const parts = timeString.split(':');
+        if (parts.length < 2) return null;
+        const hours = parseInt(parts[0], 10);
+        const minutes = parseInt(parts[1], 10);
+        const seconds = parts.length > 2 ? parseInt(parts[2], 10) : 0;
+        const date = new Date();
+        date.setHours(hours, minutes, seconds, 0);
+        return date;
+    }, []);
+
     const handleDateChange = useCallback((date: Date) => {
         setSelectedDate(date);
         setShowDatePicker(false);
@@ -144,58 +166,124 @@ const BookingInformationComponent = ({ value, onChange }: BookingInformationComp
             0
         );
         setSelectedTime(timeOnly);
+        const timeString = formatTimeToString(timeOnly);
+        setBookingHoursString(timeString);
         setShowTimePicker(false);
-    }, [selectedDate]);
+    }, [selectedDate, formatTimeToString]);
+
+    const handleFrequencyTypeChange = useCallback((frequencyType: number | null) => {
+        setFrequency((prev) => ({
+            frequencyType,
+            fromDate: prev?.fromDate || null,
+            endDate: prev?.endDate || null,
+        }));
+    }, []);
+
+    const handleFromDateChange = useCallback((fromDate: Date | null) => {
+        setFrequency((prev) => ({
+            frequencyType: prev?.frequencyType ?? null,
+            fromDate,
+            endDate: prev?.endDate || null,
+        }));
+    }, []);
+
+    const handleToDateChange = useCallback((toDate: Date | null) => {
+        setFrequency((prev) => ({
+            frequencyType: prev?.frequencyType ?? null,
+            fromDate: prev?.fromDate || null,
+            endDate: toDate,
+        }));
+    }, []);
 
     useEffect(() => {
         if (value) {
             const prevValue = previousValueRef.current;
             const hasChanged = !prevValue ||
-                prevValue.bookingDate !== value.bookingDate ||
-                prevValue.bookingTime !== value.bookingTime ||
-                prevValue.note !== value.note ||
-                prevValue.isPeriodic !== value.isPeriodic ||
+                prevValue.bookingDate?.getTime() !== value.bookingDate?.getTime() ||
+                prevValue.bookingHours !== value.bookingHours ||
+                prevValue.status !== value.status ||
+                prevValue.description !== value.description ||
                 JSON.stringify(prevValue.services) !== JSON.stringify(value.services) ||
-                JSON.stringify(prevValue.periodicSettings) !== JSON.stringify(value.periodicSettings);
+                JSON.stringify(prevValue.frequency) !== JSON.stringify(value.frequency) ||
+                JSON.stringify(prevValue.customer) !== JSON.stringify(value.customer);
 
             if (hasChanged) {
+                isUpdatingFromParentRef.current = true;
+
                 setServiceItems(value.services);
-                setNote(value.note);
-                setIsPeriodic(value.isPeriodic);
+                setDescription(value.description);
+                setFrequency(value.frequency);
                 setSelectedDate(value.bookingDate);
-                setSelectedTime(value.bookingTime);
-                if (value.periodicSettings) {
-                    setPeriodicSettings({
-                        repeatBy: value.periodicSettings.repeatBy,
-                        repeatValue: value.periodicSettings.repeatValue,
-                        endDate: value.periodicSettings.endDate,
-                    });
-                } else {
-                    setPeriodicSettings({
-                        repeatBy: "",
-                        repeatValue: "",
-                        endDate: "",
-                    });
-                }
+                const parsedTime = parseTimeString(value.bookingHours);
+                setSelectedTime(parsedTime);
+                setBookingHoursString(value.bookingHours);
                 previousValueRef.current = value;
+                isInitialMountRef.current = false;
+                lastEmittedDataRef.current = { ...value };
+
+                requestAnimationFrame(() => {
+                    isUpdatingFromParentRef.current = false;
+                });
             }
         }
-    }, [value]);
+    }, [value, parseTimeString]);
 
-    const bookingData: BookingInformationData = useMemo(() => {
-        return {
-            bookingDate: selectedDate,
-            bookingTime: selectedTime,
-            services: serviceItems,
-            note: note,
-            isPeriodic: isPeriodic,
-            periodicSettings: isPeriodic && periodicSettings.repeatBy && periodicSettings.repeatValue && periodicSettings.endDate ? {
-                repeatBy: periodicSettings.repeatBy,
-                repeatValue: periodicSettings.repeatValue,
-                endDate: periodicSettings.endDate,
-            } : undefined,
+    useEffect(() => {
+        if (!onChangeRef.current) return;
+
+        if (isInitialMountRef.current || isUpdatingFromParentRef.current) {
+            if (isInitialMountRef.current) {
+                isInitialMountRef.current = false;
+            }
+            return;
+        }
+
+        const bookingData: BookingInformationData = {
+            bookingDate: selectedDate || null,
+            bookingHours: bookingHoursString || null,
+            status: value?.status ?? 0,
+            description: description || "",
+            services: serviceItems || [],
+            frequency: frequency || {
+                frequencyType: null,
+                fromDate: null,
+                endDate: null,
+            },
+            customer: value?.customer || {
+                id: 0,
+                name: "",
+            },
         };
-    }, [selectedDate, selectedTime, serviceItems, note, isPeriodic, periodicSettings]);
+
+        const lastEmitted = lastEmittedDataRef.current;
+        if (lastEmitted) {
+            const hasChanged =
+                lastEmitted.bookingDate?.getTime() !== bookingData.bookingDate?.getTime() ||
+                lastEmitted.bookingHours !== bookingData.bookingHours ||
+                lastEmitted.status !== bookingData.status ||
+                lastEmitted.description !== bookingData.description ||
+                lastEmitted.customer?.id !== bookingData.customer?.id ||
+                lastEmitted.customer?.name !== bookingData.customer?.name ||
+                JSON.stringify(lastEmitted.services) !== JSON.stringify(bookingData.services) ||
+                JSON.stringify(lastEmitted.frequency) !== JSON.stringify(bookingData.frequency);
+
+            if (!hasChanged) {
+                return;
+            }
+        }
+
+        lastEmittedDataRef.current = bookingData;
+        onChangeRef.current(bookingData);
+    }, [selectedDate, bookingHoursString, description, serviceItems, frequency, value?.status, value?.customer]);
+
+    useEffect(() => {
+        if (!isUpdatingFromParentRef.current && selectedTime) {
+            const timeString = formatTimeToString(selectedTime);
+            if (timeString !== bookingHoursString) {
+                setBookingHoursString(timeString);
+            }
+        }
+    }, [selectedTime, formatTimeToString, bookingHoursString]);
 
     const bookingDateMaximum = useMemo(() => {
         if (!listBookingSetting) return undefined;
@@ -215,10 +303,6 @@ const BookingInformationComponent = ({ value, onChange }: BookingInformationComp
     const timePickerSteps = useMemo(() => {
         return parseSlotSteps(listBookingSetting?.bookingSlotSize);
     }, [listBookingSetting?.bookingSlotSize]);
-
-    useEffect(() => {
-        onChange?.(bookingData);
-    }, [bookingData, onChange]);
 
     return (
         <KeyboardAvoidingView
@@ -249,7 +333,7 @@ const BookingInformationComponent = ({ value, onChange }: BookingInformationComp
                                 readOnly
                                 editable={false}
                                 placeholder={t('bookingInformation.bookingDatePlaceholder')}
-                                value={formatDate(selectedDate)}
+                                value={formatDate(selectedDate || null)}
                                 style={{ height: 48 }}
                                 RightAccessory={() => (
                                     <View style={styles.accessory}>
@@ -269,7 +353,7 @@ const BookingInformationComponent = ({ value, onChange }: BookingInformationComp
                                 readOnly
                                 editable={false}
                                 placeholder={t('bookingInformation.bookingTimePlaceholder')}
-                                value={formatTime(selectedTime)}
+                                value={formatTime(selectedTime || null)}
                                 style={{ height: 48 }}
                                 RightAccessory={() => (
                                     <View style={styles.accessory}>
@@ -281,7 +365,7 @@ const BookingInformationComponent = ({ value, onChange }: BookingInformationComp
                     </View>
 
                     <ServiceListComponent
-                        services={serviceItems}
+                        services={serviceItems || []}
                         onChange={setServiceItems}
                     />
 
@@ -294,8 +378,8 @@ const BookingInformationComponent = ({ value, onChange }: BookingInformationComp
                         <TextField
                             label={t('bookingInformation.note')}
                             placeholder={t('bookingInformation.notePlaceholder')}
-                            value={note}
-                            onChangeText={setNote}
+                            value={description}
+                            onChangeText={setDescription}
                             keyboardType="default"
                             returnKeyType="done"
                             multiline={true}
@@ -305,10 +389,12 @@ const BookingInformationComponent = ({ value, onChange }: BookingInformationComp
                     </View>
 
                     <PeriodicSettingsComponent
-                        isPeriodic={isPeriodic}
-                        onPeriodicChange={setIsPeriodic}
-                        settings={periodicSettings}
-                        onSettingsChange={setPeriodicSettings}
+                        frequencyType={frequency?.frequencyType ?? null}
+                        fromDate={frequency?.fromDate || null}
+                        toDate={frequency?.endDate || null}
+                        onChangeFrequencyType={handleFrequencyTypeChange}
+                        onChangeFromDate={handleFromDateChange}
+                        onChangeToDate={handleToDateChange}
                     />
 
                 </View>

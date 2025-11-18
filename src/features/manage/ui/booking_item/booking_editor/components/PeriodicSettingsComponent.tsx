@@ -1,102 +1,78 @@
 import { Pressable, StyleSheet, Switch, View, useWindowDimensions } from "react-native";
-import { useMemo } from "react";
-import { ChevronDown } from "lucide-react-native";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Calendar, ChevronDown } from "lucide-react-native";
 import { Colors, useAppTheme } from "@/shared/theme";
 import { TextFieldLabel } from "@/shared/ui/Text";
 import { Dropdown } from "react-native-element-dropdown";
 import { useTranslation } from "react-i18next";
+import { RootState, useAppSelector } from "@/app/store";
+import { TextField } from "@/shared/ui/TextField";
+import { formatDate } from "@/shared/lib/formatDate";
+import DateTimePicker from "@/shared/ui/DatePicker";
 
 export type PeriodicSettings = {
-    repeatBy: string;
-    repeatValue: string;
-    endDate: string;
+    frequencyType: number | null;
+    fromDate: Date | null;
+    toDate: Date | null;
+    onChangeFrequencyType: (frequencyType: number | null) => void;
+    onChangeFromDate: (fromDate: Date | null) => void;
+    onChangeToDate: (toDate: Date | null) => void;
 };
 
-type PeriodicSettingsComponentProps = {
-    isPeriodic: boolean;
-    onPeriodicChange: (isPeriodic: boolean) => void;
-    settings: PeriodicSettings;
-    onSettingsChange: (settings: PeriodicSettings) => void;
-    repeatByOptions?: Array<{ label: string; value: string }>;
-    repeatValueOptions?: Array<{ label: string; value: string }>;
-    endDateOptions?: Array<{ label: string; value: string }>;
-};
 
 const PeriodicSettingsComponent = ({
-    isPeriodic,
-    onPeriodicChange,
-    settings,
-    onSettingsChange,
-    repeatByOptions: customRepeatByOptions,
-    repeatValueOptions: customRepeatValueOptions,
-    endDateOptions: customEndDateOptions,
-}: PeriodicSettingsComponentProps) => {
+    frequencyType,
+    fromDate,
+    toDate,
+    onChangeFrequencyType,
+    onChangeFromDate,
+    onChangeToDate,
+}: PeriodicSettings) => {
     const { theme: { colors } } = useAppTheme();
     const { width } = useWindowDimensions();
     const isWide = width >= 700;
     const styles = $styles(colors, isWide);
     const { t } = useTranslation();
+    const listBookingFrequency = useAppSelector((state: RootState) => state.editBooking.listBookingFrequency);
+    const [isPeriodic, setIsPeriodic] = useState(frequencyType !== null);
+    const [showFromDatePicker, setShowFromDatePicker] = useState(false);
+    const [showToDatePicker, setShowToDatePicker] = useState(false);
 
-    const repeatByOptions = useMemo(() => 
-        customRepeatByOptions || [
-            { label: t('bookingInformation.repeatByOptions.day'), value: "day" },
-            { label: t('bookingInformation.repeatByOptions.week'), value: "week" },
-            { label: t('bookingInformation.repeatByOptions.month'), value: "month" },
-        ],
-        [customRepeatByOptions, t]
+    useEffect(() => {
+        setIsPeriodic(frequencyType !== null);
+    }, [frequencyType]);
+    const repeatByOptions = useMemo(() =>
+        listBookingFrequency?.map((item) => ({ label: item.name, value: item.id.toString() })) || [],
+        [listBookingFrequency]
     );
 
-    const repeatValueOptions = useMemo(() => 
-        customRepeatValueOptions || (() => {
-            const options = [];
-            for (let i = 1; i <= 30; i++) {
-                options.push({ label: i.toString(), value: i.toString() });
-            }
-            return options;
-        })(),
-        [customRepeatValueOptions]
-    );
+    const parseFromDate = useCallback((): Date => {
+        if (!fromDate) return new Date();
+        return fromDate;
+    }, [fromDate]);
 
-    const endDateOptions = useMemo(() => 
-        customEndDateOptions || (() => {
-            const options = [];
-            const today = new Date();
-            for (let i = 0; i < 90; i++) {
-                const date = new Date(today);
-                date.setDate(today.getDate() + i);
-                const day = date.getDate();
-                const month = date.getMonth() + 1;
-                const year = date.getFullYear();
-                const dayName = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'][date.getDay()];
-                const label = i === 0 ? `${t('bookingInformation.today')} (${day}/${month}/${year})` : `${dayName}, ${day}/${month}/${year}`;
-                options.push({ label, value: `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}` });
-            }
-            return options;
-        })(),
-        [customEndDateOptions, t]
-    );
+    const handleConfirmFromDate = useCallback((date: Date) => {
+        onChangeFromDate(date);
+        setShowFromDatePicker(false);
+    }, [onChangeFromDate]);
 
-    const handleRepeatByChange = (value: string) => {
-        onSettingsChange({
-            ...settings,
-            repeatBy: value,
-            repeatValue: "", // Reset repeatValue when repeatBy changes
-        });
-    };
+    const handleCloseFromDatePicker = useCallback(() => {
+        setShowFromDatePicker(false);
+    }, []);
 
-    const handleRepeatValueChange = (value: string) => {
-        onSettingsChange({
-            ...settings,
-            repeatValue: value,
-        });
-    };
+    const parseToDate = useCallback((): Date => {
+        if (!toDate) return new Date();
+        return toDate;
+    }, [toDate]);
 
-    const handleEndDateChange = (value: string) => {
-        onSettingsChange({
-            ...settings,
-            endDate: value,
-        });
-    };
+    const handleConfirmToDate = useCallback((date: Date) => {
+        onChangeToDate(date);
+        setShowToDatePicker(false);
+    }, [onChangeToDate]);
+
+    const handleCloseToDatePicker = useCallback(() => {
+        setShowToDatePicker(false);
+    }, []);
 
     const renderItem = (item: any) => {
         return (
@@ -108,12 +84,21 @@ const PeriodicSettingsComponent = ({
         );
     };
 
+    const handlePeriodicToggle = useCallback((value: boolean) => {
+        setIsPeriodic(value);
+        if (!value) {
+            onChangeFrequencyType(null);
+            onChangeFromDate(null);
+            onChangeToDate(null);
+        }
+    }, [onChangeFrequencyType, onChangeFromDate, onChangeToDate]);
+
     return (
         <View>
-            <Pressable style={styles.row} onPress={() => onPeriodicChange(!isPeriodic)}>
+            <Pressable style={styles.row} onPress={() => handlePeriodicToggle(!isPeriodic)}>
                 <Switch
                     value={isPeriodic}
-                    onValueChange={onPeriodicChange}
+                    onValueChange={handlePeriodicToggle}
                     thumbColor={isPeriodic ? colors.yellow : colors.primary}
                     trackColor={{ true: colors.yellow + "55", false: colors.border }}
                 />
@@ -131,8 +116,8 @@ const PeriodicSettingsComponent = ({
                             data={repeatByOptions}
                             labelField="label"
                             valueField="value"
-                            value={settings.repeatBy}
-                            onChange={({ value }) => handleRepeatByChange(value as string)}
+                            value={frequencyType?.toString() || ''}
+                            onChange={({ value }) => onChangeFrequencyType(parseInt(value as string))}
                             style={styles.dropdown}
                             showsVerticalScrollIndicator={false}
                             containerStyle={styles.dropdownContainer}
@@ -154,34 +139,23 @@ const PeriodicSettingsComponent = ({
                             <TextFieldLabel text={t('bookingInformation.repeatValue')} />
                             <TextFieldLabel text={t('bookingInformation.requiredMark')} style={styles.requiredMark} />
                         </View>
-                        <Dropdown
-                            data={repeatValueOptions}
-                            labelField="label"
-                            valueField="value"
-                            value={settings.repeatValue}
-                            onChange={({ value }) => handleRepeatValueChange(value as string)}
-                            style={styles.dropdown}
-                            showsVerticalScrollIndicator={false}
-                            containerStyle={styles.dropdownContainer}
-                            itemContainerStyle={styles.dropdownItem}
-                            selectedTextStyle={styles.dropdownSelectedText}
-                            itemTextStyle={{ color: colors.text }}
-                            placeholderStyle={styles.dropdownSelectedText}
-                            placeholder={
-                                settings.repeatBy === "day" 
-                                    ? t('bookingInformation.repeatValueDayPlaceholder') 
-                                    : settings.repeatBy === "week" 
-                                    ? t('bookingInformation.repeatValueWeekPlaceholder') 
-                                    : settings.repeatBy === "month" 
-                                    ? t('bookingInformation.repeatValueMonthPlaceholder') 
-                                    : t('bookingInformation.repeatValueDayPlaceholder')
-                            }
-                            renderRightIcon={() => <ChevronDown size={16} color={colors.placeholderTextColor} />}
-                            maxHeight={220}
-                            activeColor={colors.backgroundDisabled}
-                            selectedTextProps={{ allowFontScaling: false }}
-                            renderItem={renderItem}
-                        />
+                        <Pressable
+                            onPress={() => setShowFromDatePicker(true)}
+                        >
+                            <TextField
+                                required={true}
+                                readOnly
+                                editable={false}
+                                placeholder={t('bookingInformation.bookingDatePlaceholder')}
+                                value={fromDate ? formatDate(fromDate.toISOString()) : ''}
+                                style={{ height: 48 }}
+                                RightAccessory={() => (
+                                    <View style={styles.accessory}>
+                                        <Calendar size={18} color={colors.text} />
+                                    </View>
+                                )}
+                            />
+                        </Pressable>
                     </View>
 
                     <View style={isWide ? styles.dropdownField : styles.dropdownFieldColumn}>
@@ -189,29 +163,48 @@ const PeriodicSettingsComponent = ({
                             <TextFieldLabel text={t('bookingInformation.endDate')} />
                             <TextFieldLabel text={t('bookingInformation.requiredMark')} style={styles.requiredMark} />
                         </View>
-                        <Dropdown
-                            data={endDateOptions}
-                            labelField="label"
-                            valueField="value"
-                            value={settings.endDate}
-                            onChange={({ value }) => handleEndDateChange(value as string)}
-                            style={styles.dropdown}
-                            showsVerticalScrollIndicator={false}
-                            containerStyle={styles.dropdownContainer}
-                            itemContainerStyle={styles.dropdownItem}
-                            selectedTextStyle={styles.dropdownSelectedText}
-                            itemTextStyle={{ color: colors.text }}
-                            placeholderStyle={styles.dropdownSelectedText}
-                            placeholder={t('bookingInformation.endDatePlaceholder')}
-                            renderRightIcon={() => <ChevronDown size={16} color={colors.placeholderTextColor} />}
-                            maxHeight={220}
-                            activeColor={colors.backgroundDisabled}
-                            selectedTextProps={{ allowFontScaling: false }}
-                            renderItem={renderItem}
-                        />
+                        <Pressable
+                            onPress={() => setShowToDatePicker(true)}
+                        >
+                            <TextField
+                                required={true}
+                                readOnly
+                                editable={false}
+                                placeholder={t('bookingInformation.bookingDatePlaceholder')}
+                                value={toDate ? formatDate(toDate.toISOString()) : ''}
+                                style={{ height: 48 }}
+                                RightAccessory={() => (
+                                    <View style={styles.accessory}>
+                                        <Calendar size={18} color={colors.text} />
+                                    </View>
+                                )}
+                            />
+                        </Pressable>
                     </View>
                 </View>
             )}
+
+            <DateTimePicker
+                mode="date"
+                value={parseFromDate()}
+                visible={showFromDatePicker}
+                minimumDate={new Date()}
+                onChange={handleConfirmFromDate}
+                onClose={handleCloseFromDatePicker}
+                allowFutureDates
+                allowPastDates
+                autoCloseOnConfirm={false}
+            />
+
+            <DateTimePicker
+                mode="date"
+                value={parseToDate()}
+                visible={showToDatePicker}
+                minimumDate={fromDate ? fromDate : new Date()}
+                onChange={handleConfirmToDate}
+                onClose={handleCloseToDatePicker}
+                autoCloseOnConfirm={false}
+            />
         </View>
     );
 };
@@ -272,7 +265,7 @@ const $styles = (colors: Colors, isWide: boolean) => StyleSheet.create({
     labelRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: 6,
+        marginBottom: 16,
     },
     requiredMark: {
         fontSize: 14,
@@ -283,6 +276,9 @@ const $styles = (colors: Colors, isWide: boolean) => StyleSheet.create({
         paddingVertical: 8,
         paddingHorizontal: 12,
         color: colors.text,
+    },
+    accessory: {
+        padding: 8,
     },
 });
 
