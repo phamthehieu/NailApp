@@ -281,7 +281,7 @@ const BookingPaymentModal = ({
                                     <View style={styles.paymentField}>
                                         <TextFieldLabel style={styles.fieldLabel}>{t('bookingPayment.customerAmount')}</TextFieldLabel>
                                         <TextField
-                                            style={styles.amountInput}
+                                            style={styles.changeText}
                                             placeholder={t('bookingPayment.customerAmountPlaceholder')}
                                             placeholderTextColor={colors.placeholderTextColor}
                                             value={customerAmount}
@@ -452,6 +452,11 @@ const $styles = (colors: Colors, isSmallScreen: boolean) => StyleSheet.create({
         padding: 12,
         borderWidth: 1,
         borderColor: colors.border,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 3,
     },
     mobileCardHeader: {
         marginBottom: 12,
@@ -708,7 +713,7 @@ const $styles = (colors: Colors, isSmallScreen: boolean) => StyleSheet.create({
         marginBottom: 8,
     },
     paymentDropdown: {
-        height: isSmallScreen ? 48 : 44,
+        height: isSmallScreen ? 48 : 40,
         backgroundColor: colors.card,
         borderRadius: 8,
         paddingHorizontal: 12,
@@ -716,12 +721,10 @@ const $styles = (colors: Colors, isSmallScreen: boolean) => StyleSheet.create({
         borderColor: colors.border,
     },
     amountInput: {
-        height: isSmallScreen ? 48 : 44,
+        height: isSmallScreen ? 48 : 40,
         backgroundColor: colors.card,
         borderRadius: 8,
         paddingHorizontal: 12,
-        borderWidth: 1,
-        borderColor: colors.border,
         color: colors.text,
         fontSize: isSmallScreen ? 16 : 14,
     },

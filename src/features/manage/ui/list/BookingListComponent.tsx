@@ -383,6 +383,7 @@ const $styles = (colors: Colors, isTablet: boolean) =>
             justifyContent: "center",
             alignItems: "center",
             marginLeft: "auto",
+            maxWidth: 150,
         },
         mainActionText: {
             color: colors.black,

@@ -66,7 +66,7 @@
                 });
                 return;
             }
-            console.log("dataBookingEdit", dataBookingEdit);
+
             const response = await putEditBooking(dataBookingEdit);
             if (response) {
                 alertService.showAlert({
