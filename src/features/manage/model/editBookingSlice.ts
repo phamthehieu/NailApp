@@ -1,11 +1,13 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { ListBookingFrequencyResponse, ListBookingSettingResponse, ListCustomerListResponse, ListServiceResponse } from "../api/types"
+import { CustomerCreateBookingRequest, ListBookingFrequencyResponse, ListBookingSettingResponse, ListCustomerListResponse, ListPromotionResponse, ListServiceResponse } from "../api/types"
 
 interface EditBookingState {
     listBookingSetting: ListBookingSettingResponse | null;
     listService: ListServiceResponse | null;
     listBookingFrequency: ListBookingFrequencyResponse[] | null;
     listCustomerList: ListCustomerListResponse | null;
+    listPromotion: ListPromotionResponse | null;
+    listPaymentType: CustomerCreateBookingRequest[] | null;
     loading: boolean;
     error: string | null;
 }
@@ -15,6 +17,8 @@ const initialState: EditBookingState = {
     listService: null,
     listBookingFrequency: [],
     listCustomerList: null,
+    listPromotion: null,
+    listPaymentType: null,
     loading: false,
     error: null,
 
@@ -36,6 +40,12 @@ const editBookingSlice = createSlice({
         setListCustomerList(state, action: PayloadAction<ListCustomerListResponse>) {
             state.listCustomerList = action.payload;
         },
+        setListPromotion(state, action: PayloadAction<ListPromotionResponse>) {
+            state.listPromotion = action.payload;
+        },
+        setListPaymentType(state, action: PayloadAction<CustomerCreateBookingRequest[]>) {
+            state.listPaymentType = action.payload;
+        },
         setLoading(state, action: PayloadAction<boolean>) {
             state.loading = action.payload;
         },
@@ -56,6 +66,8 @@ export const {
     setListService,
     setListBookingFrequency,
     setListCustomerList,
+    setListPromotion,
+    setListPaymentType,
     setLoading,
     setError,
     clearEditBookingState,

@@ -80,11 +80,12 @@ const vi = {
     pickDate: 'Chọn ngày',
   },
   bottomNavigator: {
-    bookingManage: 'Quản lý',
+    dashboard: 'Dashboard',
+    bookingManage: 'Calendar',
     report: 'Báo cáo',
     system: 'Hệ thống',
     settings: 'Cài đặt',
-    checkin: "Xác thực đặt lịch",
+    checkin: "Checkin",
   },
   calenderDashboard: {
     calenderHeader: {
@@ -335,6 +336,11 @@ const vi = {
     saturday: 'Thứ 7',
     sunday: 'Chủ nhật',
     events: 'sự kiện',
+  },
+  dashboard: {
+    title: 'Bảng điều khiển',
+    allStaff: 'Tất cả nhân viên',
+    searchPlaceholder: 'Tìm kiếm...',
   },
 };
 

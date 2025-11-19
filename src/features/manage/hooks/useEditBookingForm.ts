@@ -1,7 +1,7 @@
 import { useCallback, useState } from "react";
 import { useAppDispatch } from "@/app/store";
-import { setListBookingFrequency, setListBookingSetting, setListCustomerList, setListService } from "../model/editBookingSlice";
-import { getListBookingFrequencyApi, getListBookingSettingApi, getListCustomerListApi, getListServiceApi, postCreateBookingApi, postCreateUserBookingApi } from "../api/BookingApi";
+import { setListBookingFrequency, setListBookingSetting, setListCustomerList, setListPaymentType, setListPromotion, setListService } from "../model/editBookingSlice";
+import { getListBookingFrequencyApi, getListBookingSettingApi, getListCustomerListApi, getListPaymentTypeApi, getListPromotionApi, getListServiceApi, postCreateBookingApi, postCreateUserBookingApi } from "../api/BookingApi";
 import { alertService } from "@/services/alertService";
 import { useTranslation } from "react-i18next";
 import { CreateBookingRequest, CreateUserBookingRequest } from "../api/types";
@@ -130,6 +130,49 @@ export function useEditBookingForm() {
             setLoading(false);
         }
     }, [t, loading]);
+
+    const getListPromotion = useCallback(async (PageIndex?: number) => {
+        try {
+            if (loading) return;
+            setLoading(true);
+            const PageSize = 10000;
+            const response = await getListPromotionApi(PageIndex, PageSize);
+            dispatch(setListPromotion(response));
+        }
+        catch (error) {
+            console.error(error);
+            alertService.showAlert({
+                title: t('bookingList.errorTitle'),
+                message: t('bookingList.errorMessage'),
+                typeAlert: 'Error',
+                onConfirm: () => {},
+            });
+        }
+        finally {
+            setLoading(false);
+        }
+    }, [dispatch, t, loading]);
+
+    const getListPaymentType = useCallback(async () => {
+        try {
+            if (loading) return;
+            setLoading(true);
+            const response = await getListPaymentTypeApi();
+            dispatch(setListPaymentType(response));
+        } catch (error) {
+            console.error(error);
+            alertService.showAlert({
+                title: t('bookingList.errorTitle'),
+                message: t('bookingList.errorMessage'),
+                typeAlert: 'Error',
+                onConfirm: () => {},
+            });
+        }
+        finally {
+            setLoading(false);
+        }
+    }, [dispatch, t, loading]);
+
     return {
         getListBookingSetting,
         getListService,
@@ -138,5 +181,7 @@ export function useEditBookingForm() {
         postCreateUserBooking,
         postCreateBooking,
         loading,
+        getListPromotion,
+        getListPaymentType,
     };
 }

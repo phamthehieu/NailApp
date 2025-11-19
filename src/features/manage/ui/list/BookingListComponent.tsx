@@ -19,7 +19,7 @@ import { useAppSelector } from "@/app/store";
 import { BookingManagerItem } from "../../api/types";
 import Loader from "@/shared/ui/Loader";
 import { getBookingStatusColor } from "@/features/manage/utils/bookingStatusColor";
-
+import { useEditBookingForm } from "../../hooks/useEditBookingForm";
 interface BookingListComponentProps {
     navigation: RootScreenProps<Paths.BookingManage>['navigation'];
 }
@@ -31,6 +31,7 @@ const BookingListComponent = ({ navigation }: BookingListComponentProps) => {
     const { t } = useTranslation();
     const { getListBookingManager, loadMoreBookings, loading, loadingMore, resetPagination, getDetailBookingItem, getHistoryBookingItem, postCancelBooking } = useBookingForm();
     const { listBookingManager, pageIndex, totalPages } = useAppSelector((state) => state.booking);
+    const { getListPromotion, getListPaymentType } = useEditBookingForm();
 
     const [isBookingConfirmationModalVisible, setIsBookingConfirmationModalVisible] = useState(false);
     const [refreshing, setRefreshing] = useState(false);
@@ -95,10 +96,12 @@ const BookingListComponent = ({ navigation }: BookingListComponentProps) => {
     };
 
     const handleMainAction = (item: any) => {
+        getDetailBookingItem(item.id);
         if (item.status === 0) {
-            getDetailBookingItem(item.id);
             setIsCheckinBookingModalVisible(true);
         } else if (item.status === 1) {
+            getListPromotion();
+            getListPaymentType();
             setIsBookingPaymentModalVisible(true);
         }
     };

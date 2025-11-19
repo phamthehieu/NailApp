@@ -15,7 +15,7 @@ export const colors = {
   borderTable: '#4c566b',
   backgroundTable: '#1E1E21',
   bottomColor: "#4c566b",
-  backgroundDisabled: "#4c566b",
+  backgroundDisabled: "#11141A",
   blue: '#358FFC',
   purple: '#AB47BC',
   green: '#10B981',

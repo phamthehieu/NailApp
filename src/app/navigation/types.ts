@@ -18,4 +18,5 @@ export type RootStackParamList = {
   DetailBookingItem: { bookingId: number | string };
   AddNewBooking: undefined;
   EditBooking: undefined;
+  DashBoard: undefined;
 };

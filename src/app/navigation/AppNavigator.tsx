@@ -20,6 +20,7 @@ import { BookingManageScreen } from '@/features/manage';
 import BottomNavigator from './BottomNavigator';
 import { DetailBookingItemScreen, AddNewBookingScreen, EditBookingScreen } from '@/features/manage/ui/booking_item';
 import EditProfileUserScreen from '@/features/settings/ui/EditProfileUserScreen';
+import { DashBoardScreen } from '@/features/dashboard';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -51,6 +52,8 @@ const AppStack = () => {
 
             <Stack.Screen name={Paths.Settings} component={SettingsScreen} />
             <Stack.Screen name={Paths.EditProfileUser} component={EditProfileUserScreen} />
+            
+            <Stack.Screen name={Paths.DashBoard} component={DashBoardScreen} />
         </Stack.Navigator >
     );
 };

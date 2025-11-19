@@ -1,7 +1,7 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { StyleSheet } from 'react-native';
-import { CalendarCheck, UserRound, UserCheck } from 'lucide-react-native';
+import { CalendarCheck, UserRound, UserCheck, Home } from 'lucide-react-native';
 import { useAppTheme } from '@/shared/theme';
 import { Paths } from '@/app/navigation/paths';
 import type { RootStackParamList } from '@/app/navigation/types';
@@ -12,6 +12,7 @@ import { useTranslation } from 'react-i18next';
 import { TextFieldLabel } from '@/shared/ui/Text';
 import CheckinScreen from '@/features/store/ui/CheckinScreen';
 import { SettingsScreen } from '@/features/settings';
+import { DashBoardScreen } from '@/features/dashboard';
 const Tab = createBottomTabNavigator<RootStackParamList>();
 
 const BottomNavigator = () => {
@@ -19,9 +20,8 @@ const BottomNavigator = () => {
     const { t } = useTranslation();
 
     const TAB_TITLES: Record<string, string> = {
+        [Paths.DashBoard]: t('bottomNavigator.dashboard'),
         [Paths.BookingManage]: t('bottomNavigator.bookingManage'),
-        // [Paths.Report]: t('bottomNavigator.report'),
-        // [Paths.System]: t('bottomNavigator.system'),
         [Paths.Checkin]: t('bottomNavigator.checkin'),
         [Paths.Settings]: t('bottomNavigator.settings'),
     };
@@ -45,6 +45,18 @@ const BottomNavigator = () => {
                 },
             }}
         >
+
+            <Tab.Screen
+                name={Paths.DashBoard}
+                component={DashBoardScreen}
+                options={{
+                    tabBarLabel: ({ color }: { color: string }) => renderLabel(Paths.DashBoard, color),
+                    tabBarIcon: ({ color, size }: { color: string; size: number }) => (
+                        <Home color={color} size={size} />
+                    ),
+                }}
+            />
+
             <Tab.Screen
                 name={Paths.BookingManage}
                 component={BookingManageScreen}
@@ -55,28 +67,6 @@ const BottomNavigator = () => {
                     ),
                 }}
             />
-
-            {/*    <Tab.Screen
-                name={Paths.Report}
-                component={ReportScreen}
-                options={{
-                    tabBarLabel: ({ color }: { color: string }) => renderLabel(Paths.Report, color),
-                    tabBarIcon: ({ color, size }: { color: string; size: number }) => (
-                        <ChartLine  color={color} size={size} />
-                    ),
-                }}
-            /> */}
-
-            {/* <Tab.Screen
-                name={Paths.System}
-                component={SystemScreen}
-                options={{
-                    tabBarLabel: ({ color }: { color: string }) => renderLabel(Paths.System, color),
-                    tabBarIcon: ({ color, size }: { color: string; size: number }) => (
-                        <Monitor  color={color} size={size} />
-                    ),
-                }}
-            /> */}
 
             <Tab.Screen
                 name={Paths.Checkin}

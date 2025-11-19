@@ -236,6 +236,7 @@ export type CalendarWeekPickerModalProps = BaseModalProps & {
     onConfirmRange: (range: CalendarRange) => void;
     onClearRange: () => void;
     locale?: string;
+    rangeOnly?: boolean;
 };
 
 export const CalendarWeekPickerModal: React.FC<CalendarWeekPickerModalProps> = ({
@@ -247,6 +248,7 @@ export const CalendarWeekPickerModal: React.FC<CalendarWeekPickerModalProps> = (
     onConfirmRange,
     onClearRange,
     locale = 'vi-VN',
+    rangeOnly = false,
 }) => {
     const { theme: { colors } } = useAppTheme();
     const { t } = useTranslation();
@@ -256,7 +258,7 @@ export const CalendarWeekPickerModal: React.FC<CalendarWeekPickerModalProps> = (
     const iconSize = isSmall ? 16 : 18;
     const today = useMemo(() => startOfDay(new Date()), []);
 
-    const [rangeMode, setRangeMode] = useState<boolean>(false);
+    const [rangeMode, setRangeMode] = useState<boolean>(rangeOnly);
     const [displayYear, setDisplayYear] = useState<number>(selectedDate.getFullYear());
     const [displayMonth, setDisplayMonth] = useState<number>(selectedDate.getMonth());
     const [tempWeekIndex, setTempWeekIndex] = useState<number>(0);
@@ -267,6 +269,24 @@ export const CalendarWeekPickerModal: React.FC<CalendarWeekPickerModalProps> = (
         if (!visible) { return; }
 
         const normalizedSelected = startOfDay(selectedDate);
+
+        if (rangeOnly) {
+            setRangeMode(true);
+            if (committedRange) {
+                const start = startOfDay(committedRange.start);
+                const end = endOfDay(committedRange.end);
+                setTempStartDate(start);
+                setTempEndDate(end);
+                setDisplayYear(start.getFullYear());
+                setDisplayMonth(start.getMonth());
+            } else {
+                setDisplayYear(normalizedSelected.getFullYear());
+                setDisplayMonth(normalizedSelected.getMonth());
+                setTempStartDate(null);
+                setTempEndDate(null);
+            }
+            return;
+        }
 
         if (committedRange) {
             const start = startOfDay(committedRange.start);
@@ -301,7 +321,13 @@ export const CalendarWeekPickerModal: React.FC<CalendarWeekPickerModalProps> = (
             setTempStartDate(null);
             setTempEndDate(null);
         }
-    }, [visible, selectedDate, committedRange]);
+    }, [visible, selectedDate, committedRange, rangeOnly]);
+
+    useEffect(() => {
+        if (rangeOnly) {
+            setRangeMode(true);
+        }
+    }, [rangeOnly]);
 
     const handlePrevMonth = useCallback(() => {
         const d = new Date(displayYear, displayMonth, 1);
@@ -332,7 +358,7 @@ export const CalendarWeekPickerModal: React.FC<CalendarWeekPickerModalProps> = (
         const usedIdx = Math.min(tempWeekIndex, weeks.length - 1);
         const chosen = weeks[usedIdx];
 
-        if (!rangeMode) {
+        if (!rangeMode && !rangeOnly) {
             if (chosen) {
                 onConfirmWeek(new Date(chosen.start));
             }
@@ -355,13 +381,14 @@ export const CalendarWeekPickerModal: React.FC<CalendarWeekPickerModalProps> = (
             return;
         }
 
-        if (chosen) {
+        if (chosen && !rangeOnly) {
             onConfirmWeek(new Date(chosen.start));
         }
         onClose();
-    }, [displayYear, displayMonth, tempWeekIndex, rangeMode, tempStartDate, tempEndDate, onConfirmWeek, onConfirmRange, onClose]);
+    }, [displayYear, displayMonth, tempWeekIndex, rangeMode, tempStartDate, tempEndDate, onConfirmWeek, onConfirmRange, onClose, rangeOnly]);
 
     const handleSwitchToWeek = useCallback(() => {
+        if (rangeOnly) { return; }
         setRangeMode(false);
         setTempStartDate((prev) => prev ? new Date(prev) : null);
         setTempEndDate((prev) => prev ? new Date(prev) : null);
@@ -389,9 +416,11 @@ export const CalendarWeekPickerModal: React.FC<CalendarWeekPickerModalProps> = (
 
     const handleSwitchToRange = useCallback(() => {
         setRangeMode(true);
-        setTempStartDate(null);
-        setTempEndDate(null);
-    }, []);
+        if (!rangeOnly) {
+            setTempStartDate(null);
+            setTempEndDate(null);
+        }
+    }, [rangeOnly]);
 
     if (!visible) {
         return null;
@@ -411,27 +440,33 @@ export const CalendarWeekPickerModal: React.FC<CalendarWeekPickerModalProps> = (
         >
             <View style={styles.modalBackdrop}>
                 <View style={styles.modalContainer}>
-                    <TextFieldLabel style={styles.modalTitle}>{t('calenderDashboard.calenderHeader.selectWeek')}</TextFieldLabel>
-                    <View style={styles.segmentContainer}>
-                        <TouchableOpacity
-                            style={[styles.segmentButton, !rangeMode && styles.segmentActive]}
-                            onPress={handleSwitchToWeek}
-                            activeOpacity={0.7}
-                        >
-                            <TextFieldLabel style={[styles.segmentText, !rangeMode && styles.segmentTextActive]}>
-                                {t('calenderDashboard.calenderHeader.week')}
-                            </TextFieldLabel>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                            style={[styles.segmentButton, rangeMode && styles.segmentActive]}
-                            onPress={handleSwitchToRange}
-                            activeOpacity={0.7}
-                        >
-                            <TextFieldLabel style={[styles.segmentText, rangeMode && styles.segmentTextActive]}>
-                                {t('calenderDashboard.calenderHeader.range')}
-                            </TextFieldLabel>
-                        </TouchableOpacity>
-                    </View>
+                    <TextFieldLabel style={styles.modalTitle}>
+                        {rangeOnly
+                            ? t('calenderDashboard.calenderHeader.range')
+                            : t('calenderDashboard.calenderHeader.selectWeek')}
+                    </TextFieldLabel>
+                    {!rangeOnly && (
+                        <View style={styles.segmentContainer}>
+                            <TouchableOpacity
+                                style={[styles.segmentButton, !rangeMode && styles.segmentActive]}
+                                onPress={handleSwitchToWeek}
+                                activeOpacity={0.7}
+                            >
+                                <TextFieldLabel style={[styles.segmentText, !rangeMode && styles.segmentTextActive]}>
+                                    {t('calenderDashboard.calenderHeader.week')}
+                                </TextFieldLabel>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={[styles.segmentButton, rangeMode && styles.segmentActive]}
+                                onPress={handleSwitchToRange}
+                                activeOpacity={0.7}
+                            >
+                                <TextFieldLabel style={[styles.segmentText, rangeMode && styles.segmentTextActive]}>
+                                    {t('calenderDashboard.calenderHeader.range')}
+                                </TextFieldLabel>
+                            </TouchableOpacity>
+                        </View>
+                    )}
 
                     <View style={styles.weekHeaderRow}>
                         <TouchableOpacity style={styles.iconButton} onPress={handlePrevMonth} activeOpacity={0.7}>

@@ -12,4 +12,5 @@ export const enum Paths {
   DetailBookingItem = 'DetailBookingItem',
   AddNewBooking = 'AddNewBooking',
   EditBooking = 'EditBooking',
+  DashBoard = 'DashBoard',
 }

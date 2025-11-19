@@ -82,7 +82,8 @@ const en: Translations = {
         pickDate: 'Select date',
     },
     bottomNavigator: {
-        bookingManage: 'Booking',
+        dashboard: 'Dashboard',
+        bookingManage: 'Calendar',
         report: 'Report',
         system: 'System',
         settings: 'Settings',
@@ -338,6 +339,11 @@ const en: Translations = {
     sunday: 'Sunday',
     events: 'events',
   },
+  dashboard: {
+    title: 'Dashboard',
+    allStaff: 'All staff',
+    searchPlaceholder: 'Search...',
+    },
 };
 
 export default en;

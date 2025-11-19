@@ -8,7 +8,7 @@ export interface BaseEntity {
     warnings: string | null;
     errors: string | null;
 }
-    
+
 export interface PaginationResponse<T> {
     pageIndex: number;
     totalItems: number;
@@ -207,7 +207,7 @@ export interface SystemCatalog extends BaseEntity {
     systemCatalogId: number
 }
 
-export interface ListBookingFrequencyResponse extends IdNamePair {}
+export interface ListBookingFrequencyResponse extends IdNamePair { }
 
 export interface ListCustomerListResponse extends PaginationResponse<customerInfo> {
     items: customerInfo[];
@@ -269,13 +269,13 @@ export interface CreateUserBookingRequest {
 }
 
 export interface CreateBookingRequest {
- bookingDate: string | null
-  bookingHours: string | null
-  status: number | null
-  description: string | null
-  services: ServiceCreateBookingRequest[]
-  frequency: Frequency | null
-  customer: CustomerCreateBookingRequest | null
+    bookingDate: string | null
+    bookingHours: string | null
+    status: number | null
+    description: string | null
+    services: ServiceCreateBookingRequest[]
+    frequency: Frequency | null
+    customer: CustomerCreateBookingRequest | null
 }
 
 export interface ServiceCreateBookingRequest {
@@ -292,12 +292,111 @@ export interface CustomerCreateBookingRequest {
 
 export interface EditBookingRequest {
     id: number | null
-  status: number | null
-  services: ServiceEditBookingRequest[] | null
+    status: number | null
+    services: ServiceEditBookingRequest[] | null
 }
 
 export interface ServiceEditBookingRequest {
     serviceId: number | null
     staffId: number | null
     serviceTime: number | null
+}
+
+export interface PaymentBookingRequest {
+    id: number
+    services: ServiceCreateBookingRequest[]
+    voucherId: number
+    amount: number
+    amountVouchers: number
+    totalAmount: number
+    paymentType: number
+    customerPayment: number
+    customerChange: number
+    isInvoice: boolean
+}
+
+export interface PaymentItem {
+    id: number
+    services: PaymentServiceItem[]
+    voucherId: number
+    amount: number
+    amountVouchers: number
+    totalAmount: number
+    paymentType: number
+    customerPayment: number
+    customerChange: number
+    isInvoice: boolean
+}
+
+export interface PaymentServiceItem {
+    serviceId: number
+    staffId: number | null
+    serviceTime: number
+    promotionId: number | null
+    serviceName: string
+    price: number
+    serviceCode: string
+}
+
+export interface ListPromotionResponse extends PaginationResponse<promotionItem> {
+    items: promotionItem[];
+}
+
+export interface promotionItem {
+    stt: number
+    code: string
+    tenantId: number
+    name: string
+    description: string
+    discountType: number
+    discountTypeObj: DiscountTypeObj
+    discountValue: number
+    effectiveFrom: string
+    effectiveTo: string
+    listDayOfWeek: any[]
+    hasTimeFrame: boolean
+    timeFrom: any
+    timeTo: any
+    statusName: string
+    applyAllCustomerTypes: boolean
+    applyAllServiceTypes: boolean
+    customerGroups: any[]
+    serviceManagements: any[]
+    customerGroupIds: any[]
+    serviceManagementIds: any[]
+    quantityUsed: number
+    revenue: number
+    id: number
+    creator: any
+    createdAt: string
+    lastModifiedAt: string
+    informations: any
+    warnings: any
+    errors: any
+}
+
+export interface DiscountTypeObj {
+    id: number
+    name: string
+    description: string
+}
+
+export interface PutPaymentBookingRequest {
+ id: number
+  services: ServicePaymentBookingRequest[]
+  voucherId: number
+  amount: number | null
+  amountVouchers: number
+  totalAmount: number
+  paymentType: number | null
+  customerPayment: number | null
+  customerChange: number | null
+  isInvoice: boolean
+}
+
+export interface ServicePaymentBookingRequest {
+    serviceId: number
+    staffId: number | null
+    serviceTime: number | null
+    promotionId: number | null
 }
