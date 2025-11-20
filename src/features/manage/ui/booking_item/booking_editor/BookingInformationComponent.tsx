@@ -1,16 +1,18 @@
 import { Keyboard, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from "react-native";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Calendar, Clock } from "lucide-react-native";
+import { Calendar, ChevronDown } from "lucide-react-native";
 import { Colors, useAppTheme } from "@/shared/theme";
 import { TextField } from "@/shared/ui/TextField";
+import { TextFieldLabel } from "@/shared/ui/Text";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import DateTimePicker from "@/shared/ui/DatePicker";
-import TimePickerModal from "@/shared/ui/TimePickerModal";
 import { CalendarDayPickerModal } from "@/shared/ui/CalendarPickers";
 import { useTranslation } from "react-i18next";
 import ServiceListComponent, { ServiceItem } from "./components/ServiceListComponent";
-import PeriodicSettingsComponent, { PeriodicSettings } from "./components/PeriodicSettingsComponent";
+import PeriodicSettingsComponent from "./components/PeriodicSettingsComponent";
 import { RootState, useAppSelector } from "@/app/store";
+import { Dropdown } from "react-native-element-dropdown";
+import Loader from "@/shared/ui/Loader";
+import { useBookingForm } from "@/features/manage/hooks/useBookingForm";
 
 export interface BookingInformationData {
     bookingDate: Date | null;
@@ -37,27 +39,6 @@ interface BookingInformationComponentProps {
     onChange?: (data: BookingInformationData) => void;
 }
 
-const clamp = (value: number, min: number, max: number) => {
-    if (Number.isNaN(value)) { return min; }
-    return Math.min(Math.max(value, min), max);
-};
-
-const parseSlotSteps = (slot?: string) => {
-    const defaults = { hourStep: 1, minuteStep: 1, secondStep: 1 };
-    if (!slot) { return defaults; }
-    const parts = slot.split(':');
-    if (parts.length !== 3) { return defaults; }
-    const [hRaw, mRaw, sRaw] = parts;
-    const hours = clamp(parseInt(hRaw, 10) || 0, 0, 12);
-    const minutes = clamp(parseInt(mRaw, 10) || 0, 0, 60);
-    const seconds = clamp(parseInt(sRaw, 10) || 0, 0, 60);
-    return {
-        hourStep: hours > 0 ? Math.max(1, hours) : 1,
-        minuteStep: minutes > 0 ? Math.max(1, minutes) : 1,
-        secondStep: seconds > 0 ? Math.max(1, seconds) : 1,
-    };
-};
-
 const BookingInformationComponent = ({ value, onChange }: BookingInformationComponentProps) => {
     const { theme: { colors } } = useAppTheme();
     const { width } = useWindowDimensions();
@@ -66,6 +47,7 @@ const BookingInformationComponent = ({ value, onChange }: BookingInformationComp
     const insets = useSafeAreaInsets();
     const listBookingSetting = useAppSelector((state: RootState) => state.editBooking.listBookingSetting);
     const { t } = useTranslation();
+    const { getListTimeSlot, loading } = useBookingForm();
 
     const [serviceItems, setServiceItems] = useState<ServiceItem[]>();
     const [description, setDescription] = useState<string>();
@@ -77,15 +59,14 @@ const BookingInformationComponent = ({ value, onChange }: BookingInformationComp
     const [keyboardHeight, setKeyboardHeight] = useState(0);
     const [frequency, setFrequency] = useState<Frequency>();
     const [selectedDate, setSelectedDate] = useState<Date | null>();
-    const [selectedTime, setSelectedTime] = useState<Date | null>();
     const [bookingHoursString, setBookingHoursString] = useState<string | null>(null);
     const [showDatePicker, setShowDatePicker] = useState(false);
-    const [showTimePicker, setShowTimePicker] = useState(false);
     const previousValueRef = useRef<BookingInformationData | undefined>(value);
     const onChangeRef = useRef(onChange);
     const isInitialMountRef = useRef(true);
     const lastEmittedDataRef = useRef<BookingInformationData | null>(null);
     const isUpdatingFromParentRef = useRef(false);
+    const [timeSlots, setTimeSlots] = useState<{label: string, value: string}[]>([]);
 
     useEffect(() => {
         onChangeRef.current = onChange;
@@ -122,54 +103,16 @@ const BookingInformationComponent = ({ value, onChange }: BookingInformationComp
         return `${day.toString().padStart(2, '0')}/${month.toString().padStart(2, '0')}/${year}`;
     }, []);
 
-    const formatTime = useCallback((date: Date | null): string => {
-        if (!date) return "";
-        const hours = date.getHours();
-        const minutes = date.getMinutes();
-        return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-    }, []);
-
-    const formatTimeToString = useCallback((date: Date | null): string | null => {
-        if (!date) return null;
-        const hours = date.getHours();
-        const minutes = date.getMinutes();
-        const seconds = date.getSeconds();
-        return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-    }, []);
-
-    const parseTimeString = useCallback((timeString: string | null): Date | null => {
-        if (!timeString) return null;
-        const parts = timeString.split(':');
-        if (parts.length < 2) return null;
-        const hours = parseInt(parts[0], 10);
-        const minutes = parseInt(parts[1], 10);
-        const seconds = parts.length > 2 ? parseInt(parts[2], 10) : 0;
-        const date = new Date();
-        date.setHours(hours, minutes, seconds, 0);
-        return date;
-    }, []);
-
-    const handleDateChange = useCallback((date: Date) => {
+    const handleDateChange = useCallback(async (date: Date) => {
+        await handleGetListTimeSlot(date);
         setSelectedDate(date);
+        setBookingHoursString(null);
         setShowDatePicker(false);
-    }, []);
+    }, [getListTimeSlot]);
 
-    const handleTimeChange = useCallback((date: Date) => {
-        const baseDate = selectedDate || new Date();
-        const timeOnly = new Date(
-            baseDate.getFullYear(),
-            baseDate.getMonth(),
-            baseDate.getDate(),
-            date.getHours(),
-            date.getMinutes(),
-            0,
-            0
-        );
-        setSelectedTime(timeOnly);
-        const timeString = formatTimeToString(timeOnly);
-        setBookingHoursString(timeString);
-        setShowTimePicker(false);
-    }, [selectedDate, formatTimeToString]);
+    const handleTimeSlotChange = useCallback((slotValue: string) => {
+        setBookingHoursString(slotValue);
+    }, []);
 
     const handleFrequencyTypeChange = useCallback((frequencyType: number | null) => {
         setFrequency((prev) => ({
@@ -214,8 +157,6 @@ const BookingInformationComponent = ({ value, onChange }: BookingInformationComp
                 setDescription(value.description);
                 setFrequency(value.frequency);
                 setSelectedDate(value.bookingDate);
-                const parsedTime = parseTimeString(value.bookingHours);
-                setSelectedTime(parsedTime);
                 setBookingHoursString(value.bookingHours);
                 previousValueRef.current = value;
                 isInitialMountRef.current = false;
@@ -226,7 +167,7 @@ const BookingInformationComponent = ({ value, onChange }: BookingInformationComp
                 });
             }
         }
-    }, [value, parseTimeString]);
+    }, [value]);
 
     useEffect(() => {
         if (!onChangeRef.current) return;
@@ -276,15 +217,6 @@ const BookingInformationComponent = ({ value, onChange }: BookingInformationComp
         onChangeRef.current(bookingData);
     }, [selectedDate, bookingHoursString, description, serviceItems, frequency, value?.status, value?.customer]);
 
-    useEffect(() => {
-        if (!isUpdatingFromParentRef.current && selectedTime) {
-            const timeString = formatTimeToString(selectedTime);
-            if (timeString !== bookingHoursString) {
-                setBookingHoursString(timeString);
-            }
-        }
-    }, [selectedTime, formatTimeToString, bookingHoursString]);
-
     const bookingDateMaximum = useMemo(() => {
         if (!listBookingSetting) return undefined;
         const months = listBookingSetting.bookingTimeRangeMonths ?? 0;
@@ -300,9 +232,31 @@ const BookingInformationComponent = ({ value, onChange }: BookingInformationComp
         return maxDate;
     }, [listBookingSetting]);
 
-    const timePickerSteps = useMemo(() => {
-        return parseSlotSteps(listBookingSetting?.bookingSlotSize);
-    }, [listBookingSetting?.bookingSlotSize]);
+    const renderTimeSlotItem = useCallback((item: { label: string }) => (
+        <View style={styles.dropdownItemContainer}>
+            <TextFieldLabel allowFontScaling={false} style={styles.dropdownSelectedText}>
+                {item.label}
+            </TextFieldLabel>
+        </View>
+    ), [styles]);
+
+    const handleGetListTimeSlot = useCallback(async (date: Date) => {
+        const response = await getListTimeSlot(date);
+        if (response?.length) {
+            setTimeSlots(response
+                .map((item: any) => {
+                    const time = typeof item === "string" ? item : item?.time;
+                    if (!time) return null;
+                    return {
+                        label: time,
+                        value: time,
+                    };
+                })
+                .filter(Boolean) as { label: string; value: string }[]);
+        } else {
+            setTimeSlots([]);
+        }
+    }, [getListTimeSlot]);
 
     return (
         <KeyboardAvoidingView
@@ -343,25 +297,32 @@ const BookingInformationComponent = ({ value, onChange }: BookingInformationComp
                             />
                         </Pressable>
 
-                        <Pressable
-                            onPress={() => setShowTimePicker(true)}
-                            style={[styles.datePicker, styles.half]}
-                        >
-                            <TextField
-                                label={t('bookingInformation.bookingTime')}
-                                required={true}
-                                readOnly
-                                editable={false}
+                        <View style={[styles.half, styles.timeDropdownWrapper]}>
+                            <View style={styles.labelRow}>
+                                <TextFieldLabel text={t('bookingInformation.bookingTime')} />
+                                <TextFieldLabel text={t('bookingInformation.requiredMark')} style={styles.requiredMark} />
+                            </View>
+                            <Dropdown
+                                data={timeSlots}
+                                labelField="label"
+                                valueField="value"
+                                value={bookingHoursString ?? undefined}
                                 placeholder={t('bookingInformation.bookingTimePlaceholder')}
-                                value={formatTime(selectedTime || null)}
-                                style={{ height: 48 }}
-                                RightAccessory={() => (
-                                    <View style={styles.accessory}>
-                                        <Clock size={18} color={colors.text} />
-                                    </View>
-                                )}
+                                placeholderStyle={styles.dropdownPlaceholder}
+                                selectedTextStyle={styles.dropdownSelectedText}
+                                style={styles.dropdown}
+                                containerStyle={styles.dropdownContainer}
+                                itemContainerStyle={styles.dropdownItem}
+                                renderRightIcon={() => <ChevronDown size={16} color={colors.placeholderTextColor} />}
+                                showsVerticalScrollIndicator={false}
+                                disable={!selectedDate || timeSlots.length === 0}
+                                activeColor={colors.backgroundDisabled}
+                                onChange={({ value }) => handleTimeSlotChange(value)}
+                                renderItem={renderTimeSlotItem}
+                                selectedTextProps={{ allowFontScaling: false }}
+                                itemTextStyle={{ color: colors.text }}
                             />
-                        </Pressable>
+                        </View>
                     </View>
 
                     <ServiceListComponent
@@ -407,22 +368,12 @@ const BookingInformationComponent = ({ value, onChange }: BookingInformationComp
                 maximumDate={bookingDateMaximum}
                 hideOutOfRangeDates
                 onConfirm={handleDateChange}
-                onClose={() => setShowDatePicker(false)}
+                onClose={() => {
+                    setShowDatePicker(false);
+                }}
             />
 
-            <TimePickerModal
-                visible={showTimePicker}
-                initialDate={selectedTime || new Date()}
-                title={t('bookingInformation.bookingTimePickerTitle')}
-                cancelText={t('calenderDashboard.calenderHeader.cancel')}
-                confirmText={t('calenderDashboard.calenderHeader.confirm')}
-                showSeconds={false}
-                hourStep={timePickerSteps.hourStep}
-                minuteStep={timePickerSteps.minuteStep}
-                secondStep={timePickerSteps.secondStep}
-                onConfirm={handleTimeChange}
-                onClose={() => setShowTimePicker(false)}
-            />
+            <Loader loading={loading} />
 
         </KeyboardAvoidingView>
     )
@@ -462,6 +413,49 @@ const $styles = (colors: Colors, isWide: boolean) => StyleSheet.create({
     noteField: {
         marginHorizontal: 12,
         marginTop: 12,
+    },
+    timeDropdownWrapper: {
+        padding: 10,
+        borderRadius: 10,
+    },
+    labelRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 6,
+    },
+    requiredMark: {
+        color: colors.error,
+        marginLeft: 4,
+    },
+    dropdown: {
+        height: 48,
+        borderWidth: 1,
+        borderColor: colors.border,
+        backgroundColor: colors.card,
+        borderRadius: 12,
+        paddingHorizontal: 12,
+        justifyContent: 'center',
+    },
+    dropdownContainer: {
+        backgroundColor: colors.card,
+        borderWidth: 1,
+        borderColor: colors.border,
+        borderRadius: 12,
+    },
+    dropdownItem: {
+        borderBottomWidth: 0,
+    },
+    dropdownItemContainer: {
+        paddingVertical: 8,
+        paddingHorizontal: 12,
+    },
+    dropdownSelectedText: {
+        color: colors.text,
+        fontSize: 14,
+    },
+    dropdownPlaceholder: {
+        color: colors.placeholderTextColor,
+        fontSize: 14,
     },
 });
 

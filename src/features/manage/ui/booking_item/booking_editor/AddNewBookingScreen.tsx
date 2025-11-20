@@ -2,7 +2,6 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 import { ArrowLeft, Info, UserRound } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
-import { useLanguage } from "@/shared/lib/useLanguage";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { Colors, useAppTheme } from "@/shared/theme";
@@ -19,14 +18,15 @@ import Loader from "@/shared/ui/Loader";
 import { RootState, useAppSelector } from "@/app/store";
 import { alertService } from "@/services/alertService";
 import { CreateBookingRequest } from "@/features/manage/api/types";
+import { useBookingForm } from "@/features/manage/hooks/useBookingForm";
 
 const AddNewBookingScreen = ({ navigation }: RootScreenProps<Paths.AddNewBooking>) => {
     const { theme: { colors } } = useAppTheme();
     const styles = $styles(colors);
-    const { t, i18n } = useTranslation();
-    const { currentLanguage } = useLanguage();
+    const { t } = useTranslation();
     const { getListBookingSetting, loading, getListService, getListBookingFrequency, postCreateUserBooking, postCreateBooking } = useEditBookingForm();
     const listBookingSetting = useAppSelector((state: RootState) => state.editBooking.listBookingSetting);
+    const { getListBookingManager } = useBookingForm();
 
     const steps = useMemo(() => ([
         { label: t('bookingInformation.customerInfo'), icon: UserRound },
@@ -45,6 +45,13 @@ const AddNewBookingScreen = ({ navigation }: RootScreenProps<Paths.AddNewBooking
     });
 
     const [bookingData, setBookingData] = useState<BookingInformationData>();
+
+    const normalizeBookingHours = (time?: string | null) => {
+        if (!time) return null;
+        const parts = time.split(':').map((part) => part.padStart(2, '0'));
+        const [hours = '00', minutes = '00', seconds = '00'] = parts;
+        return `${hours}:${minutes}:${seconds}`;
+    };
 
     useEffect(() => {
         getListBookingSetting();
@@ -96,26 +103,26 @@ const AddNewBookingScreen = ({ navigation }: RootScreenProps<Paths.AddNewBooking
             0
         );
 
-        if (bookingDateTime < minDateTime) {
-            const locale = currentLanguage === 'vi' ? 'vi-VN' : 'en-AU';
-            const minDateStr = minDateTime.toLocaleDateString(locale, {
-                year: 'numeric',
-                month: '2-digit',
-                day: '2-digit',
-            });
-            const minTimeStr = `${minDateTime.getHours().toString().padStart(2, '0')}:${minDateTime.getMinutes().toString().padStart(2, '0')}`;
+        // if (bookingDateTime < minDateTime) {
+        //     const locale = currentLanguage === 'vi' ? 'vi-VN' : 'en-AU';
+        //     const minDateStr = minDateTime.toLocaleDateString(locale, {
+        //         year: 'numeric',
+        //         month: '2-digit',
+        //         day: '2-digit',
+        //     });
+        //     const minTimeStr = `${minDateTime.getHours().toString().padStart(2, '0')}:${minDateTime.getMinutes().toString().padStart(2, '0')}`;
 
-            alertService.showAlert({
-                title: t('addNewBooking.validationError'),
-                message: t('addNewBooking.minimumTimeError', {
-                    date: minDateStr,
-                    time: minTimeStr,
-                }),
-                typeAlert: 'Error',
-                onConfirm: () => { },
-            });
-            return false;
-        }
+        //     alertService.showAlert({
+        //         title: t('addNewBooking.validationError'),
+        //         message: t('addNewBooking.minimumTimeError', {
+        //             date: minDateStr,
+        //             time: minTimeStr,
+        //         }),
+        //         typeAlert: 'Error',
+        //         onConfirm: () => { },
+        //     });
+        //     return false;
+        // }
 
         if (!bookingData?.services || bookingData.services.length === 0) {
             alertService.showAlert({
@@ -227,7 +234,7 @@ const AddNewBookingScreen = ({ navigation }: RootScreenProps<Paths.AddNewBooking
 
                     formData = {
                         bookingDate: formatDateString(bookingData?.bookingDate ?? null),
-                        bookingHours: bookingData?.bookingHours ?? null,
+                        bookingHours: normalizeBookingHours(bookingData?.bookingHours),
                         status: 0,
                         description: bookingData?.description ?? null,
                         services: servicesPayload ?? null,
@@ -245,6 +252,7 @@ const AddNewBookingScreen = ({ navigation }: RootScreenProps<Paths.AddNewBooking
                             message: t('addNewBooking.bookingCreatedSuccessfully'),
                             typeAlert: 'Confirm',
                             onConfirm: () => {
+                                getListBookingManager();
                                 navigation.goBack();
                             },
                         });
@@ -264,6 +272,55 @@ const AddNewBookingScreen = ({ navigation }: RootScreenProps<Paths.AddNewBooking
                         title: t('addNewBooking.validationError'),
                         message: t('addNewBooking.errorCreateUserBooking'),
                         typeAlert: 'Error',
+                    });
+                    return;
+                }
+            } else {
+                const formatDateString = (date?: Date | null) => (date ? date.toISOString() : null);
+                const servicesPayload = (bookingData?.services ?? []).map((service) => ({
+                    serviceId: service.serviceId,
+                    staffId: service.staffId ?? null,
+                    serviceTime: service.serviceTime,
+                    promotionId: service.promotionId ?? null,
+                }));
+
+                const frequencyPayload = {
+                    frequencyType: bookingData?.frequency?.frequencyType ?? null,
+                    fromDate: formatDateString(bookingData?.frequency?.fromDate ?? null),
+                    endDate: formatDateString(bookingData?.frequency?.endDate ?? null),
+                }
+
+                formData = {
+                    bookingDate: formatDateString(bookingData?.bookingDate ?? null),
+                    bookingHours: normalizeBookingHours(bookingData?.bookingHours),
+                    status: 0,
+                    description: bookingData?.description ?? null,
+                    services: servicesPayload ?? null,
+                    frequency: bookingData?.frequency?.frequencyType ? frequencyPayload : null,
+                    customer: {
+                        id: customerData.id ?? null,
+                        name: customerData.name ?? null,
+                    }
+                }
+                const responseBooking = await postCreateBooking(formData);
+                if (responseBooking) {
+                    alertService.showAlert({
+                        title: t('addNewBooking.success'),
+                        message: t('addNewBooking.bookingCreatedSuccessfully'),
+                        typeAlert: 'Confirm',
+                        onConfirm: () => {
+                            getListBookingManager();
+                            navigation.goBack();
+                        },
+                    });
+                } else {
+                    alertService.showAlert({
+                        title: t('addNewBooking.validationError'),
+                        message: t('addNewBooking.errorCreateBooking'),
+                        typeAlert: 'Error',
+                        onConfirm: () => {
+                            setActiveStep(0);
+                        },
                     });
                     return;
                 }

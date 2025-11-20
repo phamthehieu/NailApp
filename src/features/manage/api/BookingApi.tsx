@@ -236,3 +236,7 @@ export const getCheckVoucherApi = async (voucherCode: string) => {
 export const putPaymentBookingApi = async (data: PutPaymentBookingRequest) => {
     return http.put<any>('/api/Booking/Payment', data);
 }
+
+export const getListTimeSlotApi = async (date: Date) => {
+    return http.get<any>(`/api/Booking/ListTimeRangeBooking?FromDate=${formatDateParam(date)}`);
+}

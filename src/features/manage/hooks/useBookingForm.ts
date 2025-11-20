@@ -1,6 +1,6 @@
 import { useAppDispatch, useAppSelector } from "@/app/store";
 import { useCallback, useState } from "react";
-import { getDetailBookingItemApi, getHistoryBookingItemApi, getlistBookingManagerApi, getListBookingStatusApi, postCancelBookingApi, putCheckinBookingApi, putEditBookingApi } from "../api/BookingApi";
+import { getDetailBookingItemApi, getHistoryBookingItemApi, getlistBookingManagerApi, getListBookingStatusApi, getListTimeSlotApi, postCancelBookingApi, putCheckinBookingApi, putEditBookingApi } from "../api/BookingApi";
 import { setListBookingManager, setListBookingStatus, appendListBookingManager, resetPageIndex, setDetailBookingItem, setHistoryBookingItem, appendHistoryBookingItem } from "../model/bookingSlice";
 import { alertService } from "@/services/alertService";
 import { useTranslation } from "react-i18next";
@@ -249,6 +249,26 @@ export function useBookingForm() {
             setLoading(false);
         }
     }, [dispatch, t]);
+
+
+    const getListTimeSlot = useCallback(async (date: Date) => {
+        try {
+            if (loading) return;
+            setLoading(true);
+            const response = await getListTimeSlotApi(date);
+            return response;
+        } catch (error: any) {
+            console.error(error);
+            alertService.showAlert({
+                title: t('bookingList.errorTitle'),
+                message: error.message,
+                typeAlert: 'Error',
+                onConfirm: () => {},
+            });
+        } finally {
+            setLoading(false);
+        }
+    }, [dispatch, t, loading]);
     return {
         getListBookingManager,
         getListBookingStatus,
@@ -286,5 +306,6 @@ export function useBookingForm() {
         putEditBooking,
         postCancelBooking,
         putCheckinBooking,
+        getListTimeSlot,
     }
 }
