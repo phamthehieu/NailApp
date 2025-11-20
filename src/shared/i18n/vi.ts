@@ -275,6 +275,7 @@ const vi = {
     errorMessage: 'Xác nhận đặt lịch thất bại. Vui lòng thử lại.',
     successTitle: 'Thành công',
     successMessage: 'Xác nhận đặt lịch thành công',
+    staffRequiredError: 'Vui lòng chọn nhân viên thực hiện cho tất cả các dịch vụ',
   },
   bookingPayment: {
     title: 'Xác nhận thanh toán',
@@ -299,6 +300,10 @@ const vi = {
     voucherPlaceholder: 'Nhập mã voucher',
     apply: 'Áp dụng',
     stt: 'STT',
+    voucherApplySuccess: 'Áp dụng voucher thành công',
+    paymentMethodRequired: 'Vui lòng chọn phương thức thanh toán',
+    successTitle: 'Thành công',
+    successMessage: 'Thanh toán thành công',
   },
   settings: {
     title: 'Cài đặt',

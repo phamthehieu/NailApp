@@ -31,7 +31,7 @@ const BookingListComponent = ({ navigation }: BookingListComponentProps) => {
     const { t } = useTranslation();
     const { getListBookingManager, loadMoreBookings, loading, loadingMore, resetPagination, getDetailBookingItem, getHistoryBookingItem, postCancelBooking } = useBookingForm();
     const { listBookingManager, pageIndex, totalPages } = useAppSelector((state) => state.booking);
-    const { getListPromotion, getListPaymentType } = useEditBookingForm();
+    const { getListPromotion, getListPaymentType, getListService } = useEditBookingForm();
 
     const [isBookingConfirmationModalVisible, setIsBookingConfirmationModalVisible] = useState(false);
     const [refreshing, setRefreshing] = useState(false);
@@ -98,9 +98,9 @@ const BookingListComponent = ({ navigation }: BookingListComponentProps) => {
     const handleMainAction = (item: any) => {
         getDetailBookingItem(item.id);
         if (item.status === 0) {
+            getListService();
             setIsCheckinBookingModalVisible(true);
         } else if (item.status === 1) {
-            getListPromotion();
             getListPaymentType();
             setIsBookingPaymentModalVisible(true);
         }
@@ -231,7 +231,7 @@ const BookingListComponent = ({ navigation }: BookingListComponentProps) => {
                 data={listBookingManager}
                 keyExtractor={(item) => item.id.toString()}
                 renderItem={renderBookingItem}
-                numColumns={isTablet ? 2 : 1}
+                numColumns={isTablet ? 3 : 1}
                 contentContainerStyle={styles.listContainer}
                 showsVerticalScrollIndicator={false}
                 columnWrapperStyle={isTablet ? styles.columnWrapper : undefined}
@@ -280,7 +280,7 @@ const BookingListComponent = ({ navigation }: BookingListComponentProps) => {
             <BookingPaymentModal
                 visible={isBookingPaymentModalVisible}
                 onClose={() => setIsBookingPaymentModalVisible(false)}
-                onConfirm={() => { }}
+                onConfirm={() => { getListBookingManager() }}
             />
             <Loader loading={loading} title={t('bookingList.loading')} />
         </>
@@ -304,7 +304,7 @@ const $styles = (colors: Colors, isTablet: boolean) =>
             borderWidth: 0.2,
             borderColor: colors.border,
             ...(isTablet && {
-                width: '48%',
+                width: '33%',
             }),
         },
         header: {

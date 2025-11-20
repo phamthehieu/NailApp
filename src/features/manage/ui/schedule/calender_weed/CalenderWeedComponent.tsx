@@ -514,7 +514,7 @@ const CalenderWeedComponent = ({ selectedDate, dateRange, onPressScheduleItem, s
                                                                 styles.partialOverlay,
                                                                 {
                                                                     width: (dayMinutesStart / 60) * timeSlotWidth,
-                                                                    backgroundColor: colors.bottomColor,
+                                                                    backgroundColor: colors.bacgroundCalendar,
                                                                     opacity: 0.8
                                                                 }
                                                             ]} />
@@ -526,7 +526,7 @@ const CalenderWeedComponent = ({ selectedDate, dateRange, onPressScheduleItem, s
                                                                 {
                                                                     left: (dayMinutesEnd / 60) * timeSlotWidth,
                                                                     width: ((60 - dayMinutesEnd) / 60) * timeSlotWidth,
-                                                                    backgroundColor: colors.bottomColor,
+                                                                    backgroundColor: colors.bacgroundCalendar,
                                                                     opacity: 0.8
                                                                 }
                                                             ]} />
@@ -676,7 +676,7 @@ const $styles = (colors: Colors, timeSlotWidth: number, isTablet: boolean) => St
         position: 'relative',
     },
     nonWorkingHoursCell: {
-        backgroundColor: colors.backgroundDisabled,
+        backgroundColor: colors.bacgroundCalendar,
         opacity: 0.8
     },
     partialOverlay: {

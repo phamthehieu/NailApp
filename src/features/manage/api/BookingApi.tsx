@@ -14,7 +14,8 @@ import type {
     CreateBookingRequest,
     EditBookingRequest,
     ListPromotionResponse,
-    CustomerCreateBookingRequest
+    CustomerCreateBookingRequest,
+    PutPaymentBookingRequest
 } from "./types";
 
 export type {
@@ -210,7 +211,7 @@ export const putCheckinBookingApi = async (data: EditBookingRequest) => {
     return http.put<any>('/api/Booking/CheckIn', data);
 }
 
-export const getListPromotionApi = async (PageIndex?: number, PageSize?: number) => {
+export const getListPromotionApi = async (PageIndex?: number, PageSize?: number, ServiceManagementIds?: number) => {
     const params = new URLSearchParams();
     if (PageIndex) {
         params.append('PageIndex', PageIndex.toString());
@@ -218,9 +219,20 @@ export const getListPromotionApi = async (PageIndex?: number, PageSize?: number)
     if (PageSize) {
         params.append('PageSize', PageSize.toString());
     }
+    if (ServiceManagementIds) {
+        params.append('ServiceManagementIds', ServiceManagementIds.toString());
+    }
     return http.get<ListPromotionResponse>(`/api/Promotion/List?${params.toString()}`);
 }
 
 export const getListPaymentTypeApi = async () => {
     return http.get<CustomerCreateBookingRequest[]>('/api/Booking/ListBookingPaymentType');
+}
+
+export const getCheckVoucherApi = async (voucherCode: string) => {
+    return http.get<any>(`/api/Vouchers/CheckVoucher/${voucherCode}`);
+}
+
+export const putPaymentBookingApi = async (data: PutPaymentBookingRequest) => {
+    return http.put<any>('/api/Booking/Payment', data);
 }

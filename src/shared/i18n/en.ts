@@ -277,6 +277,7 @@ const en: Translations = {
     errorMessage: 'Failed to confirm booking. Please try again.',
     successTitle: 'Success',
     successMessage: 'Confirm booking successfully',
+    staffRequiredError: 'Please select staff for all services',
   },
   bookingPayment: {
     title: 'Confirm payment',
@@ -301,6 +302,10 @@ const en: Translations = {
     voucherPlaceholder: 'Enter voucher code',
     apply: 'Apply',
     stt: 'STT',
+    voucherApplySuccess: 'Voucher applied successfully',
+    paymentMethodRequired: 'Please select payment method',
+    successTitle: 'Success',
+    successMessage: 'Payment successful',
   },
   settings: {
     title: 'Settings',

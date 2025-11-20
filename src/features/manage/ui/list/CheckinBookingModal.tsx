@@ -41,6 +41,16 @@ const CheckinBookingModal = ({
             });
             return false;
         }
+
+        if (dataBookingEdit?.services.some((service) => service.staffId == null)) {
+            alertService.showAlert({
+                title: t('checkinBooking.validationError'),
+                message: t('checkinBooking.staffRequiredError'),
+                typeAlert: 'Error',
+                onConfirm: () => {},
+            });
+            return false;
+        }
         return true;
     }, [dataBookingEdit]);
 

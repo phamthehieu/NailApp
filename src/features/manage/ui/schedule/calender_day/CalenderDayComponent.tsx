@@ -497,7 +497,7 @@ const CalenderDayComponent = ({ selectedDate: _selectedDate, onPressScheduleItem
                                                                     styles.partialOverlay,
                                                                     {
                                                                         width: (staffMinutesStart / 60) * timeSlotWidth,
-                                                                        backgroundColor: colors.bottomColor,
+                                                                        backgroundColor: colors.bacgroundCalendar,
                                                                         opacity: 0.8
                                                                     }
                                                                 ]} />
@@ -509,7 +509,7 @@ const CalenderDayComponent = ({ selectedDate: _selectedDate, onPressScheduleItem
                                                                     {
                                                                         left: (staffMinutesEnd / 60) * timeSlotWidth,
                                                                         width: ((60 - staffMinutesEnd) / 60) * timeSlotWidth,
-                                                                        backgroundColor: colors.bottomColor,
+                                                                        backgroundColor: colors.bacgroundCalendar,
                                                                         opacity: 0.8
                                                                     }
                                                                 ]} />
@@ -638,7 +638,7 @@ const $styles = (colors: Colors, timeSlotWidth: number, isTablet: boolean) => St
         position: 'relative',
     },
     nonWorkingHoursCell: {
-        backgroundColor: colors.backgroundDisabled,
+        backgroundColor: colors.bacgroundCalendar,
         opacity: 0.8
     },
     partialOverlay: {

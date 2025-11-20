@@ -20,7 +20,7 @@ export function useBookingForm() {
     const [phone, setPhone] = useState<string | undefined>(undefined);
     const [search, setSearch] = useState<string | undefined>(undefined);
     const [sortBy, setSortBy] = useState<string | undefined>(undefined);
-    const [pageSize, setPageSize] = useState<number | undefined>(3);
+    const [pageSize, setPageSize] = useState<number | undefined>(10);
     const [sortType, setSortType] = useState<string | undefined>(undefined);
     const [loading, setLoading] = useState<boolean>(false);
     const [loadingMore, setLoadingMore] = useState<boolean>(false);
@@ -41,11 +41,11 @@ export function useBookingForm() {
             } else {
                 dispatch(setListBookingManager(response));
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error(error);
             alertService.showAlert({
                 title: t('bookingList.errorTitle'),
-                message: t('bookingList.errorMessage'),
+                message: error.message,
                 typeAlert: 'Error',
                 onConfirm: () => {},
             });
@@ -62,11 +62,11 @@ export function useBookingForm() {
             const pageSizeDate = 10000;
             const response = await getlistBookingManagerApi(undefined, undefined, bookingDate, undefined, undefined, undefined, undefined, searchText, undefined, undefined, pageSizeDate, undefined);
             dispatch(setListBookingManager(response));
-        } catch (error) {
+        } catch (error: any) {
             console.error(error);
             alertService.showAlert({
                 title: t('bookingList.errorTitle'),
-                message: t('bookingList.errorMessage'),
+                message: error.message,
                 typeAlert: 'Error',
                 onConfirm: () => {},
             });
@@ -82,11 +82,11 @@ export function useBookingForm() {
             const pageSizeDate = 10000;
             const response = await getlistBookingManagerApi(startDate, endDate, undefined, undefined, undefined, undefined, undefined, searchText, undefined, undefined, pageSizeDate, undefined, staffId);
             dispatch(setListBookingManager(response));
-        } catch (error) {
+        } catch (error: any) {
             console.error(error);
             alertService.showAlert({
                 title: t('bookingList.errorTitle'),
-                message: t('bookingList.errorMessage'),
+                message: error.message,
                 typeAlert: 'Error',
                 onConfirm: () => {},
             });
@@ -126,11 +126,11 @@ export function useBookingForm() {
         try {
             const response = await getListBookingStatusApi();
             dispatch(setListBookingStatus(response));
-        } catch (error) {
+        } catch (error: any) {
             console.error(error);
             alertService.showAlert({
                 title: t('bookingList.errorTitle'),
-                message: t('bookingList.errorMessage'),
+                message: error.message,
                 typeAlert: 'Error',
                 onConfirm: () => {},
             });
@@ -142,11 +142,11 @@ export function useBookingForm() {
             setLoading(true);
             const response = await getDetailBookingItemApi(bookingCode);
             dispatch(setDetailBookingItem(response));
-        } catch (error) {
+        } catch (error: any) {
             console.error(error);
             alertService.showAlert({
                 title: t('bookingList.errorTitle'),
-                message: t('bookingList.errorMessage'),
+                message: error.message,
                 typeAlert: 'Error',
                 onConfirm: () => {},
             });
@@ -195,8 +195,14 @@ export function useBookingForm() {
             const response = await putEditBookingApi(data);
             return response;
         }
-        catch (error) {
+        catch (error: any) {
             console.error(error);
+            alertService.showAlert({
+                title: t('bookingList.errorTitle'),
+                message: error.message,
+                typeAlert: 'Error',
+                onConfirm: () => {},
+            });
         }
         finally {
             setLoading(false);
@@ -210,11 +216,11 @@ export function useBookingForm() {
             setLoading(true);
             const response = await postCancelBookingApi({bookingId});
             return response;
-        } catch (error) {
+        } catch (error: any) {
             console.error(error);
             alertService.showAlert({
                 title: t('bookingList.errorTitle'),
-                message: t('bookingList.errorMessage'),
+                message: error.message,
                 typeAlert: 'Error',
                 onConfirm: () => {},
             });
@@ -230,8 +236,14 @@ export function useBookingForm() {
             setLoading(true);
             const response = await putCheckinBookingApi(data);
             return response;
-        } catch (error) {
+        } catch (error: any) {
             console.error(error);
+            alertService.showAlert({
+                title: t('bookingList.errorTitle'),
+                message: error.message,
+                typeAlert: 'Error',
+                onConfirm: () => {},
+            });
         }
         finally {
             setLoading(false);

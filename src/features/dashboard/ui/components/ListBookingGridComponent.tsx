@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useRef, useMemo } from "react";
-import { View, StyleSheet, FlatList, RefreshControl, TouchableOpacity } from "react-native";
+import { View, StyleSheet, FlatList, RefreshControl, TouchableOpacity, Dimensions } from "react-native";
 import { User, MoreHorizontal, ChevronDown } from "lucide-react-native";
 import { TextFieldLabel } from "@/shared/ui/Text";
 import { useAppTheme } from "@/shared/theme";
@@ -14,6 +14,7 @@ import { BookingManagerItem, ServiceItem } from "@/features/manage/api/types";
 import Loader from "@/shared/ui/Loader";
 import { getBookingStatusColor } from "@/features/manage/utils/bookingStatusColor";
 import type { DashBoardHookResult } from "../../hooks/useDashBoardHook";
+import { isTablet } from "@/shared/lib/useIsTablet";
 interface ListBookingFormProps {
     navigation: RootScreenProps<Paths.DashBoard>['navigation'];
     dashboardHook: DashBoardHookResult;
@@ -115,6 +116,14 @@ const ListBookingGridComponent = ({ navigation, dashboardHook }: ListBookingForm
         }).format(price);
     };
 
+    const numColumns = isTablet() ? 3 : 1;
+    const screenWidth = Dimensions.get('window').width;
+    const paddingHorizontal = 16 * 2;
+    const gap = 12;
+    const itemWidth = numColumns > 1
+        ? (screenWidth - paddingHorizontal - gap * (numColumns - 1)) / numColumns
+        : screenWidth - paddingHorizontal;
+
     const renderBookingItem = ({ item }: { item: BookingServiceFlatItem }) => {
         const { booking, service } = item;
         const statusColor = getBookingStatusColor(booking.status, colors, 'border');
@@ -124,12 +133,8 @@ const ListBookingGridComponent = ({ navigation, dashboardHook }: ListBookingForm
         const staffLabel = `W/ ${staffName || t('bookingList.unassignedStaff', { defaultValue: '--' })}`;
         const serviceName = service?.serviceName || booking.description || t('bookingList.noServiceName', { defaultValue: '--' });
         const bookingDescription = booking.description && booking.description !== serviceName ? booking.description : '';
-        const priceLabel = formatPrice(service?.price);
-
-        const footerDate = timeLabel ? `${dateLabel} • ${timeLabel}` : dateLabel;
-
         return (
-            <View style={[styles.bookingCard, { borderColor: statusColor }]}>
+            <View style={[styles.bookingCard, { borderColor: statusColor, width: itemWidth }]}>
                 <View style={styles.cardHeader}>
                     <View>
                         <TextFieldLabel style={styles.headerDate}>{dateLabel}</TextFieldLabel>
@@ -223,7 +228,7 @@ const ListBookingGridComponent = ({ navigation, dashboardHook }: ListBookingForm
                 data={serviceBookings}
                 keyExtractor={(item) => item.key}
                 renderItem={renderBookingItem}
-                numColumns={1}
+                numColumns={numColumns}
                 contentContainerStyle={styles.listContainer}
                 showsVerticalScrollIndicator={false}
                 onEndReached={handleLoadMore}
@@ -286,6 +291,7 @@ const $styles = (colors: Colors) =>
             gap: 12,
         },
         bookingCard: {
+            margin: 6,
             padding: 16,
             borderRadius: 16,
             borderWidth: StyleSheet.hairlineWidth,

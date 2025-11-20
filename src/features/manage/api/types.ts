@@ -384,9 +384,9 @@ export interface DiscountTypeObj {
 export interface PutPaymentBookingRequest {
  id: number
   services: ServicePaymentBookingRequest[]
-  voucherId: number
+  voucherId: number | null
   amount: number | null
-  amountVouchers: number
+  amountVouchers: number | null
   totalAmount: number
   paymentType: number | null
   customerPayment: number | null
@@ -400,3 +400,46 @@ export interface ServicePaymentBookingRequest {
     serviceTime: number | null
     promotionId: number | null
 }
+
+export interface VoucherResponse {
+    stt: number
+    tenantId: number
+    url: any
+    code: string
+    name: string
+    description: any
+    isUnlimited: boolean
+    quantity: number
+    discountType: number
+    discountTypeObj: DiscountTypeObj
+    discountValue: number
+    hasMinimumOrderAmount: boolean
+    minimumOrderAmount: number
+    isPermanent: boolean
+    effectiveFrom: string
+    effectiveTo: string
+    applyAllCustomerTypes: boolean
+    status: number
+    statusObj: StatusObj
+    customerGroupIds: any[]
+    customerGroups: any[]
+    quantityUsed: number
+    quantityRemaining: number
+    id: number
+    creator: any
+    createdAt: string
+    lastModifiedAt: string
+    informations: any
+    warnings: any
+    errors: any
+}
+
+export interface DiscountTypeObj {
+    id: number
+    name: string
+  }
+  
+  export interface StatusObj {
+    id: number
+    name: string
+  }

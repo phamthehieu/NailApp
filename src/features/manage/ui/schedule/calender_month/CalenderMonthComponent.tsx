@@ -349,7 +349,7 @@ const $styles = (colors: Colors, isTablet: boolean) => StyleSheet.create({
         backgroundColor: colors.backgroundTable,
         padding: 6,
         minHeight: 160,
-        maxWidth: 160,
+        maxWidth: 200,
         height: isTablet ? 160 : 140,
         overflow: 'hidden',
     },
@@ -360,7 +360,7 @@ const $styles = (colors: Colors, isTablet: boolean) => StyleSheet.create({
         flex: 1,
     },
     dayCellOtherMonth: {
-        backgroundColor: colors.background,
+        backgroundColor: colors.bacgroundCalendar,
         opacity: 0.5,
     },
     dayCellToday: {

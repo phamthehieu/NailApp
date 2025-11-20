@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { StyleSheet, View, Modal, TouchableOpacity, TouchableWithoutFeedback, ScrollView, Switch, TextInput, useWindowDimensions } from "react-native";
+import React, { useEffect, useState, useCallback, useRef, useMemo } from "react";
+import { StyleSheet, View, Modal, TouchableOpacity, TouchableWithoutFeedback, ScrollView, Switch, useWindowDimensions, Keyboard } from "react-native";
 import { TextFieldLabel } from "@/shared/ui/Text";
 import { Colors, useAppTheme } from "@/shared/theme";
 import { useTranslation } from "react-i18next";
@@ -7,8 +7,14 @@ import { X, ChevronDown } from "lucide-react-native";
 import { Dropdown } from "react-native-element-dropdown";
 import { TextField } from "@/shared/ui/TextField";
 import { RootState, useAppSelector } from "@/app/store";
-import { PaymentItem, promotionItem, PutPaymentBookingRequest } from "../../api/types";
-
+import { PaymentItem, promotionItem, PutPaymentBookingRequest, VoucherResponse } from "../../api/types";
+import { getListPromotionApi } from "../../api/BookingApi";
+import { alertService } from "@/services/alertService";
+import { useEditBookingForm } from "../../hooks/useEditBookingForm";
+import Loader from "@/shared/ui/Loader";
+import Toast from "react-native-toast-message";
+import { ToastProvider } from "@/shared/ui/toast/ToastProvider";
+import { useBookingForm } from "../../hooks/useBookingForm";
 
 export type PaymentServiceItem = {
     id: number | string;
@@ -17,6 +23,24 @@ export type PaymentServiceItem = {
     promotion?: string;
     discount: number;
     total: number;
+};
+
+const calculateVoucherDiscountAmount = (baseAmount: number, voucher: VoucherResponse | null): number => {
+    if (!voucher) return 0;
+
+    let discountAmount = 0;
+
+    if (voucher.discountType === 1) {
+        discountAmount = (baseAmount * voucher.discountValue) / 100;
+    } else if (voucher.discountType === 2) {
+        discountAmount = voucher.discountValue;
+    }
+
+    if (voucher.hasMinimumOrderAmount) {
+        discountAmount = Math.min(discountAmount, voucher.minimumOrderAmount);
+    }
+
+    return Math.min(discountAmount, baseAmount);
 };
 
 interface BookingPaymentModalProps {
@@ -34,27 +58,44 @@ const BookingPaymentModal = ({
     const { width } = useWindowDimensions();
     const isSmallScreen = width < 400;
     const styles = $styles(colors, isSmallScreen);
+    const loadedServicesRef = useRef<Set<number>>(new Set());
+    const loadingServicesRef = useRef<Set<number>>(new Set());
     const { t, i18n } = useTranslation();
     const { detailBookingItem } = useAppSelector((state: RootState) => state.booking);
-    const { listPromotion, listPaymentType } = useAppSelector((state: RootState) => state.editBooking);
-
+    const { listPaymentType } = useAppSelector((state: RootState) => state.editBooking);
+    const { getCheckVoucher, putPaymentBooking, loading } = useEditBookingForm();
+    const { getListBookingManager } = useBookingForm();
     const [dataPaymentBooking, setDataPaymentBooking] = useState<PaymentItem>();
     const [servicePromotions, setServicePromotions] = useState<Record<number, promotionItem | null>>({});
+    const [promotionsByService, setPromotionsByService] = useState<Record<number, promotionItem[]>>({});
+    const [loadingPromotions, setLoadingPromotions] = useState<Record<number, boolean>>({});
     const [paymentList, setPaymentList] = useState<{ label: string, value: number }[]>([]);
 
     const [voucherCode, setVoucherCode] = useState("");
     const [paymentMethod, setPaymentMethod] = useState(null);
     const [customerAmount, setCustomerAmount] = useState("");
     const [printInvoice, setPrintInvoice] = useState(true);
+    const [voucher, setVoucher] = useState<VoucherResponse | null>(null);
+
     const [totalAmount, setTotalAmount] = useState(0);
     const [vat, setVat] = useState(0);
     const [finalAmount, setFinalAmount] = useState(0);
     const [change, setChange] = useState(0);
+    const voucherDiscountAmount = useMemo(() => {
+        const amount = calculateVoucherDiscountAmount(totalAmount, voucher);
+        return Math.min(amount, totalAmount);
+    }, [totalAmount, voucher]);
 
     const formatCurrency = (amount: number) => {
         const currentLanguage = i18n.language || 'vi';
         const locale = currentLanguage === 'vi' ? 'vi-VN' : 'en-AU';
-        return new Intl.NumberFormat(locale).format(amount);
+        const currency = currentLanguage === 'vi' ? 'VND' : 'AUD';
+
+        return new Intl.NumberFormat(locale, {
+            style: 'currency',
+            currency,
+            maximumFractionDigits: currency === 'VND' ? 0 : 2,
+        }).format(amount);
     };
 
     const calculateDiscount = (originalPrice: number, promotion: promotionItem | null): number => {
@@ -75,11 +116,41 @@ const BookingPaymentModal = ({
         return Math.max(0, originalPrice - discount);
     };
 
-    const handlePromotionChange = (serviceId: number, promotionId: number | null) => {
-        if (!listPromotion?.items) return;
+    const loadPromotionsForService = useCallback(async (serviceId: number) => {
+        if (loadedServicesRef.current.has(serviceId) || loadingServicesRef.current.has(serviceId)) {
+            return;
+        }
 
+        try {
+            loadingServicesRef.current.add(serviceId);
+            setLoadingPromotions(prev => ({ ...prev, [serviceId]: true }));
+            const PageSize = 10000;
+            const response = await getListPromotionApi(0, PageSize, serviceId);
+            if (response?.items) {
+                setPromotionsByService(prev => ({
+                    ...prev,
+                    [serviceId]: response.items
+                }));
+                loadedServicesRef.current.add(serviceId);
+            }
+        } catch (error) {
+            console.error(`Error loading promotions for service ${serviceId}:`, error);
+            alertService.showAlert({
+                title: t('bookingList.errorTitle'),
+                message: t('bookingList.errorMessage'),
+                typeAlert: 'Error',
+                onConfirm: () => { },
+            });
+        } finally {
+            loadingServicesRef.current.delete(serviceId);
+            setLoadingPromotions(prev => ({ ...prev, [serviceId]: false }));
+        }
+    }, [t]);
+
+    const handlePromotionChange = (serviceId: number, promotionId: number | null) => {
+        const servicePromotionsList = promotionsByService[serviceId] || [];
         const selectedPromotion = promotionId
-            ? listPromotion.items.find(p => p.id === promotionId) || null
+            ? servicePromotionsList.find(p => p.id === promotionId) || null
             : null;
 
         setServicePromotions(prev => ({
@@ -117,17 +188,40 @@ const BookingPaymentModal = ({
         }
     };
 
-    const getPromotionOptions = () => {
-        if (!listPromotion?.items) return [];
-
-        return listPromotion.items.map(promotion => ({
+    const getPromotionOptions = (serviceId: number) => {
+        const servicePromotionsList = promotionsByService[serviceId] || [];
+        return servicePromotionsList.map(promotion => ({
             label: promotion.name,
             value: promotion.id
         }));
     };
 
-    const handleConfirm = () => {
-        onConfirm();
+    const resetPaymentForm = useCallback(() => {
+        setVoucher(null);
+        setVoucherCode("");
+        setPaymentMethod(null);
+        setCustomerAmount("");
+        setPrintInvoice(true);
+        setServicePromotions({});
+        setPromotionsByService({});
+        setDataPaymentBooking(undefined);
+        setTotalAmount(0);
+        setVat(0);
+        setFinalAmount(0);
+        setChange(0);
+    }, []);
+
+    const handleCheckVoucher = async () => {
+        Keyboard.dismiss();
+        const response = await getCheckVoucher(voucherCode);
+        if (response) {
+            setVoucher(response);
+            Toast.show({
+                type: "success",
+                text1: t("bookingPayment.voucherApplySuccess"),
+                visibilityTime: 1800,
+            });
+        }
     };
 
     const renderItem = (item: any) => {
@@ -141,7 +235,10 @@ const BookingPaymentModal = ({
     };
 
     useEffect(() => {
-        if (detailBookingItem) {
+        if (detailBookingItem && visible) {
+            loadedServicesRef.current.clear();
+            loadingServicesRef.current.clear();
+
             const services = detailBookingItem.services.map((service) => ({
                 serviceId: service.id ?? 0,
                 staffId: service.staff?.id ?? null,
@@ -167,16 +264,33 @@ const BookingPaymentModal = ({
 
             const initialPromotions: Record<number, promotionItem | null> = {};
             services.forEach(service => {
-                if (service.promotionId && listPromotion?.items) {
-                    const promotion = listPromotion.items.find(p => p.id === service.promotionId);
-                    if (promotion) {
-                        initialPromotions[service.serviceId] = promotion;
-                    }
+                if (service.promotionId) {
+                    initialPromotions[service.serviceId] = null;
                 }
             });
             setServicePromotions(initialPromotions);
+
+            services.forEach(service => {
+                loadPromotionsForService(service.serviceId);
+            });
         }
-    }, [detailBookingItem, listPromotion]);
+    }, [detailBookingItem, visible, loadPromotionsForService]);
+
+    useEffect(() => {
+        if (dataPaymentBooking?.services) {
+            dataPaymentBooking.services.forEach(service => {
+                if (service.promotionId && promotionsByService[service.serviceId]) {
+                    const promotion = promotionsByService[service.serviceId].find(p => p.id === service.promotionId);
+                    if (promotion && servicePromotions[service.serviceId]?.id !== promotion.id) {
+                        setServicePromotions(prev => ({
+                            ...prev,
+                            [service.serviceId]: promotion
+                        }));
+                    }
+                }
+            });
+        }
+    }, [promotionsByService, dataPaymentBooking]);
 
     useEffect(() => {
         const calculatedTotalAmount = dataPaymentBooking?.services?.reduce((sum, service) => {
@@ -185,13 +299,17 @@ const BookingPaymentModal = ({
             return sum + priceAfterDiscount;
         }, 0) || 0;
 
-        const calculatedVat = calculatedTotalAmount * 0.08;
-        const calculatedFinalAmount = calculatedTotalAmount + calculatedVat;
-
         setTotalAmount(calculatedTotalAmount);
+    }, [dataPaymentBooking, servicePromotions]);
+
+    useEffect(() => {
+        const subtotalAfterVoucher = Math.max(0, totalAmount - voucherDiscountAmount);
+        const calculatedVat = subtotalAfterVoucher * 0.08;
+        const calculatedFinalAmount = subtotalAfterVoucher + calculatedVat;
+
         setVat(calculatedVat);
         setFinalAmount(calculatedFinalAmount);
-    }, [dataPaymentBooking, servicePromotions]);
+    }, [totalAmount, voucherDiscountAmount]);
 
     useEffect(() => {
         if (listPaymentType) {
@@ -200,28 +318,63 @@ const BookingPaymentModal = ({
     }, [listPaymentType]);
 
     useEffect(() => {
+        if (!customerAmount) {
+            setChange(0);
+            return;
+        }
         setChange(Number(customerAmount) - finalAmount);
     }, [customerAmount, finalAmount]);
 
-    const handlePayment = () => {
+    const validatePayment = () => {
+        if (paymentMethod == null) {
+            Toast.show({
+                type: "error",
+                text1: t("bookingPayment.paymentMethodRequired"),
+            });
+            return false;
+        }
+        return true;
+    }
+
+    const handlePayment = async () => {
+        if (!validatePayment()) {
+            return;
+        }
         if (dataPaymentBooking) {
+            const normalizedVoucherDiscount = voucher && voucherDiscountAmount > 0 ? voucherDiscountAmount : 0;
+            const normalizedCustomerPayment = customerAmount ? Number(customerAmount) : 0;
+            const normalizedCustomerChange = normalizedCustomerPayment !== 0 ? (normalizedCustomerPayment - finalAmount) : 0;
+
             const paymentRequest: PutPaymentBookingRequest = {
                 id: dataPaymentBooking.id,
                 services: dataPaymentBooking.services.map(service => ({
                     serviceId: service.serviceId,
                     staffId: service.staffId,
                     serviceTime: service.serviceTime,
-                    promotionId: service.promotionId,
+                    promotionId: service.promotionId ?? null,
                 })),
-                voucherId: 0,
+                voucherId: voucher?.id ?? null,
                 amount: totalAmount,
-                amountVouchers: 0,
+                amountVouchers: normalizedVoucherDiscount,
                 totalAmount: finalAmount,
                 paymentType: paymentMethod,
-                customerPayment: Number(customerAmount),
-                customerChange: change,
+                customerPayment: normalizedCustomerPayment,
+                customerChange: normalizedCustomerChange,
                 isInvoice: printInvoice,
             };
+            const response = await putPaymentBooking(paymentRequest);
+            if (response) {
+               alertService.showAlert({
+                title: t("bookingPayment.successTitle"),
+                message: t("bookingPayment.successMessage"),
+                typeAlert: "Confirm",
+                onConfirm: () => {
+                    getListBookingManager();
+                    resetPaymentForm();
+                    onClose();
+                },
+               });
+            }
         }
     };
 
@@ -269,11 +422,12 @@ const BookingPaymentModal = ({
                                         <TextFieldLabel style={styles.mobileCardLabel}>{t('bookingPayment.promotion')}:</TextFieldLabel>
                                         <View style={styles.mobilePromotionContainer}>
                                             <Dropdown
-                                                data={getPromotionOptions()}
+                                                data={getPromotionOptions(item.serviceId)}
                                                 labelField="label"
                                                 valueField="value"
                                                 value={servicePromotions[item.serviceId]?.id || null}
                                                 onChange={(selected) => handlePromotionChange(item.serviceId, selected.value)}
+                                                onFocus={() => loadPromotionsForService(item.serviceId)}
                                                 style={styles.mobilePromotionDropdown}
                                                 containerStyle={styles.dropdownContainer}
                                                 itemContainerStyle={styles.dropdownItem}
@@ -281,7 +435,7 @@ const BookingPaymentModal = ({
                                                 showsVerticalScrollIndicator={false}
                                                 itemTextStyle={{ color: colors.text, fontSize: 14 }}
                                                 placeholderStyle={styles.mobileDropdownPlaceholder}
-                                                placeholder={t('bookingPayment.promotionPlaceholder')}
+                                                placeholder={loadingPromotions[item.serviceId] ? t('bookingPayment.loading') || 'Đang tải...' : t('bookingPayment.promotionPlaceholder')}
                                                 renderRightIcon={() => <ChevronDown size={18} color={colors.placeholderTextColor} />}
                                                 maxHeight={200}
                                                 activeColor={colors.backgroundDisabled}
@@ -322,9 +476,19 @@ const BookingPaymentModal = ({
                                     placeholderTextColor={colors.placeholderTextColor}
                                     value={voucherCode}
                                     onChangeText={setVoucherCode}
+                                    RightAccessory={() => (
+                                        voucher ? (
+                                            <TouchableOpacity onPress={() => {
+                                                setVoucher(null)
+                                                setVoucherCode("")
+                                            }} style={styles.searchIconButton}>
+                                                <X size={20} color={colors.red} />
+                                            </TouchableOpacity>
+                                        ) : null
+                                    )}
                                 />
                             </View>
-                            <TouchableOpacity style={styles.applyButton}>
+                            <TouchableOpacity style={styles.applyButton} onPress={handleCheckVoucher}>
                                 <TextFieldLabel style={styles.applyButtonText}>{t('bookingPayment.apply')}</TextFieldLabel>
                             </TouchableOpacity>
                         </View>
@@ -335,8 +499,27 @@ const BookingPaymentModal = ({
                                 <TextFieldLabel style={styles.summaryValue}>{formatCurrency(totalAmount)}</TextFieldLabel>
                             </View>
                             <View style={styles.summaryRow}>
-                                <TextFieldLabel style={styles.summaryLabel}>{t('bookingPayment.totalDiscount')}</TextFieldLabel >
-                                <TextFieldLabel style={[styles.summaryValue, styles.discountValue]}></TextFieldLabel>
+                                <TextFieldLabel style={styles.summaryLabel}>{t('bookingPayment.voucher')}</TextFieldLabel>
+                                <View style={styles.voucherInfoContainer}>
+                                    {voucher && (
+                                        <>
+                                            <TextFieldLabel style={styles.voucherInfoText}>
+                                                {t('bookingPayment.voucherCodeLabel', { defaultValue: 'Mã' })}: {voucher.code}
+                                            </TextFieldLabel>
+                                            <TextFieldLabel style={styles.voucherInfoText}>
+                                                {voucher.discountType === 1
+                                                    ? `${voucher.discountValue}% ${t('bookingPayment.voucherPercentOffLabel', { defaultValue: 'giảm trên tổng' })}`
+                                                    : `${formatCurrency(voucher.discountValue)} ${t('bookingPayment.voucherAmountOffLabel', { defaultValue: 'giảm trực tiếp' })}`
+                                                }
+                                            </TextFieldLabel>
+                                            {voucher.hasMinimumOrderAmount && (
+                                                <TextFieldLabel style={styles.voucherInfoText}>
+                                                    {t('bookingPayment.voucherMaxLabel', { defaultValue: 'Tối đa' })}: {formatCurrency(voucher.minimumOrderAmount)}
+                                                </TextFieldLabel>
+                                            )}
+                                        </>
+                                    )}
+                                </View>
                             </View>
                             <View style={styles.summaryRow}>
                                 <TextFieldLabel style={styles.summaryLabel}>{t('bookingPayment.vat')} (8%)</TextFieldLabel>
@@ -401,7 +584,10 @@ const BookingPaymentModal = ({
                     </ScrollView>
 
                     <View style={styles.modalActions}>
-                        <TouchableOpacity style={styles.closeButtonAction} onPress={onClose}>
+                        <TouchableOpacity style={styles.closeButtonAction} onPress={() => {
+                            resetPaymentForm();
+                            onClose();
+                        }}>
                             <TextFieldLabel style={styles.closeButtonText}>{t('bookingPayment.close')}</TextFieldLabel>
                         </TouchableOpacity>
                         <TouchableOpacity
@@ -413,6 +599,8 @@ const BookingPaymentModal = ({
                     </View>
                 </View>
             </View>
+            <Loader loading={loading} />
+            {visible && <ToastProvider />}
         </Modal>
     );
 };
@@ -467,7 +655,6 @@ const $styles = (colors: Colors, isSmallScreen: boolean) => StyleSheet.create({
         maxHeight: isSmallScreen ? 400 : 500,
         marginBottom: 20,
     },
-    // Table Styles
     tableScrollContainer: {
         marginBottom: 20,
     },
@@ -478,7 +665,6 @@ const $styles = (colors: Colors, isSmallScreen: boolean) => StyleSheet.create({
         overflow: 'hidden',
         minWidth: isSmallScreen ? 600 : '100%',
     },
-    // Mobile Table Styles
     mobileTableContainer: {
         marginBottom: 20,
         gap: 12,
@@ -730,6 +916,14 @@ const $styles = (colors: Colors, isSmallScreen: boolean) => StyleSheet.create({
         fontWeight: '600',
         color: colors.text,
     },
+    voucherInfoContainer: {
+        alignItems: 'flex-end',
+        justifyContent: 'center',
+    },
+    voucherInfoText: {
+        fontSize: 12,
+        color: colors.placeholderTextColor,
+    },
     discountValue: {
         color: colors.error,
     },
@@ -749,7 +943,6 @@ const $styles = (colors: Colors, isSmallScreen: boolean) => StyleSheet.create({
         fontWeight: '700',
         color: colors.yellow,
     },
-    // Payment Styles
     paymentSection: {
         marginBottom: 20,
     },
@@ -863,6 +1056,11 @@ const $styles = (colors: Colors, isSmallScreen: boolean) => StyleSheet.create({
         paddingVertical: 8,
         paddingHorizontal: 12,
         color: colors.text,
+    },
+    searchIconButton: {
+        paddingHorizontal: 12,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
 });
 

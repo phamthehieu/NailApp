@@ -1,10 +1,10 @@
 import { useCallback, useState } from "react";
 import { useAppDispatch } from "@/app/store";
 import { setListBookingFrequency, setListBookingSetting, setListCustomerList, setListPaymentType, setListPromotion, setListService } from "../model/editBookingSlice";
-import { getListBookingFrequencyApi, getListBookingSettingApi, getListCustomerListApi, getListPaymentTypeApi, getListPromotionApi, getListServiceApi, postCreateBookingApi, postCreateUserBookingApi } from "../api/BookingApi";
+import { getCheckVoucherApi, getListBookingFrequencyApi, getListBookingSettingApi, getListCustomerListApi, getListPaymentTypeApi, getListPromotionApi, getListServiceApi, postCreateBookingApi, postCreateUserBookingApi, putPaymentBookingApi } from "../api/BookingApi";
 import { alertService } from "@/services/alertService";
 import { useTranslation } from "react-i18next";
-import { CreateBookingRequest, CreateUserBookingRequest } from "../api/types";
+import { CreateBookingRequest, CreateUserBookingRequest, PutPaymentBookingRequest } from "../api/types";
 export function useEditBookingForm() {
     const dispatch = useAppDispatch();
     const [loading, setLoading] = useState(false);
@@ -16,11 +16,11 @@ export function useEditBookingForm() {
             setLoading(true);
             const response = await getListBookingSettingApi();
             dispatch(setListBookingSetting(response));
-        } catch (error) {
+        } catch (error: any) {
             console.error(error);
             alertService.showAlert({
                 title: t('bookingList.errorTitle'),
-                message: t('bookingList.errorMessage'),
+                message: error.message,
                 typeAlert: 'Error',
                 onConfirm: () => {},
             });
@@ -36,11 +36,11 @@ export function useEditBookingForm() {
             const PageSize = 10000;
             const response = await getListServiceApi(SystemCatalogId, Search, SortBy, PageIndex, PageSize, SortType);
             dispatch(setListService(response));
-        } catch (error) {
+        } catch (error: any) {
             console.error(error);
             alertService.showAlert({
                 title: t('bookingList.errorTitle'),
-                message: t('bookingList.errorMessage'),
+                message: error.message,
                 typeAlert: 'Error',
                 onConfirm: () => {},
             });
@@ -55,11 +55,11 @@ export function useEditBookingForm() {
             setLoading(true);
             const response = await getListBookingFrequencyApi();
             dispatch(setListBookingFrequency(response));
-        } catch (error) {
+        } catch (error: any) {
             console.error(error);
             alertService.showAlert({
                 title: t('bookingList.errorTitle'),
-                message: t('bookingList.errorMessage'),
+                message: error.message,
                 typeAlert: 'Error',
                 onConfirm: () => {},
             });
@@ -75,11 +75,11 @@ export function useEditBookingForm() {
             setLoading(true);
             const response = await getListCustomerListApi(PageSize, name);
             dispatch(setListCustomerList(response));
-        } catch (error) {
+        } catch (error: any) {
             console.error(error);
             alertService.showAlert({
                 title: t('bookingList.errorTitle'),
-                message: t('bookingList.errorMessage'),
+                message: error.message,
                 typeAlert: 'Error',
                 onConfirm: () => {},
             });
@@ -96,11 +96,11 @@ export function useEditBookingForm() {
             const response = await postCreateUserBookingApi(data);
             return response;
         }
-        catch (error) {
+        catch (error: any) {
             console.error(error);
             alertService.showAlert({
                 title: t('bookingList.errorTitle'),
-                message: t('bookingList.errorMessage'),
+                message: error.message,
                 typeAlert: 'Error',
                 onConfirm: () => {},
             });
@@ -117,11 +117,11 @@ export function useEditBookingForm() {
             const response = await postCreateBookingApi(data);
             return response;
         }
-        catch (error) {
+        catch (error: any) {
             console.error(error);
             alertService.showAlert({
                 title: t('bookingList.errorTitle'),
-                message: t('bookingList.errorMessage'),
+                message: error.message,
                 typeAlert: 'Error',
                 onConfirm: () => {},
             });
@@ -131,19 +131,19 @@ export function useEditBookingForm() {
         }
     }, [t, loading]);
 
-    const getListPromotion = useCallback(async (PageIndex?: number) => {
+    const getListPromotion = useCallback(async (PageIndex?: number, ServiceManagementIds?: number) => {
         try {
             if (loading) return;
             setLoading(true);
             const PageSize = 10000;
-            const response = await getListPromotionApi(PageIndex, PageSize);
+            const response = await getListPromotionApi(PageIndex, PageSize, ServiceManagementIds);
             dispatch(setListPromotion(response));
         }
-        catch (error) {
+        catch (error: any) {
             console.error(error);
             alertService.showAlert({
                 title: t('bookingList.errorTitle'),
-                message: t('bookingList.errorMessage'),
+                message: error.message,
                 typeAlert: 'Error',
                 onConfirm: () => {},
             });
@@ -159,11 +159,53 @@ export function useEditBookingForm() {
             setLoading(true);
             const response = await getListPaymentTypeApi();
             dispatch(setListPaymentType(response));
-        } catch (error) {
+        } catch (error: any) {
             console.error(error);
             alertService.showAlert({
                 title: t('bookingList.errorTitle'),
-                message: t('bookingList.errorMessage'),
+                message: error.message,
+                typeAlert: 'Error',
+                onConfirm: () => {},
+            });
+        }
+        finally {
+            setLoading(false);
+        }
+    }, [dispatch, t, loading]);
+
+    const getCheckVoucher = useCallback(async (voucherCode: string) => {
+        try {
+            if (loading) return;
+            setLoading(true);
+            const response = await getCheckVoucherApi(voucherCode);
+            return response;
+        } catch (error: any) {
+            console.error(error);
+            alertService.showAlert({
+                title: t('bookingList.errorTitle'),
+                message: error.message,
+                typeAlert: 'Error',
+                onConfirm: () => {},
+            });
+        }
+        finally {
+            setLoading(false);
+        }
+    }, [dispatch, t, loading]);
+
+
+    const putPaymentBooking = useCallback(async (data: PutPaymentBookingRequest) => {
+        try {
+            if (loading) return;
+            setLoading(true);
+            const response = await putPaymentBookingApi(data);
+            return response;
+        }
+        catch (error: any) {
+            console.error(error);
+            alertService.showAlert({
+                title: t('bookingList.errorTitle'),
+                message: error.message,
                 typeAlert: 'Error',
                 onConfirm: () => {},
             });
@@ -183,5 +225,7 @@ export function useEditBookingForm() {
         loading,
         getListPromotion,
         getListPaymentType,
+        getCheckVoucher,
+        putPaymentBooking,
     };
 }
