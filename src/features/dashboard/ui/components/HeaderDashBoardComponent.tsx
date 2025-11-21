@@ -11,6 +11,7 @@ import { useWindowDimensions } from "react-native";
 import { TextField } from "@/shared/ui/TextField";
 import { CalendarWeekPickerModal } from "@/shared/ui/CalendarPickers";
 import type { DashBoardHookResult } from "../../hooks/useDashBoardHook";
+import { Paths } from "@/app/navigation/paths";
 
 const getStartOfDay = (date: Date) => {
     const d = new Date(date);
@@ -26,9 +27,10 @@ interface HeaderDashBoardComponentProps {
     dashboardHook: DashBoardHookResult;
     viewMode: 'list' | 'grid';
     setViewMode: (mode: 'list' | 'grid') => void;
+    onBookPress: () => void;
 }
 
-const HeaderDashBoardComponent = ({ dashboardHook, viewMode, setViewMode }: HeaderDashBoardComponentProps) => {
+const HeaderDashBoardComponent = ({ dashboardHook, viewMode, setViewMode, onBookPress }: HeaderDashBoardComponentProps) => {
     const { theme: { colors } } = useAppTheme();
     const { width } = useWindowDimensions();
     const styles = useMemo(() => $styles(colors, width), [colors, width]);
@@ -212,7 +214,7 @@ const HeaderDashBoardComponent = ({ dashboardHook, viewMode, setViewMode }: Head
 
                 <Pressable
                     style={styles.bookButton}
-                    onPress={() => { }}
+                    onPress={onBookPress}
                 >
                     <Plus size={18} color={colors.white} />
                     <TextFieldLabel style={styles.bookButtonText}>{t('calenderDashboard.calenderTab.book')}</TextFieldLabel>

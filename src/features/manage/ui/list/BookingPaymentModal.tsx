@@ -57,7 +57,8 @@ const BookingPaymentModal = ({
     const { theme: { colors } } = useAppTheme();
     const { width } = useWindowDimensions();
     const isSmallScreen = width < 400;
-    const styles = $styles(colors, isSmallScreen);
+    const isTablet = width >= 768;
+    const styles = $styles(colors, isSmallScreen, isTablet);
     const loadedServicesRef = useRef<Set<number>>(new Set());
     const loadingServicesRef = useRef<Set<number>>(new Set());
     const { t, i18n } = useTranslation();
@@ -407,66 +408,150 @@ const BookingPaymentModal = ({
                         nestedScrollEnabled={true}
                         keyboardShouldPersistTaps="handled"
                     >
-                        <View style={styles.mobileTableContainer}>
-                            {dataPaymentBooking?.services?.map((item, index) => (
-                                <View key={item.serviceId} style={styles.mobileServiceCard}>
-                                    <View style={styles.mobileCardHeader}>
-                                        <TextFieldLabel style={styles.mobileCardTitle}>{t('bookingPayment.service')} {index + 1}</TextFieldLabel>
-                                        <TextFieldLabel style={styles.mobileServiceName}>{t('bookingPayment.service')}: {item.serviceName}</TextFieldLabel>
+                        {isTablet ? (
+                            <View style={styles.tableContainer}>
+                                <View style={styles.tableHeader}>
+                                    <View style={styles.colStt}>
+                                        <TextFieldLabel style={styles.tableHeaderCell}>STT</TextFieldLabel>
                                     </View>
-                                    <View style={styles.mobileCardRow}>
-                                        <TextFieldLabel style={styles.mobileCardLabel}>{t('bookingPayment.price')}:</TextFieldLabel>
-                                        <TextFieldLabel style={styles.mobileCardValue}>{formatCurrency(item.price)}</TextFieldLabel>
+                                    <View style={styles.colService}>
+                                        <TextFieldLabel style={[styles.tableHeaderCell, { textAlign: 'left' }]}>{t('bookingPayment.service')}</TextFieldLabel>
                                     </View>
-                                    <View style={styles.mobileCardRow}>
-                                        <TextFieldLabel style={styles.mobileCardLabel}>{t('bookingPayment.promotion')}:</TextFieldLabel>
-                                        <View style={styles.mobilePromotionContainer}>
-                                            <Dropdown
-                                                data={getPromotionOptions(item.serviceId)}
-                                                labelField="label"
-                                                valueField="value"
-                                                value={servicePromotions[item.serviceId]?.id || null}
-                                                onChange={(selected) => handlePromotionChange(item.serviceId, selected.value)}
-                                                onFocus={() => loadPromotionsForService(item.serviceId)}
-                                                style={styles.mobilePromotionDropdown}
-                                                containerStyle={styles.dropdownContainer}
-                                                itemContainerStyle={styles.dropdownItem}
-                                                selectedTextStyle={styles.mobileDropdownSelectedText}
-                                                showsVerticalScrollIndicator={false}
-                                                itemTextStyle={{ color: colors.text, fontSize: 14 }}
-                                                placeholderStyle={styles.mobileDropdownPlaceholder}
-                                                placeholder={loadingPromotions[item.serviceId] ? t('bookingPayment.loading') || 'Đang tải...' : t('bookingPayment.promotionPlaceholder')}
-                                                renderRightIcon={() => <ChevronDown size={18} color={colors.placeholderTextColor} />}
-                                                maxHeight={200}
-                                                activeColor={colors.backgroundDisabled}
-                                                selectedTextProps={{ allowFontScaling: false }}
-                                                renderItem={renderItem}
-                                            />
-                                            {servicePromotions[item.serviceId] && (
-                                                <TouchableOpacity
-                                                    onPress={() => handleClearPromotion(item.serviceId)}
-                                                    style={styles.clearButton}
-                                                >
-                                                    <X size={16} color={colors.red} />
-                                                </TouchableOpacity>
-                                            )}
-                                        </View>
+                                    <View style={styles.colPrice}>
+                                        <TextFieldLabel style={styles.tableHeaderCell}>{t('bookingPayment.price')}</TextFieldLabel>
                                     </View>
-                                    <View style={styles.mobileCardRow}>
-                                        <TextFieldLabel style={styles.mobileCardLabel}>{t('bookingPayment.discount')}:</TextFieldLabel>
-                                        <TextFieldLabel style={styles.mobileCardValue}>
-                                            {formatCurrency(calculateDiscount(item.price, servicePromotions[item.serviceId] || null))}
-                                        </TextFieldLabel>
+                                    <View style={styles.colPromotion}>
+                                        <TextFieldLabel style={styles.tableHeaderCell}>{t('bookingPayment.promotion')}</TextFieldLabel>
                                     </View>
-                                    <View style={[styles.mobileCardRow, styles.mobileCardTotalRow]}>
-                                        <TextFieldLabel style={styles.mobileCardTotalLabel}>{t('bookingPayment.total')}:</TextFieldLabel>
-                                        <TextFieldLabel style={styles.mobileCardTotalValue}>
-                                            {formatCurrency(calculatePriceAfterDiscount(item.price, servicePromotions[item.serviceId] || null))}
-                                        </TextFieldLabel>
+                                    <View style={styles.colDiscount}>
+                                        <TextFieldLabel style={styles.tableHeaderCell}>{t('bookingPayment.discount')}</TextFieldLabel>
+                                    </View>
+                                    <View style={styles.colTotal}>
+                                        <TextFieldLabel style={styles.tableHeaderCell}>{t('bookingPayment.total')}</TextFieldLabel>
                                     </View>
                                 </View>
-                            ))}
-                        </View>
+                                {dataPaymentBooking?.services?.map((item, index) => {
+                                    const promotion = servicePromotions[item.serviceId] || null;
+                                    const discount = calculateDiscount(item.price, promotion);
+                                    const total = calculatePriceAfterDiscount(item.price, promotion);
+                                    const isLastRow = index === (dataPaymentBooking?.services?.length || 0) - 1;
+
+                                    return (
+                                        <View key={item.serviceId} style={[styles.tableRow, isLastRow && styles.tableRowLast]}>
+                                            <View style={styles.colStt}>
+                                                <TextFieldLabel style={styles.tableCell}>{index + 1}</TextFieldLabel>
+                                            </View>
+                                            <View style={styles.colService}>
+                                                <TextFieldLabel style={[styles.tableCell, { textAlign: 'left' }]}>{item.serviceName}</TextFieldLabel>
+                                            </View>
+                                            <View style={styles.colPrice}>
+                                                <TextFieldLabel style={styles.tableCell}>{formatCurrency(item.price)}</TextFieldLabel>
+                                            </View>
+                                            <View style={[styles.colPromotion, styles.promotionCell]}>
+                                                <View style={styles.promotionDropdownContainer}>
+                                                    <Dropdown
+                                                        data={getPromotionOptions(item.serviceId)}
+                                                        labelField="label"
+                                                        valueField="value"
+                                                        value={promotion?.id || null}
+                                                        onChange={(selected) => handlePromotionChange(item.serviceId, selected.value)}
+                                                        onFocus={() => loadPromotionsForService(item.serviceId)}
+                                                        style={styles.promotionDropdown}
+                                                        containerStyle={styles.dropdownContainer}
+                                                        itemContainerStyle={styles.dropdownItem}
+                                                        selectedTextStyle={styles.promotionDropdownSelectedText}
+                                                        showsVerticalScrollIndicator={false}
+                                                        itemTextStyle={{ color: colors.text, fontSize: 12 }}
+                                                        placeholderStyle={styles.promotionDropdownPlaceholder}
+                                                        placeholder={loadingPromotions[item.serviceId] ? t('bookingPayment.loading') || 'Đang tải...' : t('bookingPayment.promotionPlaceholder')}
+                                                        renderRightIcon={() => <ChevronDown size={14} color={colors.placeholderTextColor} />}
+                                                        maxHeight={200}
+                                                        activeColor={colors.backgroundDisabled}
+                                                        selectedTextProps={{ allowFontScaling: false }}
+                                                        renderItem={renderItem}
+                                                    />
+                                                    {promotion && (
+                                                        <TouchableOpacity
+                                                            onPress={() => handleClearPromotion(item.serviceId)}
+                                                            style={styles.clearButtonTable}
+                                                        >
+                                                            <X size={14} color={colors.red} />
+                                                        </TouchableOpacity>
+                                                    )}
+                                                </View>
+                                            </View>
+                                            <View style={styles.colDiscount}>
+                                                <TextFieldLabel style={styles.tableCell}>{formatCurrency(discount)}</TextFieldLabel>
+                                            </View>
+                                            <View style={styles.colTotal}>
+                                                <TextFieldLabel style={styles.tableCell}>{formatCurrency(total)}</TextFieldLabel>
+                                            </View>
+                                        </View>
+                                    );
+                                })}
+                            </View>
+                        ) : (
+                            <View style={styles.mobileTableContainer}>
+                                {dataPaymentBooking?.services?.map((item, index) => (
+                                    <View key={item.serviceId} style={styles.mobileServiceCard}>
+                                        <View style={styles.mobileCardHeader}>
+                                            <TextFieldLabel style={styles.mobileCardTitle}>{t('bookingPayment.service')} {index + 1}</TextFieldLabel>
+                                            <TextFieldLabel style={styles.mobileServiceName}>{t('bookingPayment.service')}: {item.serviceName}</TextFieldLabel>
+                                        </View>
+                                        <View style={styles.mobileCardRow}>
+                                            <TextFieldLabel style={styles.mobileCardLabel}>{t('bookingPayment.price')}:</TextFieldLabel>
+                                            <TextFieldLabel style={styles.mobileCardValue}>{formatCurrency(item.price)}</TextFieldLabel>
+                                        </View>
+                                        <View style={styles.mobileCardRow}>
+                                            <TextFieldLabel style={styles.mobileCardLabel}>{t('bookingPayment.promotion')}:</TextFieldLabel>
+                                            <View style={styles.mobilePromotionContainer}>
+                                                <Dropdown
+                                                    data={getPromotionOptions(item.serviceId)}
+                                                    labelField="label"
+                                                    valueField="value"
+                                                    value={servicePromotions[item.serviceId]?.id || null}
+                                                    onChange={(selected) => handlePromotionChange(item.serviceId, selected.value)}
+                                                    onFocus={() => loadPromotionsForService(item.serviceId)}
+                                                    style={styles.mobilePromotionDropdown}
+                                                    containerStyle={styles.dropdownContainer}
+                                                    itemContainerStyle={styles.dropdownItem}
+                                                    selectedTextStyle={styles.mobileDropdownSelectedText}
+                                                    showsVerticalScrollIndicator={false}
+                                                    itemTextStyle={{ color: colors.text, fontSize: 14 }}
+                                                    placeholderStyle={styles.mobileDropdownPlaceholder}
+                                                    placeholder={loadingPromotions[item.serviceId] ? t('bookingPayment.loading') || 'Đang tải...' : t('bookingPayment.promotionPlaceholder')}
+                                                    renderRightIcon={() => <ChevronDown size={18} color={colors.placeholderTextColor} />}
+                                                    maxHeight={200}
+                                                    activeColor={colors.backgroundDisabled}
+                                                    selectedTextProps={{ allowFontScaling: false }}
+                                                    renderItem={renderItem}
+                                                />
+                                                {servicePromotions[item.serviceId] && (
+                                                    <TouchableOpacity
+                                                        onPress={() => handleClearPromotion(item.serviceId)}
+                                                        style={styles.clearButton}
+                                                    >
+                                                        <X size={16} color={colors.red} />
+                                                    </TouchableOpacity>
+                                                )}
+                                            </View>
+                                        </View>
+                                        <View style={styles.mobileCardRow}>
+                                            <TextFieldLabel style={styles.mobileCardLabel}>{t('bookingPayment.discount')}:</TextFieldLabel>
+                                            <TextFieldLabel style={styles.mobileCardValue}>
+                                                {formatCurrency(calculateDiscount(item.price, servicePromotions[item.serviceId] || null))}
+                                            </TextFieldLabel>
+                                        </View>
+                                        <View style={[styles.mobileCardRow, styles.mobileCardTotalRow]}>
+                                            <TextFieldLabel style={styles.mobileCardTotalLabel}>{t('bookingPayment.total')}:</TextFieldLabel>
+                                            <TextFieldLabel style={styles.mobileCardTotalValue}>
+                                                {formatCurrency(calculatePriceAfterDiscount(item.price, servicePromotions[item.serviceId] || null))}
+                                            </TextFieldLabel>
+                                        </View>
+                                    </View>
+                                ))}
+                            </View>
+                        )}
 
                         <View style={styles.voucherSection}>
                             <View style={styles.voucherInputContainer}>
@@ -499,27 +584,10 @@ const BookingPaymentModal = ({
                                 <TextFieldLabel style={styles.summaryValue}>{formatCurrency(totalAmount)}</TextFieldLabel>
                             </View>
                             <View style={styles.summaryRow}>
-                                <TextFieldLabel style={styles.summaryLabel}>{t('bookingPayment.voucher')}</TextFieldLabel>
-                                <View style={styles.voucherInfoContainer}>
-                                    {voucher && (
-                                        <>
-                                            <TextFieldLabel style={styles.voucherInfoText}>
-                                                {t('bookingPayment.voucherCodeLabel', { defaultValue: 'Mã' })}: {voucher.code}
-                                            </TextFieldLabel>
-                                            <TextFieldLabel style={styles.voucherInfoText}>
-                                                {voucher.discountType === 1
-                                                    ? `${voucher.discountValue}% ${t('bookingPayment.voucherPercentOffLabel', { defaultValue: 'giảm trên tổng' })}`
-                                                    : `${formatCurrency(voucher.discountValue)} ${t('bookingPayment.voucherAmountOffLabel', { defaultValue: 'giảm trực tiếp' })}`
-                                                }
-                                            </TextFieldLabel>
-                                            {voucher.hasMinimumOrderAmount && (
-                                                <TextFieldLabel style={styles.voucherInfoText}>
-                                                    {t('bookingPayment.voucherMaxLabel', { defaultValue: 'Tối đa' })}: {formatCurrency(voucher.minimumOrderAmount)}
-                                                </TextFieldLabel>
-                                            )}
-                                        </>
-                                    )}
-                                </View>
+                                <TextFieldLabel style={styles.summaryLabel}>{t('bookingPayment.totalDiscount') || 'Tổng giảm giá'}</TextFieldLabel>
+                                <TextFieldLabel style={[styles.summaryValue, voucherDiscountAmount > 0 && styles.discountValue]}>
+                                    {voucherDiscountAmount > 0 ? `-${formatCurrency(voucherDiscountAmount)}` : formatCurrency(0)}
+                                </TextFieldLabel>
                             </View>
                             <View style={styles.summaryRow}>
                                 <TextFieldLabel style={styles.summaryLabel}>{t('bookingPayment.vat')} (8%)</TextFieldLabel>
@@ -532,43 +600,45 @@ const BookingPaymentModal = ({
                         </View>
 
                         <View style={styles.paymentSection}>
-                            <View style={styles.paymentField}>
-                                <TextFieldLabel style={styles.fieldLabel}>{t('bookingPayment.paymentMethod')}</TextFieldLabel>
-                                <Dropdown
-                                    data={paymentList}
-                                    labelField="label"
-                                    valueField="value"
-                                    value={paymentMethod}
-                                    onChange={(item) => setPaymentMethod(item.value)}
-                                    style={styles.paymentDropdown}
-                                    containerStyle={styles.dropdownContainer}
-                                    itemContainerStyle={styles.dropdownItem}
-                                    selectedTextStyle={styles.dropdownSelectedText}
-                                    showsVerticalScrollIndicator={false}
-                                    itemTextStyle={{ color: colors.text }}
-                                    placeholderStyle={styles.dropdownPlaceholder}
-                                    renderRightIcon={() => <ChevronDown size={16} color={colors.placeholderTextColor} />}
-                                    maxHeight={150}
-                                    activeColor={colors.backgroundDisabled}
-                                    selectedTextProps={{ allowFontScaling: false }}
-                                    renderItem={renderItem}
-                                />
-                            </View>
-                            <View style={styles.paymentField}>
-                                <TextFieldLabel style={styles.fieldLabel}>{t('bookingPayment.customerAmount')}</TextFieldLabel>
-                                <TextField
-                                    style={styles.changeText}
-                                    placeholder={t('bookingPayment.customerAmount')}
-                                    placeholderTextColor={colors.placeholderTextColor}
-                                    value={customerAmount}
-                                    onChangeText={setCustomerAmount}
-                                    keyboardType="numeric"
-                                />
-                            </View>
-                            <View style={styles.paymentField}>
-                                <TextFieldLabel style={styles.fieldLabel}>{t('bookingPayment.change')}</TextFieldLabel>
-                                <View style={styles.changeField}>
-                                    <TextFieldLabel style={styles.changeText}>{customerAmount ? formatCurrency(Number(customerAmount) - finalAmount) : formatCurrency(0)}</TextFieldLabel>
+                            <View style={isTablet ? styles.paymentRow : undefined}>
+                                <View style={[styles.paymentField, isTablet && styles.paymentFieldHorizontal]}>
+                                    <TextFieldLabel style={styles.fieldLabel}>{t('bookingPayment.paymentMethod')}</TextFieldLabel>
+                                    <Dropdown
+                                        data={paymentList}
+                                        labelField="label"
+                                        valueField="value"
+                                        placeholder={t('bookingPayment.paymentMethod')}
+                                        value={paymentMethod}
+                                        onChange={(item) => setPaymentMethod(item.value)}
+                                        style={styles.paymentDropdown}
+                                        containerStyle={styles.dropdownContainer}
+                                        itemContainerStyle={styles.dropdownItem}
+                                        selectedTextStyle={styles.dropdownSelectedText}
+                                        showsVerticalScrollIndicator={false}
+                                        itemTextStyle={{ color: colors.text }}
+                                        placeholderStyle={styles.dropdownPlaceholder}
+                                        renderRightIcon={() => <ChevronDown size={16} color={colors.placeholderTextColor} />}
+                                        maxHeight={150}
+                                        activeColor={colors.backgroundDisabled}
+                                        selectedTextProps={{ allowFontScaling: false }}
+                                        renderItem={renderItem}
+                                    />
+                                </View>
+                                <View style={[styles.paymentField, isTablet && styles.paymentFieldHorizontal]}>
+                                    <TextFieldLabel style={styles.fieldLabel}>{t('bookingPayment.customerAmount')}</TextFieldLabel>
+                                    <TextField
+                                        placeholder={t('bookingPayment.customerAmount')}
+                                        placeholderTextColor={colors.placeholderTextColor}
+                                        value={customerAmount}
+                                        onChangeText={setCustomerAmount}
+                                        keyboardType="numeric"
+                                    />
+                                </View>
+                                <View style={[styles.paymentField, isTablet && styles.paymentFieldHorizontal]}>
+                                    <TextFieldLabel style={styles.fieldLabel}>{t('bookingPayment.change')}</TextFieldLabel>
+                                    <View style={styles.changeField}>
+                                        <TextFieldLabel style={styles.changeText}>{customerAmount ? formatCurrency(Number(customerAmount) - finalAmount) : formatCurrency(0)}</TextFieldLabel>
+                                    </View>
                                 </View>
                             </View>
                             <View style={styles.invoiceRow}>
@@ -605,7 +675,7 @@ const BookingPaymentModal = ({
     );
 };
 
-const $styles = (colors: Colors, isSmallScreen: boolean) => StyleSheet.create({
+const $styles = (colors: Colors, isSmallScreen: boolean, isTablet: boolean) => StyleSheet.create({
     modalBackdrop: {
         flex: 1,
         justifyContent: 'center',
@@ -622,6 +692,7 @@ const $styles = (colors: Colors, isSmallScreen: boolean) => StyleSheet.create({
     },
     modalCard: {
         width: '100%',
+        maxWidth: isTablet ? 1200 : '100%',
         backgroundColor: colors.card,
         borderRadius: 16,
         padding: 20,
@@ -659,11 +730,12 @@ const $styles = (colors: Colors, isSmallScreen: boolean) => StyleSheet.create({
         marginBottom: 20,
     },
     tableContainer: {
+        width: '100%',
         borderWidth: 1,
         borderColor: colors.border,
         borderRadius: 8,
         overflow: 'hidden',
-        minWidth: isSmallScreen ? 600 : '100%',
+        marginBottom: 20,
     },
     mobileTableContainer: {
         marginBottom: 20,
@@ -800,6 +872,10 @@ const $styles = (colors: Colors, isSmallScreen: boolean) => StyleSheet.create({
         flex: 1,
         minWidth: 100,
     },
+    colVoucher: {
+        flex: 1,
+        minWidth: 100,
+    },
     colPromotion: {
         flex: 1.5,
         alignItems: 'stretch',
@@ -925,7 +1001,7 @@ const $styles = (colors: Colors, isSmallScreen: boolean) => StyleSheet.create({
         color: colors.placeholderTextColor,
     },
     discountValue: {
-        color: colors.error,
+        color: colors.error || '#FF0000',
     },
     finalAmountRow: {
         marginTop: 8,
@@ -953,9 +1029,13 @@ const $styles = (colors: Colors, isSmallScreen: boolean) => StyleSheet.create({
         flexDirection: 'row',
         gap: 12,
         marginBottom: 16,
+        width: '100%',
+        alignItems: 'flex-start',
     },
     paymentFieldHorizontal: {
         flex: 1,
+        marginBottom: 0,
+        alignSelf: 'stretch',
     },
     fieldLabel: {
         fontSize: 14,
@@ -964,7 +1044,7 @@ const $styles = (colors: Colors, isSmallScreen: boolean) => StyleSheet.create({
         marginBottom: 8,
     },
     paymentDropdown: {
-        height: isSmallScreen ? 48 : 40,
+        height: 40,
         backgroundColor: colors.card,
         borderRadius: 8,
         paddingHorizontal: 12,
@@ -972,7 +1052,7 @@ const $styles = (colors: Colors, isSmallScreen: boolean) => StyleSheet.create({
         borderColor: colors.border,
     },
     amountInput: {
-        height: isSmallScreen ? 48 : 40,
+        height: 40,
         backgroundColor: colors.card,
         borderRadius: 8,
         paddingHorizontal: 12,

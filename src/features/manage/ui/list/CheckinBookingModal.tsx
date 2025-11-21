@@ -10,6 +10,7 @@ import { useAppSelector } from "@/app/store";
 import { EditBookingRequest } from "../../api/types";
 import { alertService } from "@/services/alertService";
 import { useBookingForm } from "../../hooks/useBookingForm";
+import Loader from "@/shared/ui/Loader";
 
 
 interface CheckinBookingModalProps {
@@ -27,7 +28,7 @@ const CheckinBookingModal = ({
     const styles = $styles(colors);
     const { t } = useTranslation();
     const { detailBookingItem } = useAppSelector((state) => state.booking);
-    const { putCheckinBooking, getListBookingManager } = useBookingForm();
+    const { putCheckinBooking, getListBookingManager, loading } = useBookingForm();
 
     const [dataBookingEdit, setDataBookingEdit] = useState<EditBookingRequest>();
 
@@ -37,7 +38,7 @@ const CheckinBookingModal = ({
                 title: t('checkinBooking.validationError'),
                 message: t('checkinBooking.noServiceError'),
                 typeAlert: 'Error',
-                onConfirm: () => {},
+                onConfirm: () => { },
             });
             return false;
         }
@@ -47,7 +48,7 @@ const CheckinBookingModal = ({
                 title: t('checkinBooking.validationError'),
                 message: t('checkinBooking.staffRequiredError'),
                 typeAlert: 'Error',
-                onConfirm: () => {},
+                onConfirm: () => { },
             });
             return false;
         }
@@ -64,7 +65,7 @@ const CheckinBookingModal = ({
                 title: t('checkinBooking.errorTitle'),
                 message: t('checkinBooking.errorMessage'),
                 typeAlert: 'Error',
-                onConfirm: () => {},
+                onConfirm: () => { },
             });
             return;
         }
@@ -85,7 +86,7 @@ const CheckinBookingModal = ({
                 title: t('checkinBooking.errorTitle'),
                 message: t('checkinBooking.errorMessage'),
                 typeAlert: 'Error',
-                onConfirm: () => {},
+                onConfirm: () => { },
             });
         }
     };
@@ -131,6 +132,7 @@ const CheckinBookingModal = ({
                     <ScrollView style={styles.servicesContainer} contentContainerStyle={styles.servicesContent} showsVerticalScrollIndicator={false}>
 
                         <ServiceListComponent
+                            type="checkin"
                             services={dataBookingEdit?.services?.map((service) => ({ serviceId: service?.serviceId ?? 0, staffId: service?.staffId ?? null, serviceTime: service?.serviceTime ?? 0 })) || []}
                             onChange={(services) =>
                                 setDataBookingEdit((prev) => (prev ? { ...prev, services } : prev))
@@ -152,6 +154,7 @@ const CheckinBookingModal = ({
                     </View>
                 </View>
             </View>
+            <Loader loading={loading} />
         </Modal>
     );
 };

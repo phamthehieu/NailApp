@@ -91,7 +91,7 @@ const DashBoardScreen = ({ navigation }: RootScreenProps<Paths.DashBoard>) => {
                 onBack={() => navigation.goBack()}
                 bgColor={colors.yellow}
             />
-            <HeaderDashBoardComponent dashboardHook={dashboardHook} viewMode={viewMode} setViewMode={setViewMode} />
+            <HeaderDashBoardComponent dashboardHook={dashboardHook} viewMode={viewMode} setViewMode={setViewMode} onBookPress={() => navigation.navigate(Paths.AddNewBooking)} />
 
             <View style={styles.content}>
 

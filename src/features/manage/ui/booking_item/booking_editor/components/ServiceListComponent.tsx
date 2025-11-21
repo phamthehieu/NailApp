@@ -16,11 +16,13 @@ export type ServiceItem = {
 };
 
 type ServiceListComponentProps = {
+    type?: string;
     services: ServiceItem[];
     onChange: (services: ServiceItem[]) => void;
 };
 
 const ServiceListComponent = ({
+    type,
     services,
     onChange,
 }: ServiceListComponentProps) => {
@@ -133,6 +135,7 @@ const ServiceListComponent = ({
                             <TextFieldLabel text={t('bookingInformation.duration')} />
                         </View>
                         <TextField
+                            readOnly={type === 'checkin'}
                             placeholder={t('bookingInformation.durationPlaceholder')}
                             keyboardType="number-pad"
                             value={item.serviceTime.toString()}
