@@ -163,7 +163,8 @@ export function useBookingForm() {
             } else {
                 setLoading(true);
             }
-            const response = await getHistoryBookingItemApi(CustomerId, Search, SortBy, PageIndex, PageSize, SortType);
+            const pageSizeHistory = 10000;
+            const response = await getHistoryBookingItemApi(CustomerId, Search, SortBy, PageIndex, pageSizeHistory, SortType);
             if (isLoadMore) {
                 dispatch(appendHistoryBookingItem(response));
             } else {

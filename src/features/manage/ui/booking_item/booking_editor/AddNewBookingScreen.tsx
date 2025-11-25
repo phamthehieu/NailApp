@@ -42,6 +42,7 @@ const AddNewBookingScreen = ({ navigation }: RootScreenProps<Paths.AddNewBooking
         note: "",
         dob: null,
         id: null,
+        avatarUrl: null,
     });
 
     const [bookingData, setBookingData] = useState<BookingInformationData>();

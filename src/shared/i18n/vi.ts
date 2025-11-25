@@ -80,7 +80,7 @@ const vi = {
     dateRangeEnd: 'Đến ngày',
     bookingCode: 'Mã booking',
     enterCode: 'Nhập mã booking',
-    customerName: 'Tên khách hàng',
+    customerName: 'Tên khách hàng (Nickname)',
     enterCustomer: 'Nhập tên khách hàng',
     phone: 'Số điện thoại',
     enterPhone: 'Nhập số điện thoại',
@@ -163,6 +163,7 @@ const vi = {
     },
   },
   bookingInformation: {
+    selectCustomer: 'Chọn khách hàng',
     customerInfo: 'Thông tin khách hàng',
     bookingInfo: 'Thông tin đặt lịch',
     serviceInfo: 'Thông tin dịch vụ',
@@ -171,7 +172,7 @@ const vi = {
     serviceTime: 'Thời gian thực hiện',
     minutes: 'phút',
     customerName: 'Tên khách hàng',
-    customerNamePlaceholder: 'Nhập tên khách hàng (Nickname)',
+    customerNamePlaceholder: 'Nhập tên khách hàng',
     phone: 'Số điện thoại',
     phonePlaceholder: 'Nhập số điện thoại',
     email: 'Email',
@@ -227,6 +228,11 @@ const vi = {
   historyBooking: {
     serviceHistory: 'Lịch sử sử dụng dịch vụ',
     noHistory: 'Chưa có lịch sử sử dụng dịch vụ',
+    index: 'STT',
+    service: 'Dịch vụ',
+    time: 'Thời gian',
+    employee: 'Nhân viên',
+    viewAllServiceHistory: 'Xem tất cả lịch sử dịch vụ của khách hàng.',
   },
   addNewBooking: {
     title: 'Đặt lịch',

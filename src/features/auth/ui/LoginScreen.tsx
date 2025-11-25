@@ -216,9 +216,6 @@ const LoginScreen = ({ navigation }: RootScreenProps<Paths.Login>) => {
                                 returnKeyType="next"
                                 onSubmitEditing={() => {
                                     passwordInputRef.current?.focus();
-                                    setTimeout(() => {
-                                        scrollViewRef.current?.scrollToEnd({ animated: true });
-                                    }, 100);
                                 }}
                                 onBlur={() => {
                                     if (!username.trim()) {
@@ -247,25 +244,13 @@ const LoginScreen = ({ navigation }: RootScreenProps<Paths.Login>) => {
                                 secureTextEntry={!isPasswordVisible}
                                 RightAccessory={PasswordRightAccessory}
                                 onFocus={() => {
-                                    const eventName = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
-                                    let removed = false;
-                                    const doScroll = () => {
-                                        if (removed) return;
+                                    setTimeout(() => {
                                         const node = findNodeHandle(passwordInputRef.current);
                                         const responder = scrollViewRef.current?.getScrollResponder?.();
                                         if (node && responder?.scrollResponderScrollNativeHandleToKeyboard) {
-                                            responder.scrollResponderScrollNativeHandleToKeyboard(node, 32, true);
+                                            responder.scrollResponderScrollNativeHandleToKeyboard(node, 100, true);
                                         }
-                                        removed = true;
-                                    };
-                                    const sub = Keyboard.addListener(eventName, () => {
-                                        requestAnimationFrame(doScroll);
-                                        sub.remove();
-                                    });
-                                    const timer = setTimeout(() => {
-                                        doScroll();
-                                        try { sub.remove(); } catch { }
-                                    }, 250);
+                                    }, Platform.OS === 'ios' ? 100 : 200);
                                 }}
                                 onSubmitEditing={() => {
                                     passwordInputRef.current?.blur();

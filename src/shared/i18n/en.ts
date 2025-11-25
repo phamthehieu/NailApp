@@ -82,7 +82,7 @@ const en: Translations = {
         dateRangeEnd: 'To date',
         bookingCode: 'Booking code',
         enterCode: 'Enter booking code',
-        customerName: 'Customer name',
+        customerName: 'Customer name (Nickname)',
         enterCustomer: 'Enter customer name',
         phone: 'Phone number',
         enterPhone: 'Enter phone number',
@@ -165,6 +165,7 @@ const en: Translations = {
     },
   },
   bookingInformation: {
+    selectCustomer: 'Select customer',
     customerInfo: 'Customer information',
     bookingInfo: 'Booking information',
     serviceInfo: 'Service information',
@@ -173,7 +174,7 @@ const en: Translations = {
     serviceTime: 'Service time',
     minutes: 'minutes',
     customerName: 'Customer name',
-    customerNamePlaceholder: 'Enter customer name (Nickname)',
+    customerNamePlaceholder: 'Enter customer name',
     phone: 'Phone number',
     phonePlaceholder: 'Enter phone number',
     email: 'Email',
@@ -229,6 +230,11 @@ const en: Translations = {
   historyBooking: {
     serviceHistory: 'Service usage history',
     noHistory: 'No service history available',
+    index: 'Index',
+    service: 'Service',
+    time: 'Time',
+    employee: 'Employee',
+    viewAllServiceHistory: 'View all service history of the customer.',
   },  
   addNewBooking: {
     title: 'Add new booking',
