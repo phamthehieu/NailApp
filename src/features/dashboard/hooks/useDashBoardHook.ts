@@ -14,7 +14,7 @@ export function useDashBoardHook() {
     const [loadingMore, setLoadingMore] = useState<boolean>(false);
     const [dateFrom, setDateFrom] = useState<Date | null>(null);
     const [dateTo, setDateTo] = useState<Date | null>(null);
-    const [bookingDate, setBookingDate] = useState<Date | null>(null);
+    const [bookingDate, setBookingDate] = useState<Date | null>(new Date());
     const [status, setStatus] = useState<string | undefined>(undefined);
     const [bookingCode, setBookingCode] = useState<string | undefined>(undefined);
     const [customerName, setCustomerName] = useState<string | undefined>(undefined);

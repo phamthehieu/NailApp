@@ -328,6 +328,13 @@ const AddNewBookingScreen = ({ navigation }: RootScreenProps<Paths.AddNewBooking
         }
     }
 
+    const handleBackPress = () => {
+        if (activeStep === 0) {
+            navigation.goBack();
+        } else {
+            setActiveStep((prev) => Math.max(0, prev - 1));
+        }
+    }
     return (
         <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
 
@@ -428,8 +435,7 @@ const AddNewBookingScreen = ({ navigation }: RootScreenProps<Paths.AddNewBooking
             <View style={styles.footer}>
                 <Button
                     text={t('addNewBooking.back')}
-                    onPress={() => setActiveStep((prev) => Math.max(0, prev - 1))}
-                    disabled={activeStep === 0}
+                    onPress={() => handleBackPress()}
                     style={styles.footerButton}
                 />
                 <Button

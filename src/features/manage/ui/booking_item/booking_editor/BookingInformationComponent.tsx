@@ -13,6 +13,7 @@ import { RootState, useAppSelector } from "@/app/store";
 import { Dropdown } from "react-native-element-dropdown";
 import Loader from "@/shared/ui/Loader";
 import { useBookingForm } from "@/features/manage/hooks/useBookingForm";
+import { useEditBookingForm } from "@/features/manage/hooks/useEditBookingForm";
 
 export interface BookingInformationData {
     bookingDate: Date | null;
@@ -39,6 +40,13 @@ interface BookingInformationComponentProps {
     onChange?: (data: BookingInformationData) => void;
 }
 
+const normalizeBookingHours = (time?: string | null) => {
+    if (!time) return null;
+    const parts = time.split(':').map((part) => part.padStart(2, '0'));
+    const [hours = '00', minutes = '00', seconds = '00'] = parts;
+    return `${hours}:${minutes}:${seconds}`;
+};
+
 const BookingInformationComponent = ({ value, onChange }: BookingInformationComponentProps) => {
     const { theme: { colors } } = useAppTheme();
     const { width } = useWindowDimensions();
@@ -48,6 +56,7 @@ const BookingInformationComponent = ({ value, onChange }: BookingInformationComp
     const listBookingSetting = useAppSelector((state: RootState) => state.editBooking.listBookingSetting);
     const { t } = useTranslation();
     const { getListTimeSlot, loading } = useBookingForm();
+    const { getListService } = useEditBookingForm();
 
     const [serviceItems, setServiceItems] = useState<ServiceItem[]>();
     const [description, setDescription] = useState<string>();
@@ -257,6 +266,20 @@ const BookingInformationComponent = ({ value, onChange }: BookingInformationComp
             setTimeSlots([]);
         }
     }, [getListTimeSlot]);
+
+    useEffect(() => {
+        const fetchListService = async () => {
+            if (selectedDate && bookingHoursString) {
+                const formatDateString = (date?: Date | null) => (date ? date.toISOString() : null);
+                const formattedDate = formatDateString(selectedDate ?? null);
+                const normalizedBookingHours = normalizeBookingHours(bookingHoursString);
+                if (formattedDate && normalizedBookingHours) {
+                    await getListService(formattedDate, normalizedBookingHours);
+                }
+            }
+        };
+        fetchListService();
+    }, [selectedDate, bookingHoursString]);
 
     return (
         <KeyboardAvoidingView

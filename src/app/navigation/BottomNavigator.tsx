@@ -5,19 +5,19 @@ import { CalendarCheck, UserRound, UserCheck, Home } from 'lucide-react-native';
 import { useAppTheme } from '@/shared/theme';
 import { Paths } from '@/app/navigation/paths';
 import type { RootStackParamList } from '@/app/navigation/types';
-import ReportScreen from '@/features/report/ui/ReportScreen';
-import SystemScreen from '@/features/system/ui/SystemScreen';
 import BookingManageScreen from '@/features/manage/ui/BookingManageScreen';
 import { useTranslation } from 'react-i18next';
 import { TextFieldLabel } from '@/shared/ui/Text';
 import CheckinScreen from '@/features/store/ui/CheckinScreen';
 import { SettingsScreen } from '@/features/settings';
 import { DashBoardScreen } from '@/features/dashboard';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 const Tab = createBottomTabNavigator<RootStackParamList>();
 
 const BottomNavigator = () => {
     const { theme: { colors } } = useAppTheme();
     const { t } = useTranslation();
+    const insets = useSafeAreaInsets();
 
     const TAB_TITLES: Record<string, string> = {
         [Paths.DashBoard]: t('bottomNavigator.dashboard'),
@@ -42,6 +42,12 @@ const BottomNavigator = () => {
                     borderTopWidth: 1,
                     borderTopColor: colors.border,
                     backgroundColor: colors.card,
+                    paddingTop: 8,
+                    paddingBottom: Math.max(insets.bottom, 8),
+                    height: 60 + Math.max(insets.bottom, 8),
+                },
+                tabBarLabelStyle: {
+                    marginBottom: 4,
                 },
             }}
         >

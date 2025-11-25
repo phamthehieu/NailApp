@@ -27,6 +27,7 @@ const DashBoardScreen = ({ navigation }: RootScreenProps<Paths.DashBoard>) => {
     const tab2Opacity = useRef(new Animated.Value(0)).current;
     const tab2TranslateX = useRef(new Animated.Value(50)).current;
     const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
+    
     useEffect(() => {
         getListStaff();
     }, [navigation]);

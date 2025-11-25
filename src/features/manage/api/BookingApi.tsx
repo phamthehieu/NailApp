@@ -153,8 +153,14 @@ export const getListBookingSettingApi = async () => {
     return http.get<ListBookingSettingResponse>('/api/Booking/GetBookingSetting');
 }
 
-export const getListServiceApi = async (SystemCatalogId?: number, Search?: string, SortBy?: number, PageIndex?: number, PageSize?: number, SortType?: string) => {
+export const getListServiceApi = async (BookingDate?: string, BookingTime?: string, SystemCatalogId?: number, Search?: string, SortBy?: number, PageIndex?: number, PageSize?: number, SortType?: string) => {
     const params = new URLSearchParams();
+    if (BookingDate) {
+        params.append('BookingDate', BookingDate);
+    }
+    if (BookingTime) {
+        params.append('BookingTime', BookingTime);
+    }
     if (SystemCatalogId) {
         params.append('SystemCatalogId', SystemCatalogId.toString());
     }
@@ -173,7 +179,7 @@ export const getListServiceApi = async (SystemCatalogId?: number, Search?: strin
     if (SortType) {
         params.append('SortType', SortType);
     }
-    return http.get<ListServiceResponse>(`/api/ServiceManagement/List?${params.toString()}`);
+    return http.get<ListServiceResponse>(`/api/Booking/GetServiceManagementByConfigPrice?${params.toString()}`);
 }
 
 export const getListBookingFrequencyApi = async () => {

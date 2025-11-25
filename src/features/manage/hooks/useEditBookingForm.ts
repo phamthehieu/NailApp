@@ -29,12 +29,12 @@ export function useEditBookingForm() {
         }
     }, [t, dispatch, loading]);
 
-    const getListService = useCallback(async (SystemCatalogId?: number, Search?: string, SortBy?: number, PageIndex?: number, PageSize?: number, SortType?: string) => {
+    const getListService = useCallback(async (BookingDate?: string, BookingTime?: string, SystemCatalogId?: number, Search?: string, SortBy?: number, PageIndex?: number, PageSize?: number, SortType?: string) => {
         try {
             if (loading) return;
             setLoading(true);
             const PageSize = 10000;
-            const response = await getListServiceApi(SystemCatalogId, Search, SortBy, PageIndex, PageSize, SortType);
+            const response = await getListServiceApi(BookingDate, BookingTime, SystemCatalogId, Search, SortBy, PageIndex, PageSize, SortType);
             dispatch(setListService(response));
         } catch (error: any) {
             console.error(error);
