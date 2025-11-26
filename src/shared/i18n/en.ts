@@ -20,6 +20,7 @@ const en: Translations = {
         errorMessage: 'Login failed. Please try again.',
     },
     checkin: {
+        checkinButton: 'Confirm',
         checkin: 'Verify appointment',
         toCheckIn: 'TO CHECK IN',
         skip: 'SKIP →',
@@ -38,6 +39,10 @@ const en: Translations = {
         point: 'Point',
         pointsFor10Percent: '10 points for 10% discount',
         pointsFor15Dollar: '15 points for $15 discount',
+        errorTitle: 'Error verifying appointment',
+        errorMessage: 'Failed to verify appointment. Please try again.',
+        successTitle: 'Success',
+        successMessage: 'Checkin successfully',
     },
     loading: {
         processing: 'Processing...',
@@ -148,6 +153,8 @@ const en: Translations = {
         noMoreBookingsMessage: 'You have reached the end of the booking list.',
         checkingBooking: 'Confirm booking',
         paymentBooking: 'Payment',
+        successTitle: 'Success',
+        successMessage: 'Cancel booking successfully',
     },
   detailBookingItem: {
     title: 'Booking details',

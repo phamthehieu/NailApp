@@ -415,7 +415,7 @@ const CalenderDayComponent = ({ selectedDate: _selectedDate, onPressScheduleItem
                     >
                         <View style={styles.container}>
                             <View style={styles.userRowsContainer}>
-                                {selectedDayWorkingRange && (
+                                {/* {selectedDayWorkingRange && (
                                     <>
                                         <CurrentTimeLine
                                             scheduleHeight={scheduleHeight}
@@ -434,7 +434,7 @@ const CalenderDayComponent = ({ selectedDate: _selectedDate, onPressScheduleItem
                                             baseHourOffset={minVisibleHour}
                                         />
                                     </>
-                                )}
+                                )} */}
                                 {filteredListStaff.map((staff, index) => {
                                     const staffWorkingHours = getWorkingHoursForStaff(staff.id, dayOfWeek);
                                     const hasWorkingHours = staffWorkingHours !== null;

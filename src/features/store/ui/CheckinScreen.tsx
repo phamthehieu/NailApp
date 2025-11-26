@@ -9,8 +9,10 @@ import { useTranslation } from 'react-i18next';
 import { useState, useEffect } from 'react';
 import { TextFieldLabel } from '@/shared/ui/Text';
 import Loader from '@/shared/ui/Loader';
-import { ChevronUp, ChevronDown, Printer, Settings, Check } from 'lucide-react-native';
+import { ChevronUp, ChevronDown, Printer, Settings, Check, ChevronLeft } from 'lucide-react-native';
 import LinearGradient from 'react-native-linear-gradient';
+import { postCheckinApi } from '../api/storeApi';
+import { alertService } from '@/services/alertService';
 
 const CheckinScreen = ({ navigation }: RootScreenProps<Paths.Checkin>) => {
     const { theme: { colors } } = useAppTheme();
@@ -35,9 +37,9 @@ const CheckinScreen = ({ navigation }: RootScreenProps<Paths.Checkin>) => {
         }
 
         if (cleaned.startsWith('0')) {
-            if (cleaned.length <= 2) return `(${cleaned}`;
-            if (cleaned.length <= 6) return `(${cleaned.slice(0, 2)}) ${cleaned.slice(2)}`;
-            return `(${cleaned.slice(0, 2)}) ${cleaned.slice(2, 6)} ${cleaned.slice(6, 10)}`;
+            if (cleaned.length <= 3) return cleaned;
+            if (cleaned.length <= 6) return `${cleaned.slice(0, 3)} ${cleaned.slice(3)}`;
+            return `${cleaned.slice(0, 3)} ${cleaned.slice(3, 6)} ${cleaned.slice(6, 10)}`;
         }
 
         const withZero = cleaned.startsWith('4') ? `0${cleaned}` : cleaned;
@@ -48,9 +50,9 @@ const CheckinScreen = ({ navigation }: RootScreenProps<Paths.Checkin>) => {
             return `${withZero.slice(0, 4)} ${withZero.slice(4, 7)} ${withZero.slice(7, 10)}`;
         }
 
-        if (withZero.length <= 2) return `(${withZero}`;
-        if (withZero.length <= 6) return `(${withZero.slice(0, 2)}) ${withZero.slice(2)}`;
-        return `(${withZero.slice(0, 2)}) ${withZero.slice(2, 6)} ${withZero.slice(6, 10)}`;
+        if (withZero.length <= 3) return withZero;
+        if (withZero.length <= 6) return `${withZero.slice(0, 3)} ${withZero.slice(3)}`;
+        return `${withZero.slice(0, 3)} ${withZero.slice(3, 6)} ${withZero.slice(6, 10)}`;
     };
 
     const handleNumberPress = (num: string) => {
@@ -67,12 +69,33 @@ const CheckinScreen = ({ navigation }: RootScreenProps<Paths.Checkin>) => {
         setPhone(formatPhoneNumber(newPhone));
     };
 
-    const handleCheckin = () => {
+    const handleCheckin = async () => {
         if (phone.replace(/\D/g, '').length === 10) {
-            setLoading(true);
-            setTimeout(() => {
+            try {
+                setLoading(true);
+                const data = {
+                    phoneNumber: phone.replace(/\D/g, ''),
+                };
+                const response = await postCheckinApi(data);
+                console.log("response", response);
+                if (response) {
+                    alertService.showAlert({
+                        title: t('checkin.successTitle'),
+                        message: t('checkin.successMessage'),
+                        typeAlert: 'Confirm',
+                        onConfirm: () => {},
+                    });
+                }
+            } catch (error: any) {
+                alertService.showAlert({
+                    title: t('checkin.errorTitle'),
+                    message: error.message,
+                    typeAlert: 'Error',
+                    onConfirm: () => {},
+                });
+            } finally {
                 setLoading(false);
-            }, 3000);
+            }
         }
     };
 
@@ -83,7 +106,7 @@ const CheckinScreen = ({ navigation }: RootScreenProps<Paths.Checkin>) => {
         if (cleaned.startsWith('04') || cleaned.startsWith('4')) {
             return '04XX XXX XXX';
         }
-        return '(0X) XXXX XXXX';
+        return '0XXX XXX XXX';
     };
 
     return (
@@ -92,14 +115,17 @@ const CheckinScreen = ({ navigation }: RootScreenProps<Paths.Checkin>) => {
 
             <View style={styles.topSection}>
                 <View style={styles.topChevronContainer}>
+                    <TouchableOpacity style={styles.topIconButton} onPress={() => navigation.goBack()}>
+                        <ChevronLeft size={20} color={colors.text} />
+                    </TouchableOpacity>
                 </View>
                 <View style={styles.topRightIcons}>
-                    <TouchableOpacity style={styles.topIconButton}>
+                    {/* <TouchableOpacity style={styles.topIconButton}>
                         <Printer size={20} color={colors.text} />
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.topIconButton}>
+                    </TouchableOpacity> */}
+                    {/* <TouchableOpacity style={styles.topIconButton}>
                         <Settings size={20} color={colors.text} />
-                    </TouchableOpacity>
+                    </TouchableOpacity> */}
                 </View>
             </View>
 
@@ -214,7 +240,7 @@ const CheckinScreen = ({ navigation }: RootScreenProps<Paths.Checkin>) => {
                                         disabled={!canProceed}
                                     >
                                         <TextFieldLabel style={[styles.nextButtonText, !canProceed && styles.nextButtonTextDisabled]}>
-                                            {t('checkin.next')}
+                                            {t('checkin.checkinButton')}
                                         </TextFieldLabel>
                                     </TouchableOpacity>
                                 </View>
@@ -267,8 +293,7 @@ const $styles = (colors: Colors, isTablet: boolean, screenWidth: number, isSmall
             paddingBottom: 10,
         },
         topChevronContainer: {
-            flex: 1,
-            alignItems: 'center',
+            alignItems: 'flex-start',
         },
         topRightIcons: {
             flex: 1,

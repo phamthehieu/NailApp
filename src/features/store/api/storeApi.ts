@@ -36,3 +36,7 @@ export async function listChooseShopApi(userId: number): Promise<ListChooseShopR
 export async function postSelectStoreApi(storeId: number): Promise<PostSelectStoreRequest> {
     return http.postPortal<PostSelectStoreRequest>(`/api/StaffProfile/SelectStore?IdStore=${storeId}`);
 }
+
+export async function postCheckinApi(data: { phoneNumber: string }): Promise<any> {
+    return http.put<any>(`/api/Booking/CustomerCheckIn`, data);
+}

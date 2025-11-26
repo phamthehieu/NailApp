@@ -2,14 +2,14 @@ import { Paths } from '@/app/navigation/paths';
 import { RootScreenProps } from '@/app/navigation/types';
 import { Colors, useAppTheme } from '@/shared/theme';
 import StatusBarComponent from '@/shared/ui/StatusBar';
-import { StyleSheet, KeyboardAvoidingView, Platform, View, FlatList, RefreshControl } from 'react-native';
+import { StyleSheet, KeyboardAvoidingView, Platform, View, FlatList, RefreshControl, Animated, TouchableOpacity, Dimensions, PanResponderInstance, PanResponder } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useIsTablet } from '@/shared/lib/useIsTablet';
 import { useTranslation } from 'react-i18next';
 import MHeader from '@/shared/ui/MHeader';
 import Loader from '@/shared/ui/Loader';
-import { useCallback, useEffect, useState } from 'react';
-import { ChevronRightIcon, LogOutIcon } from 'lucide-react-native';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { ChevronRightIcon, LogOutIcon, MapPinCheck } from 'lucide-react-native';
 import { ListItem } from '@/shared/ui/ListItem';
 import { AutoImage } from '@/shared/ui/AutoImage';
 import { TextFieldLabel } from '@/shared/ui/Text';
@@ -33,6 +33,31 @@ const ChooseShop = ({navigation}: RootScreenProps<Paths.ChooseShop>) => {
     const listChooseShop = useSelector((state: RootState) => state.store.listChooseShop);
     const dispatch = useAppDispatch();
     const userId = useSelector((state: RootState) => state.auth.userId);
+
+    const panY = useRef(new Animated.Value(0)).current;
+    const dragOffsetY = useRef(0);
+    const screenHeight = Dimensions.get('window').height;
+    const minY = 5;
+    const maxY = screenHeight - 20;
+    const panResponder = useRef<PanResponderInstance>(
+        PanResponder.create({
+            onStartShouldSetPanResponder: () => true,
+            onMoveShouldSetPanResponder: (_, gesture) => Math.abs(gesture.dy) > 2,
+            onPanResponderGrant: () => {
+                panY.stopAnimation((value) => {
+                    dragOffsetY.current = value as number;
+                });
+            },
+            onPanResponderMove: (_, gesture) => {
+                const next = Math.max(minY, Math.min(maxY, dragOffsetY.current + gesture.dy));
+                panY.setValue(next);
+            },
+            onPanResponderRelease: () => {
+                panY.flattenOffset?.();
+            },
+        })
+    ).current;
+
     const fetchListChooseShop = useCallback(async () => {
         if (!userId) {
             return;
@@ -154,6 +179,25 @@ const ChooseShop = ({navigation}: RootScreenProps<Paths.ChooseShop>) => {
 
             </KeyboardAvoidingView>
 
+            <Animated.View
+                style={[
+                    styles.edgeHandle,
+                    { transform: [{ translateY: panY }] },
+                ]}
+                {...panResponder.panHandlers}
+            >
+                <TouchableOpacity
+                    style={styles.edgeHandlePress}
+                    onPress={() => {
+                        navigation.navigate(Paths.Checkin);
+                    }}
+                    activeOpacity={0.8}
+                    hitSlop={{ top: 10, bottom: 10, left: 0, right: 10 }}
+                >
+                    <MapPinCheck size={20} color={colors.black} />
+                </TouchableOpacity>
+            </Animated.View>
+
             <Loader loading={loadingList || loadingAction} title={t('loading.processing')} />
 
         </SafeAreaView >
@@ -213,6 +257,39 @@ const $styles = (colors: Colors, isTablet: boolean) => {
         },
         flatListContainer: {
             paddingVertical: 16,
+        },
+        edgeHandle: {
+            position: 'absolute',
+            left: 0,
+            top: 40,
+            width: 40,
+            height: 40,
+            backgroundColor: colors.yellow,
+            borderTopRightRadius: 10,
+            borderBottomRightRadius: 10,
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 100,
+            opacity: 0.95,
+            shadowColor: colors.black,
+            shadowOpacity: 0.15,
+            shadowRadius: 6,
+            shadowOffset: { width: 0, height: 2 },
+            elevation: 3,
+        },
+        edgeHandlePress: {
+            flex: 1,
+            width: '100%',
+            justifyContent: 'center',
+            alignItems: 'center',
+            paddingVertical: 8,
+            paddingHorizontal: 4,
+        },
+        edgeHandleLabel: {
+            color: colors.black,
+            fontSize: 12,
+            fontWeight: '600',
+            transform: [{ rotate: '-90deg' }],
         },
     });
 };

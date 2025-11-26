@@ -96,11 +96,13 @@ const BookingListComponent = ({ navigation }: BookingListComponentProps) => {
     };
 
     const handleMainAction = (item: any) => {
+        console.log("Item:", item);
         getDetailBookingItem(item.id);
         if (item.status === 0) {
-            getListService();
+            getListService(item.bookingDate, item.bookingHours);
             setIsCheckinBookingModalVisible(true);
         } else if (item.status === 1) {
+            getListService(item.bookingDate, item.bookingHours);
             getListPaymentType();
             setIsBookingPaymentModalVisible(true);
         }
@@ -116,7 +118,7 @@ const BookingListComponent = ({ navigation }: BookingListComponentProps) => {
     const renderBookingItem = ({ item }: { item: BookingManagerItem }) => {
         const statusColor = getBookingStatusColor(item.status, colors, 'border');
         const formattedDate = formatDate(item.bookingDate);
-
+        const nameService = item.services.map((service) => service.serviceName).join(', ');
         return (
             <View style={styles.bookingCard}>
                 <View style={styles.header}>
@@ -139,7 +141,7 @@ const BookingListComponent = ({ navigation }: BookingListComponentProps) => {
 
                 <View style={styles.infoRow}>
                     <Info size={16} color={colors.text} />
-                    <TextFieldLabel style={styles.infoText}>{item.description}</TextFieldLabel>
+                    <TextFieldLabel style={styles.infoText}>{nameService}</TextFieldLabel>
                 </View>
 
                 {item.bookingHours && (

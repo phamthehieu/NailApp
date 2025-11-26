@@ -163,7 +163,7 @@ const AddNewBookingScreen = ({ navigation }: RootScreenProps<Paths.AddNewBooking
     }
 
     const validateCustomerData = () => {
-        if (!customerData.name || !customerData.phone || !customerData.email || !customerData.dob) {
+        if (!customerData.name || !customerData.phone || !customerData.dob) {
             alertService.showAlert({
                 title: t('addNewBooking.validationError'),
                 message: t('addNewBooking.customerInfoError'),

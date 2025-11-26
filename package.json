@@ -1,6 +1,6 @@
 {
   "name": "NailApp",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "private": true,
   "scripts": {
     "android": "react-native run-android",
@@ -23,6 +23,9 @@
     "bundle:android:prod": "cross-env NODE_ENV=production react-native bundle --platform android --dev false --entry-file index.js --bundle-output android/app/src/main/assets/index.android.bundle --assets-dest android/app/src/main/res",
     "bundle:ios:dev": "cross-env NODE_ENV=development react-native bundle --platform ios --dev true --entry-file index.js --bundle-output ios/main.jsbundle --assets-dest ios/",
     "bundle:ios:prod": "cross-env NODE_ENV=production react-native bundle --platform ios --dev false --entry-file index.js --bundle-output ios/main.jsbundle --assets-dest ios/",
+    "clean": "react-native clean",
+    "clean:android": "cd android && gradlew clean && cd ..",
+    "clean:all": "npm run clean:android && npm run start:reset",
     "update-version": "node scripts/update-version.js"
   },
   "dependencies": {

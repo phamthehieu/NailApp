@@ -47,29 +47,7 @@ const LoginScreen = ({ navigation }: RootScreenProps<Paths.Login>) => {
         passwordRequired: t('login.passwordRequired'),
         passwordMin: t('login.passwordMin'),
     });
-    const panY = useRef(new Animated.Value(0)).current;
-    const dragOffsetY = useRef(0);
-    const screenHeight = Dimensions.get('window').height;
-    const minY = 20;
-    const maxY = screenHeight - 100;
-    const panResponder = useRef<PanResponderInstance>(
-        PanResponder.create({
-            onStartShouldSetPanResponder: () => true,
-            onMoveShouldSetPanResponder: (_, gesture) => Math.abs(gesture.dy) > 2,
-            onPanResponderGrant: () => {
-                panY.stopAnimation((value) => {
-                    dragOffsetY.current = value as number;
-                });
-            },
-            onPanResponderMove: (_, gesture) => {
-                const next = Math.max(minY, Math.min(maxY, dragOffsetY.current + gesture.dy));
-                panY.setValue(next);
-            },
-            onPanResponderRelease: () => {
-                panY.flattenOffset?.();
-            },
-        })
-    ).current;
+
     const passwordInputRef = useRef<TextInput>(null);
     const scrollViewRef = useRef<ScrollView>(null);
 
@@ -137,7 +115,7 @@ const LoginScreen = ({ navigation }: RootScreenProps<Paths.Login>) => {
 
     return (
         <SafeAreaView style={styles.container} edges={['top', 'left', 'right', 'bottom']}>
-            <StatusBarComponent />
+             <StatusBarComponent backgroundColor={colors.yellow} />
             <KeyboardAvoidingView
                 style={styles.keyboardAvoidingView}
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -298,25 +276,6 @@ const LoginScreen = ({ navigation }: RootScreenProps<Paths.Login>) => {
 
                 </ScrollView>
             </KeyboardAvoidingView>
-
-            <Animated.View
-                style={[
-                    styles.edgeHandle,
-                    { transform: [{ translateY: panY }] },
-                ]}
-                {...panResponder.panHandlers}
-            >
-                <TouchableOpacity
-                    style={styles.edgeHandlePress}
-                    onPress={() => {
-                        navigation.navigate(Paths.Checkin);
-                    }}
-                    activeOpacity={0.8}
-                    hitSlop={{ top: 10, bottom: 10, left: 0, right: 10 }}
-                >
-                    <MapPinCheck size={20} color={colors.black} />
-                </TouchableOpacity>
-            </Animated.View>
 
             <Loader loading={loading} title={t('loading.processing')} />
 

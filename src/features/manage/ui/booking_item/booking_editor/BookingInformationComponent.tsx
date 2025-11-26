@@ -75,7 +75,7 @@ const BookingInformationComponent = ({ value, onChange }: BookingInformationComp
     const isInitialMountRef = useRef(true);
     const lastEmittedDataRef = useRef<BookingInformationData | null>(null);
     const isUpdatingFromParentRef = useRef(false);
-    const [timeSlots, setTimeSlots] = useState<{label: string, value: string}[]>([]);
+    const [timeSlots, setTimeSlots] = useState<{label: string, value: string, isAvailable?: boolean}[]>([]);
 
     useEffect(() => {
         onChangeRef.current = onChange;
@@ -241,27 +241,49 @@ const BookingInformationComponent = ({ value, onChange }: BookingInformationComp
         return maxDate;
     }, [listBookingSetting]);
 
-    const renderTimeSlotItem = useCallback((item: { label: string }) => (
-        <View style={styles.dropdownItemContainer}>
-            <TextFieldLabel allowFontScaling={false} style={styles.dropdownSelectedText}>
-                {item.label}
-            </TextFieldLabel>
-        </View>
-    ), [styles]);
+    const availableTimeSlots = useMemo(() => {
+        return timeSlots.filter(slot => slot.isAvailable === true);
+    }, [timeSlots]);
+
+    const renderTimeSlotItem = useCallback((item: { label: string; value: string; isAvailable?: boolean }) => {
+        return (
+            <View style={styles.dropdownItemContainer}>
+                <TextFieldLabel
+                    allowFontScaling={false} 
+                    style={styles.dropdownSelectedText}
+                >
+                    {item.label}
+                </TextFieldLabel>
+            </View>
+        );
+    }, [styles]);
 
     const handleGetListTimeSlot = useCallback(async (date: Date) => {
         const response = await getListTimeSlot(date);
         if (response?.length) {
             setTimeSlots(response
                 .map((item: any) => {
-                    const time = typeof item === "string" ? item : item?.time;
+                    let time: string | null = null;
+                    let isAvailable: boolean | undefined = undefined;
+
+                    if (typeof item === "string") {
+                        time = item;
+                    } else if (item?.timeRange) {
+                        time = item.timeRange;
+                        isAvailable = item.isAvailable;
+                    } else if (item?.time) {
+                        time = item.time;
+                        isAvailable = item.isAvailable;
+                    }
+
                     if (!time) return null;
                     return {
                         label: time,
                         value: time,
+                        isAvailable: isAvailable,
                     };
                 })
-                .filter(Boolean) as { label: string; value: string }[]);
+                .filter(Boolean) as { label: string; value: string; isAvailable?: boolean }[]);
         } else {
             setTimeSlots([]);
         }
@@ -326,7 +348,7 @@ const BookingInformationComponent = ({ value, onChange }: BookingInformationComp
                                 <TextFieldLabel text={t('bookingInformation.requiredMark')} style={styles.requiredMark} />
                             </View>
                             <Dropdown
-                                data={timeSlots}
+                                data={availableTimeSlots}
                                 labelField="label"
                                 valueField="value"
                                 value={bookingHoursString ?? undefined}
@@ -338,7 +360,7 @@ const BookingInformationComponent = ({ value, onChange }: BookingInformationComp
                                 itemContainerStyle={styles.dropdownItem}
                                 renderRightIcon={() => <ChevronDown size={16} color={colors.placeholderTextColor} />}
                                 showsVerticalScrollIndicator={false}
-                                disable={!selectedDate || timeSlots.length === 0}
+                                disable={!selectedDate || availableTimeSlots.length === 0}
                                 activeColor={colors.backgroundDisabled}
                                 onChange={({ value }) => handleTimeSlotChange(value)}
                                 renderItem={renderTimeSlotItem}
@@ -479,6 +501,13 @@ const $styles = (colors: Colors, isWide: boolean) => StyleSheet.create({
     dropdownPlaceholder: {
         color: colors.placeholderTextColor,
         fontSize: 14,
+    },
+    dropdownItemDisabled: {
+        opacity: 0.5,
+        backgroundColor: colors.backgroundDisabled,
+    },
+    dropdownItemDisabledText: {
+        color: colors.placeholderTextColor,
     },
 });
 

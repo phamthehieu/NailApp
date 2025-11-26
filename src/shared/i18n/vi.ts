@@ -18,6 +18,7 @@ const vi = {
     errorMessage: 'Đăng nhập thất bại. Vui lòng thử lại.',
   },
   checkin: {
+    checkinButton: "Xác nhận",
     checkin: 'Xác thực đặt lịch',
     toCheckIn: 'Đặt lịch',
     skip: 'Bỏ qua →',
@@ -36,6 +37,10 @@ const vi = {
     point: 'Điểm',
     pointsFor10Percent: '10 điểm cho 10% giảm giá',
     pointsFor15Dollar: '15 điểm cho $15 giảm giá',
+    errorTitle: 'Lỗi xác thực đặt lịch',
+    errorMessage: 'Xác thực đặt lịch thất bại. Vui lòng thử lại.',
+    successTitle: 'Thành công',
+    successMessage: 'Checkin thành công',
   },
   loading: {
     processing: 'Đang xử lý...',
@@ -146,6 +151,8 @@ const vi = {
     noMoreBookingsMessage: 'Đã đến cuối danh sách đặt lịch.',
     checkingBooking: 'Xác nhận đặt lịch',
     paymentBooking: 'Thanh toán',
+    successTitle: 'Thành công',
+    successMessage: 'Hủy đặt lịch thành công',
   },
   detailBookingItem: {
     title: 'Thông tin đặt lịch',
