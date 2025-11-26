@@ -300,6 +300,7 @@ export interface ServiceEditBookingRequest {
     serviceId: number | null
     staffId: number | null
     serviceTime: number | null
+    servicePrice: number | null
 }
 
 export interface PaymentBookingRequest {
@@ -442,4 +443,10 @@ export interface DiscountTypeObj {
   export interface StatusObj {
     id: number
     name: string
+  }
+
+  export interface ListStaffManager {
+    id: number,
+    name: string,
+    code: string,
   }

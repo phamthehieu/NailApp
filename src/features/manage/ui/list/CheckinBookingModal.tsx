@@ -69,7 +69,7 @@ const CheckinBookingModal = ({
             });
             return;
         }
-        console.log("dataBookingEdit", dataBookingEdit);
+
         const response = await putCheckinBooking(dataBookingEdit);
         if (response) {
             alertService.showAlert({
@@ -100,6 +100,7 @@ const CheckinBookingModal = ({
                     serviceId: service.id ?? 0,
                     staffId: service.staff?.id ?? null,
                     serviceTime: service.serviceTime,
+                    servicePrice: service.price,
                 })),
             });
         }
@@ -133,7 +134,7 @@ const CheckinBookingModal = ({
 
                         <ServiceListComponent
                             type="checkin"
-                            services={dataBookingEdit?.services?.map((service) => ({ serviceId: service?.serviceId ?? 0, staffId: service?.staffId ?? null, serviceTime: service?.serviceTime ?? 0 })) || []}
+                            services={dataBookingEdit?.services?.map((service) => ({ serviceId: service?.serviceId ?? 0, staffId: service?.staffId ?? null, serviceTime: service?.serviceTime ?? 0, servicePrice: service?.serviceTime ?? 0 })) || []}
                             onChange={(services) =>
                                 setDataBookingEdit((prev) => (prev ? { ...prev, services } : prev))
                             }

@@ -29,7 +29,7 @@
         const scrollRef = useRef<ScrollView>(null);
 
         const {getListService} = useEditBookingForm();
-        const {putEditBooking, loading} = useBookingForm();
+        const {putEditBooking, loading, getListBookingManager} = useBookingForm();
 
         const [dataBookingEdit, setDataBookingEdit] = useState<EditBookingRequest>();
 
@@ -74,6 +74,7 @@
                     message: t('editBooking.successMessage'),
                     typeAlert: 'Confirm',
                     onConfirm: () => {
+                        getListBookingManager();
                         navigation.goBack();
                     },
                 });
@@ -82,7 +83,10 @@
                     title: t('editBooking.errorTitle'),
                     message: t('editBooking.errorMessage'),
                     typeAlert: 'Error',
-                    onConfirm: () => {},
+                    onConfirm: () => {
+                        getListBookingManager();
+                        navigation.goBack();
+                    },
                 });
             }
         }, [dataBookingEdit, putEditBooking]);
@@ -96,6 +100,7 @@
                         serviceId: service.id ?? 0,
                         staffId: service.staff?.id ?? null,
                         serviceTime: service.serviceTime,
+                        servicePrice: service.price,
                     })),
                 });
             }
@@ -156,7 +161,7 @@
                             </View>
 
                             <ServiceListComponent
-                                services={dataBookingEdit?.services?.map((service) => ({ serviceId: service?.serviceId ?? 0, staffId: service?.staffId ?? null, serviceTime: service?.serviceTime ?? 0 })) || []}
+                                services={dataBookingEdit?.services?.map((service) => ({ serviceId: service?.serviceId ?? 0, staffId: service?.staffId ?? null, serviceTime: service?.serviceTime ?? 0, servicePrice: service?.servicePrice ?? 0 })) || []}
                                 onChange={(services) =>
                                     setDataBookingEdit((prev) => (prev ? { ...prev, services } : prev))
                                 }

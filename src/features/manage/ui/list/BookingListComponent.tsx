@@ -96,12 +96,11 @@ const BookingListComponent = ({ navigation }: BookingListComponentProps) => {
     };
 
     const handleMainAction = (item: any) => {
-        console.log("Item:", item);
         getDetailBookingItem(item.id);
         if (item.status === 0) {
             getListService(item.bookingDate, item.bookingHours);
             setIsCheckinBookingModalVisible(true);
-        } else if (item.status === 1) {
+        } else if (item.status === 1 || item.status === 2) {
             getListService(item.bookingDate, item.bookingHours);
             getListPaymentType();
             setIsBookingPaymentModalVisible(true);
@@ -111,7 +110,7 @@ const BookingListComponent = ({ navigation }: BookingListComponentProps) => {
     const nameAction = (status: number) => {
         if (status === 0) {
             return t('bookingList.checkingBooking');
-        } else if (status === 1) {
+        } else if (status === 1 || status === 2) {
             return t('bookingList.paymentBooking');
         }
     };
@@ -176,7 +175,7 @@ const BookingListComponent = ({ navigation }: BookingListComponentProps) => {
                             </TouchableOpacity>
                         </React.Fragment>
                     )}
-                    {(item.status === 0 || item.status === 1) && (
+                    {(item.status === 0 || item.status === 1 || item.status === 2) && (
                         <TouchableOpacity
                             style={[styles.mainActionButton, { backgroundColor: item.status === 0 ? colors.blue : colors.yellow }]}
                             onPress={() => handleMainAction(item)}

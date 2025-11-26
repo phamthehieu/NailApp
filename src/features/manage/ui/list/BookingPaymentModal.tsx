@@ -379,6 +379,8 @@ const BookingPaymentModal = ({
         }
     };
 
+    console.log('detailBookingItem', detailBookingItem);
+
     return (
         <Modal
             visible={visible}

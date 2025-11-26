@@ -370,10 +370,12 @@ const BookingInformationComponent = ({ value, onChange }: BookingInformationComp
                         </View>
                     </View>
 
-                    <ServiceListComponent
-                        services={serviceItems || []}
-                        onChange={setServiceItems}
-                    />
+                    {bookingHoursString && (
+                        <ServiceListComponent
+                            services={serviceItems || []}
+                            onChange={setServiceItems}
+                        />
+                    )}
 
                     <View
                         style={styles.noteField}

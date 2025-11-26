@@ -15,7 +15,8 @@ import type {
     EditBookingRequest,
     ListPromotionResponse,
     CustomerCreateBookingRequest,
-    PutPaymentBookingRequest
+    PutPaymentBookingRequest,
+    ListStaffManager,
 } from "./types";
 
 export type {
@@ -245,4 +246,8 @@ export const putPaymentBookingApi = async (data: PutPaymentBookingRequest) => {
 
 export const getListTimeSlotApi = async (date: Date) => {
     return http.get<any>(`/api/Booking/ListTimeRangeBooking?FromDate=${formatDateParam(date)}`);
+}
+
+export const getListStaffManagerApi = async () => {
+    return http.get<ListStaffManager[]>('/api/ServiceManagement/ListStaff');
 }

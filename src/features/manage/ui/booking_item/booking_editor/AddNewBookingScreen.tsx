@@ -24,7 +24,7 @@ const AddNewBookingScreen = ({ navigation }: RootScreenProps<Paths.AddNewBooking
     const { theme: { colors } } = useAppTheme();
     const styles = $styles(colors);
     const { t } = useTranslation();
-    const { getListBookingSetting, loading, getListService, getListBookingFrequency, postCreateUserBooking, postCreateBooking } = useEditBookingForm();
+    const { getListBookingSetting, loading, getListService, getListBookingFrequency, postCreateUserBooking, postCreateBooking, getListStaffManager } = useEditBookingForm();
     const listBookingSetting = useAppSelector((state: RootState) => state.editBooking.listBookingSetting);
     const { getListBookingManager } = useBookingForm();
 
@@ -55,6 +55,7 @@ const AddNewBookingScreen = ({ navigation }: RootScreenProps<Paths.AddNewBooking
     };
 
     useEffect(() => {
+        getListStaffManager();
         getListBookingSetting();
         getListService();
         getListBookingFrequency();
@@ -163,11 +164,30 @@ const AddNewBookingScreen = ({ navigation }: RootScreenProps<Paths.AddNewBooking
     }
 
     const validateCustomerData = () => {
-        if (!customerData.name || !customerData.phone || !customerData.dob) {
+        if (!customerData.name) {
             alertService.showAlert({
                 title: t('addNewBooking.validationError'),
-                message: t('addNewBooking.customerInfoError'),
+                message: t('addNewBooking.nameError'),
                 typeAlert: 'Error',
+                onConfirm: () => { },
+            });
+            return false;
+        }
+        if (!customerData.phone) {
+            alertService.showAlert({
+                title: t('addNewBooking.validationError'),
+                message: t('addNewBooking.phoneError'),
+                typeAlert: 'Error',
+                onConfirm: () => { },
+            });
+            return false;
+        }
+        if (!customerData.dob) {
+            alertService.showAlert({
+                title: t('addNewBooking.validationError'),
+                message: t('addNewBooking.dobError'),
+                typeAlert: 'Error',
+                onConfirm: () => { },
             });
             return false;
         }
@@ -219,11 +239,16 @@ const AddNewBookingScreen = ({ navigation }: RootScreenProps<Paths.AddNewBooking
                 }
                 const response = await postCreateUserBooking(dataUserBooking);
                 if (response) {
-                    const formatDateString = (date?: Date | null) => (date ? date.toISOString() : null);
+                    const formatDateString = (date?: Date | null) => {
+                        if (!date) return null;
+                        const tzOffset = date.getTimezoneOffset() * 60000;
+                        return new Date(date.getTime() - tzOffset).toISOString();
+                    };
                     const servicesPayload = (bookingData?.services ?? []).map((service) => ({
                         serviceId: service.serviceId,
                         staffId: service.staffId ?? null,
                         serviceTime: service.serviceTime,
+                        servicePrice: service.servicePrice,
                         promotionId: service.promotionId ?? null,
                     }));
 
@@ -277,11 +302,16 @@ const AddNewBookingScreen = ({ navigation }: RootScreenProps<Paths.AddNewBooking
                     return;
                 }
             } else {
-                const formatDateString = (date?: Date | null) => (date ? date.toISOString() : null);
+                const formatDateString = (date?: Date | null) => {
+                    if (!date) return null;
+                    const tzOffset = date.getTimezoneOffset() * 60000;
+                    return new Date(date.getTime() - tzOffset).toISOString();
+                };
                 const servicesPayload = (bookingData?.services ?? []).map((service) => ({
                     serviceId: service.serviceId,
                     staffId: service.staffId ?? null,
                     serviceTime: service.serviceTime,
+                    servicePrice: service.servicePrice,
                     promotionId: service.promotionId ?? null,
                 }));
 
@@ -337,6 +367,7 @@ const AddNewBookingScreen = ({ navigation }: RootScreenProps<Paths.AddNewBooking
         }
     }
     return (
+
         <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
 
             <StatusBarComponent backgroundColor={colors.yellow} />

@@ -353,7 +353,6 @@ const $styles = (colors: Colors) => {
         },
         input: {
             height: 44,
-            borderWidth: 1,
             borderRadius: 8,
             paddingHorizontal: 12,
         },

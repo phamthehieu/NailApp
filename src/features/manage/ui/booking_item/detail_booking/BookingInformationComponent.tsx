@@ -16,10 +16,6 @@ const BookingInformationComponent = ({ bookingId }: BookingInformationComponentP
     const styles = $styles(colors);
     const { t } = useTranslation();
     const { detailBookingItem } = useAppSelector((state) => state.booking);
-    const booking = useMemo(() => {
-        if (!bookingId) return null;
-        return scheduleItemsList.find(item => item.id === bookingId);
-    }, [bookingId]);
 
     const formatDate = (dateString: string) => {
         const date = new Date(dateString);
@@ -43,7 +39,7 @@ const BookingInformationComponent = ({ bookingId }: BookingInformationComponentP
             </View>
         );
     }
-
+    
     return (
         <ScrollView
             style={styles.container}

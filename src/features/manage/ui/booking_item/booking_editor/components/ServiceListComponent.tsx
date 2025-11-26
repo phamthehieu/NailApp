@@ -12,7 +12,9 @@ export type ServiceItem = {
     serviceId: number;
     staffId: number | null;
     serviceTime: number;
+    servicePrice: number;
     promotionId?: number | null;
+
 };
 
 type ServiceListComponentProps = {
@@ -32,35 +34,46 @@ const ServiceListComponent = ({
     const styles = $styles(colors, isWide);
     const { t } = useTranslation();
     const listService = useAppSelector((state: RootState) => state.editBooking.listService);
-    const listStaff = useAppSelector((state: RootState) => state.staff.listStaff);
+    const listStaff = useAppSelector((state: RootState) => state.editBooking.listStaffManager);
     const serviceOptions = useMemo(() => {
         return listService?.items?.map((item) => ({
             label: item.name,
             value: item.id.toString(),
             serviceTime: item.serviceTime,
+            employeeIds: item.employeeIds,
+            price: item.price,
         })) || [];
     }, [listService]);
 
     const baseStaffOptions = useMemo(() => {
         return listStaff?.map((item) => ({
-            label: item.displayName,
+            label: item.name,
             value: item.id.toString(),
         })) || [];
     }, [listStaff]);
 
-    const getStaffOptionsForItem = useCallback((staffId: number | null) => {
+    const getStaffOptionsForItem = useCallback((serviceId: number, staffId: number | null) => {
+        const selectedService = serviceOptions?.find((option) => Number(option.value) === serviceId);
+        const allowedEmployeeIds = selectedService?.employeeIds;
+
+        const filteredStaffOptions = allowedEmployeeIds && allowedEmployeeIds.length > 0
+            ? baseStaffOptions.filter((staff) => allowedEmployeeIds.includes(Number(staff.value)))
+            : baseStaffOptions;
+
         const isAnyEmployee = staffId === null || staffId === 0;
+
         if (isAnyEmployee) {
             return [
                 { label: t('bookingInformation.anyEmployee'), value: 'null' },
-                ...baseStaffOptions,
+                ...filteredStaffOptions,
             ];
         }
-        return baseStaffOptions;
-    }, [baseStaffOptions, t]);
+
+        return filteredStaffOptions;
+    }, [baseStaffOptions, serviceOptions, t]);
 
     const addService = useCallback(() => {
-        onChange([...services, { serviceId: 0, staffId: null, serviceTime: 0, promotionId: null }]);
+        onChange([...services, { serviceId: 0, staffId: null, serviceTime: 0, servicePrice: 0, promotionId: null }]);
     }, [services, onChange]);
 
     const updateService = useCallback((index: number, patch: Partial<ServiceItem>) => {
@@ -81,19 +94,24 @@ const ServiceListComponent = ({
         );
     };
 
+    console.log('services', serviceOptions);
+    console.log('listStaff', listStaff);
+
     return (
         <View>
             <View style={styles.row}>
-                <Pressable
-                    style={({ pressed }) => [
-                        styles.bookButton,
-                        pressed && styles.bookButtonPressed,
-                    ]}
-                    onPress={addService}
-                >
-                    <Plus size={18} color={colors.white} />
-                    <TextFieldLabel text={t('bookingInformation.addService')} style={styles.bookButtonText} />
-                </Pressable>
+                {type !== 'checkin' && (
+                    <Pressable
+                        style={({ pressed }) => [
+                            styles.bookButton,
+                            pressed && styles.bookButtonPressed,
+                        ]}
+                        onPress={addService}
+                    >
+                        <Plus size={18} color={colors.white} />
+                        <TextFieldLabel text={t('bookingInformation.addService')} style={styles.bookButtonText} />
+                    </Pressable>
+                )}
             </View>
 
             {services.map((item, index) => (
@@ -104,6 +122,7 @@ const ServiceListComponent = ({
                             <TextFieldLabel text={t('bookingInformation.requiredMark')} style={styles.requiredMark} />
                         </View>
                         <Dropdown
+                            disable={type === 'checkin'}
                             data={serviceOptions}
                             labelField="label"
                             valueField="value"
@@ -113,6 +132,8 @@ const ServiceListComponent = ({
                                 updateService(index, {
                                     serviceId: Number(value),
                                     serviceTime: selected?.serviceTime ?? 0,
+                                    staffId: null,
+                                    servicePrice: selected?.price ?? 0,
                                 });
                             }}
                             style={styles.dropdown}
@@ -143,13 +164,25 @@ const ServiceListComponent = ({
                         />
                     </View>
 
+                    {/* <View style={styles.field}>
+                        <View style={styles.labelRow}>
+                            <TextFieldLabel text={t('bookingInformation.price')} />
+                        </View>
+                        <TextField
+                            readOnly
+                            placeholder={t('bookingInformation.pricePlaceholder')}
+                            keyboardType="number-pad"
+                            value={item.servicePrice.toString()}
+                        />
+                    </View> */}
+
                     <View style={styles.field}>
                         <View style={styles.labelRow}>
                             <TextFieldLabel text={t('bookingInformation.staff')} />
                             <TextFieldLabel text={t('bookingInformation.requiredMark')} style={styles.requiredMark} />
                         </View>
                         <Dropdown
-                            data={getStaffOptionsForItem(item.staffId)}
+                            data={getStaffOptionsForItem(item.serviceId, item.staffId)}
                             labelField="label"
                             valueField="value"
                             value={item.staffId === null ? 'null' : item.staffId.toString()}
@@ -172,31 +205,35 @@ const ServiceListComponent = ({
                     </View>
 
                     <View style={styles.actions}>
-                        <View style={styles.anyWrap}>
+                        {type !== 'checkin' && (
+                            <>
+                                <View style={styles.anyWrap}>
 
-                            <Switch
-                                value={item.staffId === null}
-                                onValueChange={(val) => {
-                                    if (val) {
-                                        updateService(index, { staffId: null });
-                                    } else {
-                                        const currentStaffId = item.staffId !== null && item.staffId !== 0
-                                            ? item.staffId
-                                            : (baseStaffOptions.length > 0 ? Number(baseStaffOptions[0].value) : null);
-                                        updateService(index, { staffId: currentStaffId });
-                                    }
-                                }}
-                                thumbColor={item.staffId === null ? colors.yellow : colors.primary}
-                                trackColor={{ true: colors.yellow + "55", false: colors.border }}
-                            />
+                                    <Switch
+                                        value={item.staffId === null}
+                                        onValueChange={(val) => {
+                                            if (val) {
+                                                updateService(index, { staffId: null });
+                                            } else {
+                                                const currentStaffId = item.staffId !== null && item.staffId !== 0
+                                                    ? item.staffId
+                                                    : (baseStaffOptions.length > 0 ? Number(baseStaffOptions[0].value) : null);
+                                                updateService(index, { staffId: currentStaffId });
+                                            }
+                                        }}
+                                        thumbColor={item.staffId === null ? colors.yellow : colors.primary}
+                                        trackColor={{ true: colors.yellow + "55", false: colors.border }}
+                                    />
 
-                            <TextFieldLabel text={t('bookingInformation.anyEmployee')} />
-                        </View>
+                                    <TextFieldLabel text={t('bookingInformation.anyEmployee')} />
+                                </View>
 
-                        <Pressable onPress={() => removeService(index)} style={styles.deleteBtn}>
-                            <Trash2 size={16} color={colors.error} />
-                            <TextFieldLabel text={t('bookingInformation.delete')} style={styles.deleteText} />
-                        </Pressable>
+                                <Pressable onPress={() => removeService(index)} style={styles.deleteBtn}>
+                                    <Trash2 size={16} color={colors.error} />
+                                    <TextFieldLabel text={t('bookingInformation.delete')} style={styles.deleteText} />
+                                </Pressable>
+                            </>
+                        )}
                     </View>
                 </View>
             ))}

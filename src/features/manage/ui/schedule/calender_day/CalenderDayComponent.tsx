@@ -205,12 +205,18 @@ const CalenderDayComponent = ({ selectedDate: _selectedDate, onPressScheduleItem
 
                 const getColorByStatus = (status: number) => {
                     switch (status) {
-                        case 1: // CheckIn
-                            return { color: '#E1F5FE', borderColor: '#4FC3F7' };
-                        case 2: // Có thể là status khác
-                            return { color: '#E8F5E9', borderColor: '#66BB6A' };
+                        case 0:
+                            return { color: '#E1F5FE', borderColor: '#E1F5FE' };
+                        case 1:
+                            return { color: '#66BB6A', borderColor: '#66BB6A' };
+                        case 2:
+                            return { color: '#AB47BC', borderColor: '#AB47BC' };
+                        case 3:
+                            return { color: '#EF4444', borderColor: '#EF4444' };
+                            case 4:
+                            return { color: '#FFB74D', borderColor: '#FFB74D' };
                         default:
-                            return { color: '#FFF3E0', borderColor: '#FFB74D' };
+                            return { color: '#4FC3F7', borderColor: '#4FC3F7' };
                     }
                 };
 

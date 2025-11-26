@@ -1,5 +1,5 @@
-import React, { useMemo, useRef } from 'react';
-import { View, StyleSheet, ScrollView, useWindowDimensions, Pressable } from 'react-native';
+import React, { useMemo, useRef, useState } from 'react';
+import { View, StyleSheet, ScrollView, useWindowDimensions, Pressable, Modal } from 'react-native';
 import { Colors, useAppTheme } from '@/shared/theme';
 import { useIsTablet } from '@/shared/lib/useIsTablet';
 import { TextFieldLabel } from '@/shared/ui/Text';
@@ -26,6 +26,7 @@ type CalendarDay = {
         color: string;
         borderColor: string;
         userName: string;
+        customerId: string;
     }>;
 };
 
@@ -97,6 +98,9 @@ const CalenderMonthComponent = ({ selectedDate, onPressScheduleItem }: Props) =>
         );
     };
 
+    const [isEventPickerVisible, setEventPickerVisible] = useState(false);
+    const [pendingEvents, setPendingEvents] = useState<CalendarDay['events']>([]);
+
     const calendarDays = useMemo(() => {
         const year = selectedDate.getFullYear();
         const month = selectedDate.getMonth();
@@ -139,6 +143,7 @@ const CalenderMonthComponent = ({ selectedDate, onPressScheduleItem }: Props) =>
                         color,
                         borderColor: color,
                         userName: formatUserName(item.customer?.name || ''),
+                        customerId: String(item.customer?.id || ''),
                     };
                 });
 
@@ -164,7 +169,26 @@ const CalenderMonthComponent = ({ selectedDate, onPressScheduleItem }: Props) =>
         return result;
     }, [calendarDays]);
 
-    const renderEvent = (event: CalendarDay['events'][0], index: number) => {
+    const closeEventPicker = () => {
+        setEventPickerVisible(false);
+        setPendingEvents([]);
+    };
+
+    const handleEventPress = (events: CalendarDay['events'], event: CalendarDay['events'][0]) => {
+        if (events.length <= 1) {
+            onPressScheduleItem(event);
+            return;
+        }
+        setPendingEvents(events);
+        setEventPickerVisible(true);
+    };
+
+    const handleSelectEventFromModal = (event: CalendarDay['events'][0]) => {
+        closeEventPicker();
+        onPressScheduleItem(event);
+    };
+
+    const renderEvent = (event: CalendarDay['events'][0], index: number, allEvents: CalendarDay['events']) => {
         const formattedStart = formatTime(event.startTime);
         const formattedEnd = formatTime(event.endTime);
         const timeText = [formattedStart, formattedEnd].filter(Boolean).join(' - ');
@@ -173,7 +197,7 @@ const CalenderMonthComponent = ({ selectedDate, onPressScheduleItem }: Props) =>
         return (
             <Pressable
                 onPress={() => {
-                    onPressScheduleItem(event);
+                    handleEventPress(allEvents, event);
                 }}
                 key={`${event.id}-${index}`}
                 style={[
@@ -239,7 +263,7 @@ const CalenderMonthComponent = ({ selectedDate, onPressScheduleItem }: Props) =>
 
                             <View style={styles.eventsContainer}>
                                 {day.events.slice(0, 3).map((event, eventIndex) =>
-                                    renderEvent(event, eventIndex)
+                                    renderEvent(event, eventIndex, day.events)
                                 )}
                                 {day.events.length > 3 && (
                                     <TextFieldLabel style={styles.moreEventsText}>
@@ -252,6 +276,44 @@ const CalenderMonthComponent = ({ selectedDate, onPressScheduleItem }: Props) =>
                 </View>
             ))}
         </ScrollView>
+    );
+
+    const renderEventPickerModal = () => (
+        <Modal
+            visible={isEventPickerVisible}
+            transparent
+            animationType="fade"
+            onRequestClose={closeEventPicker}
+        >
+            <Pressable style={styles.modalBackdrop} onPress={closeEventPicker}>
+                <Pressable style={styles.modalContent}>
+                    <TextFieldLabel style={styles.modalTitle}>
+                        {t('common.events')}
+                    </TextFieldLabel>
+                    <ScrollView style={styles.modalList}>
+                        {pendingEvents.map((event) => {
+                            const formattedStart = formatTime(event.startTime);
+                            const formattedEnd = formatTime(event.endTime);
+                            const timeText = [formattedStart, formattedEnd].filter(Boolean).join(' - ');
+                            const displayText = timeText ? `${event.userName} ${timeText}`.trim() : event.userName;
+
+                            return (
+                                <Pressable
+                                    key={event.id}
+                                    style={styles.modalEventRow}
+                                    onPress={() => handleSelectEventFromModal(event)}
+                                >
+                                    <View style={[styles.modalColorDot, { backgroundColor: event.color }]} />
+                                    <TextFieldLabel style={styles.modalEventText} numberOfLines={2}>
+                                        {displayText}
+                                    </TextFieldLabel>
+                                </Pressable>
+                            );
+                        })}
+                    </ScrollView>
+                </Pressable>
+            </Pressable>
+        </Modal>
     );
 
     if (needsHorizontalScroll) {
@@ -279,6 +341,7 @@ const CalenderMonthComponent = ({ selectedDate, onPressScheduleItem }: Props) =>
                 >
                     {renderBody()}
                 </ScrollView>
+                {renderEventPickerModal()}
             </View>
         );
     }
@@ -289,6 +352,7 @@ const CalenderMonthComponent = ({ selectedDate, onPressScheduleItem }: Props) =>
                 {renderHeader()}
             </View>
             {renderBody()}
+            {renderEventPickerModal()}
         </View>
     );
 };
@@ -404,6 +468,45 @@ const $styles = (colors: Colors, isTablet: boolean) => StyleSheet.create({
         opacity: 0.7,
         fontStyle: 'italic',
         marginTop: 2,
+    },
+    modalBackdrop: {
+        flex: 1,
+        backgroundColor: '#00000088',
+        justifyContent: 'center',
+        padding: 16,
+    },
+    modalContent: {
+        backgroundColor: colors.background,
+        borderRadius: 12,
+        padding: 16,
+        maxHeight: '70%',
+    },
+    modalTitle: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: colors.text,
+        marginBottom: 12,
+    },
+    modalList: {
+        maxHeight: '100%',
+    },
+    modalEventRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: 8,
+        borderBottomWidth: 1,
+        borderBottomColor: colors.borderTable,
+    },
+    modalColorDot: {
+        width: 12,
+        height: 12,
+        borderRadius: 6,
+        marginRight: 8,
+    },
+    modalEventText: {
+        flex: 1,
+        color: colors.text,
+        fontSize: 14,
     },
 });
 

@@ -15,6 +15,7 @@ import { Button } from '@/shared/ui/Button';
 import { alertService } from '@/services/alertService';
 import { useAppSelector } from '@/app/store';
 import { getBookingStatusColor } from '@/features/manage/utils/bookingStatusColor';
+import { useBookingForm } from '@/features/manage/hooks/useBookingForm';
 
 type TabType = { label: string; value: number }
 
@@ -24,6 +25,7 @@ const DetailBookingItem = ({ navigation, route }: RootScreenProps<Paths.DetailBo
     const styles = $styles(colors);
     const { t } = useTranslation();
     const { detailBookingItem } = useAppSelector((state) => state.booking);
+    const { getDetailBookingItem } = useBookingForm();
     const tab1Opacity = useRef(new Animated.Value(1)).current;
     const tab1TranslateX = useRef(new Animated.Value(0)).current;
     const tab2Opacity = useRef(new Animated.Value(0)).current;
@@ -34,7 +36,7 @@ const DetailBookingItem = ({ navigation, route }: RootScreenProps<Paths.DetailBo
     const statusColor = getBookingStatusColor(
         detailBookingItem?.statusObj?.name ?? detailBookingItem?.status,
         colors,
-        'yellow',
+        'white',
     );
 
     const handleCancelBooking = () => {
@@ -51,10 +53,6 @@ const DetailBookingItem = ({ navigation, route }: RootScreenProps<Paths.DetailBo
                 console.log('Cancel booking:', bookingId);
             },
         });
-    };
-
-    const handleEditBooking = () => {
-        console.log('Edit booking:', bookingId);
     };
 
     useEffect(() => {
@@ -108,6 +106,13 @@ const DetailBookingItem = ({ navigation, route }: RootScreenProps<Paths.DetailBo
         }
     }, [activeTab.value]);
 
+    const handleEdit = () => {
+        getDetailBookingItem(bookingId as string);
+        navigation.navigate(Paths.EditBooking);
+    };
+
+    console.log('detailBookingItem', detailBookingItem);
+
     return (
         <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
 
@@ -158,31 +163,28 @@ const DetailBookingItem = ({ navigation, route }: RootScreenProps<Paths.DetailBo
                     </View>
                 </Animated.View>
             </View>
-
-            <View style={styles.buttonContainer}>
-                <Button
-                    text={t('detailBookingItem.cancelBooking')}
-                    preset="default"
-                    onPress={handleCancelBooking}
-                    style={[styles.button, styles.cancelButton]}
-                    textStyle={styles.cancelButtonText}
-                />
-                <Button
-                    text={t('detailBookingItem.editBooking')}
-                    preset="filled"
-                    onPress={handleEditBooking}
-                    style={[styles.button, styles.editButton]}
-                    textStyle={styles.editButtonText}
-                />
-                <Button
-                    text={t('detailBookingItem.editBooking')}
-                    preset="filled"
-                    onPress={handleEditBooking}
-                    style={[styles.button, styles.editButton]}
-                    textStyle={styles.editButtonText}
-                />
-            </View>
-
+            {detailBookingItem?.status == 0 && (
+                <>
+                    <View style={styles.buttonContainer}>
+                        <Button
+                            disabled={detailBookingItem?.status != 0}
+                            text={t('detailBookingItem.cancelBooking')}
+                            preset="default"
+                            onPress={handleCancelBooking}
+                            style={[styles.button, styles.cancelButton]}
+                            textStyle={styles.cancelButtonText}
+                        />
+                        <Button
+                            disabled={detailBookingItem?.status != 0}
+                            text={t('detailBookingItem.editBooking')}
+                            preset="filled"
+                            onPress={handleEdit}
+                            style={[styles.button, styles.editButton]}
+                            textStyle={styles.editButtonText}
+                        />
+                    </View>
+                </>
+            )}
         </SafeAreaView>
     )
 }

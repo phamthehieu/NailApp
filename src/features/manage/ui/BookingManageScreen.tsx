@@ -37,6 +37,7 @@ const getCurrentWeekRange = (): { start: Date; end: Date } => {
 const BookingManageScreen = ({ navigation }: RootScreenProps<Paths.BookingManage>) => {
     const { t } = useTranslation();
     const { theme: { colors } } = useAppTheme();
+    const { getDetailBookingItem, getHistoryBookingItem } = useBookingForm();
     const { listStaff } = useSelector((state: RootState) => state.staff);
     const [viewMode, setViewMode] = useState<'Ngày' | 'Tuần' | 'Tháng'>('Ngày');
     const [anchorDate, setAnchorDate] = useState<Date>(new Date());
@@ -174,6 +175,9 @@ const BookingManageScreen = ({ navigation }: RootScreenProps<Paths.BookingManage
     }, [activeTab.value]);
 
     const handlePressScheduleItem = (item: any) => {
+        console.log('item', item);
+        getDetailBookingItem(item.id);
+        getHistoryBookingItem(item.customerId);
         navigation.navigate(Paths.DetailBookingItem, { bookingId: item.id });
     };
 

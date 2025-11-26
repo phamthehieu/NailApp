@@ -1,7 +1,7 @@
 import { useCallback, useState } from "react";
 import { useAppDispatch } from "@/app/store";
-import { setListBookingFrequency, setListBookingSetting, setListCustomerList, setListPaymentType, setListPromotion, setListService } from "../model/editBookingSlice";
-import { getCheckVoucherApi, getListBookingFrequencyApi, getListBookingSettingApi, getListCustomerListApi, getListPaymentTypeApi, getListPromotionApi, getListServiceApi, postCreateBookingApi, postCreateUserBookingApi, putPaymentBookingApi } from "../api/BookingApi";
+import { setListBookingFrequency, setListBookingSetting, setListCustomerList, setListPaymentType, setListPromotion, setListService, setListStaffManager } from "../model/editBookingSlice";
+import { getCheckVoucherApi, getListBookingFrequencyApi, getListBookingSettingApi, getListCustomerListApi, getListPaymentTypeApi, getListPromotionApi, getListServiceApi, getListStaffManagerApi, postCreateBookingApi, postCreateUserBookingApi, putPaymentBookingApi } from "../api/BookingApi";
 import { alertService } from "@/services/alertService";
 import { useTranslation } from "react-i18next";
 import { CreateBookingRequest, CreateUserBookingRequest, PutPaymentBookingRequest } from "../api/types";
@@ -215,6 +215,27 @@ export function useEditBookingForm() {
         }
     }, [dispatch, t, loading]);
 
+    const getListStaffManager = useCallback(async () => {
+        try {
+            if (loading) return;
+            setLoading(true);
+            const response = await getListStaffManagerApi();
+            dispatch(setListStaffManager(response));
+        }
+        catch (error: any) {
+            console.error(error);
+            alertService.showAlert({
+                title: t('bookingList.errorTitle'),
+                message: error.message,
+                typeAlert: 'Error',
+                onConfirm: () => {},
+            });
+        }
+        finally {
+            setLoading(false);
+        }
+    }, [dispatch, t, loading]);
+
     return {
         getListBookingSetting,
         getListService,
@@ -227,5 +248,6 @@ export function useEditBookingForm() {
         getListPaymentType,
         getCheckVoucher,
         putPaymentBooking,
+        getListStaffManager,
     };
 }
