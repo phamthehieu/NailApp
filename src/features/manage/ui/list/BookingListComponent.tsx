@@ -20,6 +20,7 @@ import { BookingManagerItem } from "../../api/types";
 import Loader from "@/shared/ui/Loader";
 import { getBookingStatusColor } from "@/features/manage/utils/bookingStatusColor";
 import { useEditBookingForm } from "../../hooks/useEditBookingForm";
+import { useFocusEffect } from "@react-navigation/native";
 interface BookingListComponentProps {
     navigation: RootScreenProps<Paths.BookingManage>['navigation'];
 }
@@ -225,6 +226,10 @@ const BookingListComponent = ({ navigation }: BookingListComponentProps) => {
             setRefreshing(false);
         }
     }, [getListBookingManager, resetPagination]);
+
+    useFocusEffect(useCallback(() => {
+        getListBookingManager();
+    }, [navigation]));
 
     return (
         <>

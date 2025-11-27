@@ -7,12 +7,13 @@ import { useTranslation } from "react-i18next";
 import StatusBarComponent from "@/shared/ui/StatusBar";
 import MHeader from "@/shared/ui/MHeader";
 import Loader from "@/shared/ui/Loader";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import HeaderDashBoardComponent from "./components/HeaderDashBoardComponent";
 import { useStaffForm } from "@/features/manage/hooks/useStaffForm";
 import ListBookingForm from "./components/ListBookingFormComponent";
 import { useDashBoardHook } from "../hooks/useDashBoardHook";
 import ListBookingGridComponent from "./components/ListBookingGridComponent";
+import { useFocusEffect } from "@react-navigation/native";
 
 
 const DashBoardScreen = ({ navigation }: RootScreenProps<Paths.DashBoard>) => {
@@ -21,15 +22,17 @@ const DashBoardScreen = ({ navigation }: RootScreenProps<Paths.DashBoard>) => {
     const { t } = useTranslation();
     const [loading, setLoading] = useState(false);
     const { getListStaff } = useStaffForm();
+    const { getListBookingByDashBoard } = useDashBoardHook();
     const dashboardHook = useDashBoardHook();
     const tab1Opacity = useRef(new Animated.Value(1)).current;
     const tab1TranslateX = useRef(new Animated.Value(0)).current;
     const tab2Opacity = useRef(new Animated.Value(0)).current;
     const tab2TranslateX = useRef(new Animated.Value(50)).current;
     const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
-    
+
     useEffect(() => {
         getListStaff();
+        
     }, [navigation]);
 
     useEffect(() => {
@@ -81,6 +84,10 @@ const DashBoardScreen = ({ navigation }: RootScreenProps<Paths.DashBoard>) => {
             ]).start();
         }
     }, [viewMode]);
+
+    useFocusEffect(useCallback(() => {
+        getListBookingByDashBoard();
+    }, [navigation]));
 
     return (
         <SafeAreaView style={styles.container} edges={['top']}>

@@ -253,6 +253,7 @@ const en: Translations = {
     invalidTime: 'Invalid time',
     minimumTimeError: 'Booking time must be greater than {{date}} {{time}}',
     noServiceError: 'Please add at least one service',
+    singleServiceError: 'Only one service can be added per new booking',
     invalidServiceError: 'Please select service and duration for all services',
     repeatValueError: 'Please select start date and end date',
     customerInfoError: 'Please enter all customer information',

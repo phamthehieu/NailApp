@@ -136,6 +136,16 @@ const AddNewBookingScreen = ({ navigation }: RootScreenProps<Paths.AddNewBooking
             return false;
         }
 
+        if (bookingData.services.length > 1) {
+            alertService.showAlert({
+                title: t('addNewBooking.validationError'),
+                message: t('addNewBooking.singleServiceError'),
+                typeAlert: 'Error',
+                onConfirm: () => { },
+            });
+            return false;
+        }
+
         const invalidService = bookingData.services.find(
             (service) => !service.serviceId || service.serviceId === 0 || !service.serviceTime || service.serviceTime === 0
         );
@@ -270,7 +280,7 @@ const AddNewBookingScreen = ({ navigation }: RootScreenProps<Paths.AddNewBooking
                             name: customerData.name ?? null,
                         }
                     }
-                    console.log("formData", formData);
+
                     const responseBooking = await postCreateBooking(formData);
                     if (responseBooking) {
                         alertService.showAlert({
@@ -278,7 +288,6 @@ const AddNewBookingScreen = ({ navigation }: RootScreenProps<Paths.AddNewBooking
                             message: t('addNewBooking.bookingCreatedSuccessfully'),
                             typeAlert: 'Confirm',
                             onConfirm: () => {
-                                getListBookingManager();
                                 navigation.goBack();
                             },
                         });
@@ -340,7 +349,6 @@ const AddNewBookingScreen = ({ navigation }: RootScreenProps<Paths.AddNewBooking
                         message: t('addNewBooking.bookingCreatedSuccessfully'),
                         typeAlert: 'Confirm',
                         onConfirm: () => {
-                            getListBookingManager();
                             navigation.goBack();
                         },
                     });

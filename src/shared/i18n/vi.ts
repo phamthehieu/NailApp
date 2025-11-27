@@ -251,6 +251,7 @@ const vi = {
     invalidTime: 'Thời gian không hợp lệ',
     minimumTimeError: 'Thời gian đặt lịch phải lớn hơn {{date}} {{time}}',
     noServiceError: 'Vui lòng thêm ít nhất một dịch vụ',
+    singleServiceError: 'Chỉ đặt được một dịch vụ cho mỗi đơn đặt lịch',
     invalidServiceError: 'Vui lòng chọn dịch vụ và thời gian cho tất cả các dịch vụ',
     repeatValueError: 'Vui lòng chọn ngày bắt đầu và ngày kết thúc',
     customerInfoError: 'Vui lòng nhập đầy đủ thông tin khách hàng',

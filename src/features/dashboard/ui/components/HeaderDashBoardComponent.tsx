@@ -40,6 +40,9 @@ const HeaderDashBoardComponent = ({ dashboardHook, viewMode, setViewMode, onBook
     const currentLanguage = i18n.language;
     const {
         getListBookingByDashBoard,
+        dateFrom,
+        dateTo,
+        bookingDate,
         setDateFrom,
         setDateTo,
         setBookingDate,
@@ -169,7 +172,7 @@ const HeaderDashBoardComponent = ({ dashboardHook, viewMode, setViewMode, onBook
 
     useEffect(() => {
         getListBookingByDashBoard();
-    }, [staffId, committedRange, selectedDate, search]);
+    }, [staffId, search, dateFrom, dateTo, bookingDate]);
 
     return (
         <>
