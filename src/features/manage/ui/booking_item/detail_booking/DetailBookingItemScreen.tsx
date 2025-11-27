@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { RootScreenProps } from '@/app/navigation/types';
 import { Paths } from '@/app/navigation/paths';
@@ -16,6 +16,7 @@ import { alertService } from '@/services/alertService';
 import { useAppSelector } from '@/app/store';
 import { getBookingStatusColor } from '@/features/manage/utils/bookingStatusColor';
 import { useBookingForm } from '@/features/manage/hooks/useBookingForm';
+import { useFocusEffect } from '@react-navigation/native';
 
 type TabType = { label: string; value: number }
 
@@ -111,8 +112,9 @@ const DetailBookingItem = ({ navigation, route }: RootScreenProps<Paths.DetailBo
         navigation.navigate(Paths.EditBooking);
     };
 
-    console.log('detailBookingItem', detailBookingItem);
-
+    useFocusEffect(useCallback(() => {
+        getDetailBookingItem(bookingId as string);
+    }, [navigation]));
     return (
         <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
 

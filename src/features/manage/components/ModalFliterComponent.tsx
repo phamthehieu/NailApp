@@ -8,7 +8,8 @@ import { useRef, useState } from "react";
 import { useBookingForm } from "../hooks/useBookingForm";
 import { ChevronDown, X } from "lucide-react-native";
 import { format } from "date-fns";
-import { useAppSelector } from "@/app/store";
+import { useAppSelector, useAppDispatch } from "@/app/store";
+import { resetPageIndex } from "../model/bookingSlice";
 import { Dropdown } from "react-native-element-dropdown";
 
 
@@ -16,8 +17,9 @@ export default function ModalFliterComponent({ showAdvanced, setShowAdvanced, fo
     const { theme: { colors } } = useAppTheme();
     const styles = $styles(colors);
     const { t } = useTranslation();
+    const dispatch = useAppDispatch();
     const { listBookingStatus } = useAppSelector((state) => state.booking);
-    const { getListBookingManager, resetPagination, dateFrom, setDateFrom, dateTo, setDateTo, bookingDate, setBookingDate, bookingCode, setBookingCode, customerName, setCustomerName, phone, setPhone, search, setSearch, sortBy, setSortBy, pageSize, setPageSize, sortType, status, setStatus } = useBookingForm();
+    const { getListBookingManager, resetPagination, dateFrom, setDateFrom, dateTo, setDateTo, bookingDate, setBookingDate, bookingCode, setBookingCode, customerName, setCustomerName, phone, setPhone, status, setStatus } = useBookingForm();
     const [activePicker, setActivePicker] = useState<'range-from' | 'range-to' | null>(null);
     const [activeBookingDatePicker, setActiveBookingDatePicker] = useState<boolean>(false);
     const [tempRange, setTempRange] = useState<{ from: Date; to: Date } | null>(null);
@@ -76,7 +78,7 @@ export default function ModalFliterComponent({ showAdvanced, setShowAdvanced, fo
     };
 
     const handleFilter = () => {
-        resetPagination();
+        // dispatch(resetPageIndex());
         getListBookingManager();
     };
 
@@ -140,7 +142,7 @@ console.log("statusOptions", listBookingStatus);
                                         <TouchableOpacity onPress={() => {
                                             setDateFrom(null);
                                             setDateTo(null);
-                                            resetPagination();
+                                            // resetPagination();
                                         }} style={styles.searchIconButton}>
                                             <X size={20} color={colors.red} />
                                         </TouchableOpacity>
@@ -221,27 +223,34 @@ console.log("statusOptions", listBookingStatus);
                                 <View style={styles.labelRow}>
                                     <TextFieldLabel text={t('bookingManage.status')} style={styles.labelText} />
                                 </View>
-                                <Dropdown
-                                    data={statusOptions}
-                                    labelField="label"
-                                    valueField="value"
-                                    placeholder={t('bookingManage.pickStatus')}
-                                    value={status}
-                                    onChange={({ value }) => setStatus(value)}
-                                    style={styles.dropdown}
-                                    containerStyle={styles.dropdownContainer}
-                                    itemContainerStyle={styles.dropdownItem}
-                                    selectedTextStyle={styles.dropdownSelectedText}
-                                    showsVerticalScrollIndicator={false}
-                                    itemTextStyle={{ color: colors.text }}
-                                    placeholderStyle={styles.dropdownSelectedText}
-                                    renderRightIcon={() => <ChevronDown size={16} color={colors.placeholderTextColor} />}
-                                    maxHeight={250}
-                                    activeColor={colors.backgroundDisabled}
-                                    selectedTextProps={{ allowFontScaling: false }}
-                                    renderItem={renderItem}
-                                    dropdownPosition="top"
-                                />
+                                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                    <Dropdown
+                                        data={statusOptions}
+                                        labelField="label"
+                                        valueField="value"
+                                        placeholder={t('bookingManage.pickStatus')}
+                                        value={status}
+                                        onChange={({ value }) => setStatus(value)}
+                                        style={[styles.dropdown, { flex: 1 }]}
+                                        containerStyle={styles.dropdownContainer}
+                                        itemContainerStyle={styles.dropdownItem}
+                                        selectedTextStyle={styles.dropdownSelectedText}
+                                        showsVerticalScrollIndicator={false}
+                                        itemTextStyle={{ color: colors.text }}
+                                        placeholderStyle={styles.dropdownSelectedText}
+                                        renderRightIcon={() => <ChevronDown size={16} color={colors.placeholderTextColor} />}
+                                        maxHeight={250}
+                                        activeColor={colors.backgroundDisabled}
+                                        selectedTextProps={{ allowFontScaling: false }}
+                                        renderItem={renderItem}
+                                        dropdownPosition="top"
+                                    />
+                                    {status !== null && (
+                                        <TouchableOpacity onPress={() => setStatus(null)} style={styles.searchIconButton}>
+                                            <X size={20} color={colors.red} />
+                                        </TouchableOpacity>
+                                    )}
+                                </View>
                             </View>
                         </ScrollView>
                     </KeyboardAvoidingView>

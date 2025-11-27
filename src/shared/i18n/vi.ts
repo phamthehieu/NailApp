@@ -323,6 +323,7 @@ const vi = {
     printInvoice: 'In hóa đơn',
     totalAmount: 'Tổng tiền',
     totalDiscount: 'Tổng giảm giá',
+    voucherDiscount: 'Giảm giá voucher',
     vat: 'Thuế VAT',
     finalAmount: 'Tổng tiền thanh toán',
     promotionPlaceholder: 'Chọn khuyến mãi',

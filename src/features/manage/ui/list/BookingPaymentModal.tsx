@@ -82,6 +82,16 @@ const BookingPaymentModal = ({
     const [vat, setVat] = useState(0);
     const [finalAmount, setFinalAmount] = useState(0);
     const [change, setChange] = useState(0);
+    const totalServiceAmountBeforeDiscount = useMemo(() => {
+        return dataPaymentBooking?.services?.reduce((sum, service) => {
+            return sum + (service.price || 0);
+        }, 0) || 0;
+    }, [dataPaymentBooking]);
+
+    const totalServiceDiscount = useMemo(() => {
+        return Math.max(0, totalServiceAmountBeforeDiscount - totalAmount);
+    }, [totalServiceAmountBeforeDiscount, totalAmount]);
+
     const voucherDiscountAmount = useMemo(() => {
         const amount = calculateVoucherDiscountAmount(totalAmount, voucher);
         return Math.min(amount, totalAmount);
@@ -379,8 +389,6 @@ const BookingPaymentModal = ({
         }
     };
 
-    console.log('detailBookingItem', detailBookingItem);
-
     return (
         <Modal
             visible={visible}
@@ -521,7 +529,7 @@ const BookingPaymentModal = ({
                                                     showsVerticalScrollIndicator={false}
                                                     itemTextStyle={{ color: colors.text, fontSize: 14 }}
                                                     placeholderStyle={styles.mobileDropdownPlaceholder}
-                                                    placeholder={loadingPromotions[item.serviceId] ? t('bookingPayment.loading') || 'Đang tải...' : t('bookingPayment.promotionPlaceholder')}
+                                                    placeholder={t('bookingPayment.promotionPlaceholder')}
                                                     renderRightIcon={() => <ChevronDown size={18} color={colors.placeholderTextColor} />}
                                                     maxHeight={200}
                                                     activeColor={colors.backgroundDisabled}
@@ -583,10 +591,16 @@ const BookingPaymentModal = ({
                         <View style={styles.summarySection}>
                             <View style={styles.summaryRow}>
                                 <TextFieldLabel style={styles.summaryLabel}>{t('bookingPayment.totalAmount')}</TextFieldLabel>
-                                <TextFieldLabel style={styles.summaryValue}>{formatCurrency(totalAmount)}</TextFieldLabel>
+                                <TextFieldLabel style={styles.summaryValue}>{formatCurrency(totalServiceAmountBeforeDiscount)}</TextFieldLabel>
                             </View>
                             <View style={styles.summaryRow}>
-                                <TextFieldLabel style={styles.summaryLabel}>{t('bookingPayment.totalDiscount') || 'Tổng giảm giá'}</TextFieldLabel>
+                                <TextFieldLabel style={styles.summaryLabel}>{t('bookingPayment.totalDiscount')}</TextFieldLabel>
+                                <TextFieldLabel style={[styles.summaryValue, totalServiceDiscount > 0 && styles.discountValue]}>
+                                    {formatCurrency(totalServiceDiscount)}
+                                </TextFieldLabel>
+                            </View>
+                            <View style={styles.summaryRow}>
+                                <TextFieldLabel style={styles.summaryLabel}>{t('bookingPayment.voucherDiscount')}</TextFieldLabel>
                                 <TextFieldLabel style={[styles.summaryValue, voucherDiscountAmount > 0 && styles.discountValue]}>
                                     {voucherDiscountAmount > 0 ? `-${formatCurrency(voucherDiscountAmount)}` : formatCurrency(0)}
                                 </TextFieldLabel>

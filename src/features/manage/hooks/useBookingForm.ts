@@ -1,7 +1,7 @@
 import { useAppDispatch, useAppSelector } from "@/app/store";
 import { useCallback, useState } from "react";
 import { getDetailBookingItemApi, getHistoryBookingItemApi, getlistBookingManagerApi, getListBookingStatusApi, getListTimeSlotApi, postCancelBookingApi, putCheckinBookingApi, putEditBookingApi } from "../api/BookingApi";
-import { setListBookingManager, setListBookingStatus, appendListBookingManager, resetPageIndex, setDetailBookingItem, setHistoryBookingItem, appendHistoryBookingItem } from "../model/bookingSlice";
+import { setListBookingManager, setListBookingStatus, appendListBookingManager, resetPageIndex, setDetailBookingItem, setHistoryBookingItem, appendHistoryBookingItem, setFilters, resetFilters } from "../model/bookingSlice";
 import { alertService } from "@/services/alertService";
 import { useTranslation } from "react-i18next";
 import { EditBookingRequest } from "../api/types";
@@ -10,20 +10,65 @@ import { EditBookingRequest } from "../api/types";
 export function useBookingForm() {
     const dispatch = useAppDispatch();
     const { t } = useTranslation();
-    const { pageIndex: reduxPageIndex, historyBookingItem } = useAppSelector((state) => state.booking);
-    const [dateFrom, setDateFrom] = useState<Date | null>(null);
-    const [dateTo, setDateTo] = useState<Date | null>(null);
-    const [bookingDate, setBookingDate] = useState<Date | null>(null);
-    const [status, setStatus] = useState<string | undefined>(undefined);
-    const [bookingCode, setBookingCode] = useState<string | undefined>(undefined);
-    const [customerName, setCustomerName] = useState<string | undefined>(undefined);
-    const [phone, setPhone] = useState<string | undefined>(undefined);
-    const [search, setSearch] = useState<string | undefined>(undefined);
-    const [sortBy, setSortBy] = useState<string | undefined>(undefined);
-    const [pageSize, setPageSize] = useState<number | undefined>(10);
-    const [sortType, setSortType] = useState<string | undefined>(undefined);
+    const { pageIndex: reduxPageIndex, historyBookingItem, filters } = useAppSelector((state) => state.booking);
     const [loading, setLoading] = useState<boolean>(false);
     const [loadingMore, setLoadingMore] = useState<boolean>(false);
+
+    const dateFrom = filters.dateFrom ? new Date(filters.dateFrom) : null;
+    const dateTo = filters.dateTo ? new Date(filters.dateTo) : null;
+    const bookingDate = filters.bookingDate ? new Date(filters.bookingDate) : null;
+    const status = filters.status;
+    const bookingCode = filters.bookingCode;
+    const customerName = filters.customerName;
+    const phone = filters.phone;
+    const search = filters.search;
+    const sortBy = filters.sortBy;
+    const sortType = filters.sortType;
+    const pageSize = filters.pageSize;
+
+    const setDateFrom = useCallback((value: Date | null) => {
+        dispatch(setFilters({ dateFrom: value ? value.toISOString() : null }));
+    }, [dispatch]);
+
+    const setDateTo = useCallback((value: Date | null) => {
+        dispatch(setFilters({ dateTo: value ? value.toISOString() : null }));
+    }, [dispatch]);
+
+    const setBookingDate = useCallback((value: Date | null) => {
+        dispatch(setFilters({ bookingDate: value ? value.toISOString() : null }));
+    }, [dispatch]);
+
+    const setStatus = useCallback((value: number | null) => {
+        dispatch(setFilters({ status: value }));
+    }, [dispatch]);
+
+    const setBookingCode = useCallback((value: string | undefined) => {
+        dispatch(setFilters({ bookingCode: value }));
+    }, [dispatch]);
+
+    const setCustomerName = useCallback((value: string | undefined) => {
+        dispatch(setFilters({ customerName: value }));
+    }, [dispatch]);
+
+    const setPhone = useCallback((value: string | undefined) => {
+        dispatch(setFilters({ phone: value }));
+    }, [dispatch]);
+
+    const setSearch = useCallback((value: string | undefined) => {
+        dispatch(setFilters({ search: value }));
+    }, [dispatch]);
+
+    const setSortBy = useCallback((value: string | undefined) => {
+        dispatch(setFilters({ sortBy: value }));
+    }, [dispatch]);
+
+    const setSortType = useCallback((value: string | undefined) => {
+        dispatch(setFilters({ sortType: value }));
+    }, [dispatch]);
+
+    const setPageSize = useCallback((value: number | undefined) => {
+        dispatch(setFilters({ pageSize: value }));
+    }, [dispatch]);
 
     const getListBookingManager = useCallback(async (isLoadMore: boolean = false) => {
         try {
@@ -53,7 +98,7 @@ export function useBookingForm() {
             setLoading(false);
             setLoadingMore(false);
         }
-    }, [dateFrom, dateTo, bookingDate, status, bookingCode, customerName, phone, search, sortBy, reduxPageIndex, pageSize, sortType, dispatch]);
+    }, [filters, reduxPageIndex, dispatch, t]);
 
     const getListBookingManagerByDate = useCallback(async (bookingDate: Date, searchText: string) => {
         try {
@@ -96,28 +141,30 @@ export function useBookingForm() {
     }, [dispatch, t, loading]);
 
     const loadMoreBookings = useCallback(async () => {
-        await getListBookingManager(true);
-    }, [getListBookingManager]);
+        if (loadingMore || loading) return;
+        try {
+            setLoadingMore(true);
+            const safeReduxPageIndex = Math.max(0, reduxPageIndex || 0);
+            const currentPageIndex = safeReduxPageIndex + 1;
+            const finalPageIndex = Math.max(0, currentPageIndex);
+
+            const response = await getlistBookingManagerApi(dateFrom, dateTo, bookingDate, status, bookingCode, customerName, phone, search, sortBy, finalPageIndex, pageSize, sortType);
+            dispatch(appendListBookingManager(response));
+        } catch (error: any) {
+            console.error(error);
+            alertService.showAlert({
+                title: t('bookingList.errorTitle'),
+                message: error.message,
+                typeAlert: 'Error',
+                onConfirm: () => {},
+            });
+        } finally {
+            setLoadingMore(false);
+        }
+    }, [filters, reduxPageIndex, dispatch, t, loadingMore, loading]);
 
     const resetPagination = useCallback(() => {
-        setDateFrom(null);
-        setDateTo(null);
-        setBookingDate(null);
-        setStatus(undefined);
-        setBookingCode(undefined);
-        setCustomerName(undefined);
-        setPhone(undefined);
-        setSearch(undefined);
-        setSortBy(undefined);
-        setPageSize(3);
-        setSortType(undefined);
-        setBookingCode(undefined);
-        setCustomerName(undefined);
-        setPhone(undefined);
-        setSearch(undefined);
-        setSortBy(undefined);
-        setPageSize(3);
-        setSortType(undefined);
+        dispatch(resetFilters());
         dispatch(resetPageIndex());
     }, [dispatch]);
 

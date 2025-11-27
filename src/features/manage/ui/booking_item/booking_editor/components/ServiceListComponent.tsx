@@ -187,8 +187,8 @@ const ServiceListComponent = ({
                             valueField="value"
                             value={item.staffId === null ? 'null' : item.staffId.toString()}
                             onChange={({ value }) => updateService(index, { staffId: value === 'null' ? null : Number(value) })}
-                            style={[styles.dropdown, (item.staffId === null) && styles.dropdownDisabled]}
-                            disable={item.staffId === null}
+                            style={[styles.dropdown, (type === 'checkin' ? false : item.staffId === null) && styles.dropdownDisabled]}
+                            disable={type === 'checkin' ? false : item.staffId === null}
                             showsVerticalScrollIndicator={false}
                             containerStyle={styles.dropdownContainer}
                             itemContainerStyle={styles.dropdownItem}

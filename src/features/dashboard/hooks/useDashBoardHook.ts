@@ -15,13 +15,13 @@ export function useDashBoardHook() {
     const [dateFrom, setDateFrom] = useState<Date | null>(null);
     const [dateTo, setDateTo] = useState<Date | null>(null);
     const [bookingDate, setBookingDate] = useState<Date | null>(new Date());
-    const [status, setStatus] = useState<string | undefined>(undefined);
+    const [status, setStatus] = useState<number | null>(null);
     const [bookingCode, setBookingCode] = useState<string | undefined>(undefined);
     const [customerName, setCustomerName] = useState<string | undefined>(undefined);
     const [phone, setPhone] = useState<string | undefined>(undefined);
     const [search, setSearch] = useState<string | undefined>(undefined);
     const [sortBy, setSortBy] = useState<string | undefined>(undefined);
-    const [pageSize, setPageSize] = useState<number | undefined>(3);
+    const [pageSize, setPageSize] = useState<number | undefined>(10);
     const [sortType, setSortType] = useState<string | undefined>(undefined);
     const [staffId, setStaffId] = useState<number | null>(null);
 

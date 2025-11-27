@@ -16,6 +16,20 @@ interface BookingListState {
     listBookingStatus: ListBookingStatusResponse | null;
     detailBookingItem: DetailBookingItemResponse | null;
     historyBookingItem: HistoryBookingItemResponse | null;
+    
+    filters: {
+        dateFrom: string | null;
+        dateTo: string | null;
+        bookingDate: string | null;
+        status: number | null;
+        bookingCode: string | undefined;
+        customerName: string | undefined;
+        phone: string | undefined;
+        search: string | undefined;
+        sortBy: string | undefined;
+        sortType: string | undefined;
+        pageSize: number | undefined;
+    };
 }
 
 const initialState: BookingListState = {
@@ -31,6 +45,19 @@ const initialState: BookingListState = {
     listBookingStatus: null,
     detailBookingItem: null,
     historyBookingItem: null,
+    filters: {
+        dateFrom: null,
+        dateTo: null,
+        bookingDate: null,
+        status: null,
+        bookingCode: undefined,
+        customerName: undefined,
+        phone: undefined,
+        search: undefined,
+        sortBy: undefined,
+        sortType: undefined,
+        pageSize: 10,
+    },
 };
 
 const bookingSlice = createSlice({
@@ -105,6 +132,24 @@ const bookingSlice = createSlice({
                 state.historyBookingItem = action.payload;
             }
         },
+        setFilters(state, action: PayloadAction<Partial<BookingListState['filters']>>) {
+            state.filters = { ...state.filters, ...action.payload };
+        },
+        resetFilters(state) {
+            state.filters = {
+                dateFrom: null,
+                dateTo: null,
+                bookingDate: null,
+                status: null,
+                bookingCode: undefined,
+                customerName: undefined,
+                phone: undefined,
+                search: undefined,
+                sortBy: undefined,
+                sortType: undefined,
+                pageSize: 10,
+            };
+        },
     },
 });
 
@@ -119,6 +164,8 @@ export const {
     setDetailBookingItem,
     setHistoryBookingItem,
     appendHistoryBookingItem,
+    setFilters,
+    resetFilters,
 } = bookingSlice.actions;
 
 export default bookingSlice.reducer;

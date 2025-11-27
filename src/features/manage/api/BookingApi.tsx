@@ -59,7 +59,7 @@ export const getlistBookingManagerApi = async (
     dateFrom?: Date | null,
     dateTo?: Date | null,
     bookingDate?: Date | null,
-    status?: string,
+    status?: number | null,
     bookingCode?: string,
     customerName?: string,
     phone?: string,
@@ -81,8 +81,8 @@ export const getlistBookingManagerApi = async (
     if (bookingDate) {
         params.append('BookingDate', formatDateParam(bookingDate));
     }
-    if (status) {
-        params.append('Status', status);
+    if (status !== null && status !== undefined) {
+        params.append('Status', status.toString());
     }
     if (bookingCode) {
         params.append('BookingCode', bookingCode);

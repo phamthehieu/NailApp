@@ -325,6 +325,7 @@ const en: Translations = {
     printInvoice: 'Print invoice',
     totalAmount: 'Total amount',
     totalDiscount: 'Total discount',
+    voucherDiscount: 'Voucher discount',
     vat: 'VAT',
     finalAmount: 'Total payment amount',
     promotionPlaceholder: 'Select promotion',
