@@ -154,6 +154,13 @@ const vi = {
     successTitle: 'Thành công',
     successMessage: 'Hủy đặt lịch thành công',
   },
+  bookingStatusLabel: {
+    waitingCheckin: 'Chờ CheckIn',
+    awaitingPayment: 'Chờ Thanh toán',
+    checkedIn: 'Người dùng CheckIn',
+    cancelled: 'Đã hủy',
+    completed: 'Hoàn thành',
+  },
   detailBookingItem: {
     title: 'Thông tin đặt lịch',
     tab: {

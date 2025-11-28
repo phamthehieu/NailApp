@@ -156,6 +156,13 @@ const en = {
     successTitle: 'Success',
     successMessage: 'Booking cancelled successfully',
   },
+  bookingStatusLabel: {
+    waitingCheckin: 'Waiting for check-in',
+    awaitingPayment: 'Awaiting payment',
+    checkedIn: 'Checked in',
+    cancelled: 'Cancelled',
+    completed: 'Completed',
+  },
   detailBookingItem: {
     title: 'Booking information',
     tab: {

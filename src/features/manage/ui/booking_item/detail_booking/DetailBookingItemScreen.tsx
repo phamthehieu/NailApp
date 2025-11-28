@@ -17,6 +17,7 @@ import { useAppSelector } from '@/app/store';
 import { getBookingStatusColor } from '@/features/manage/utils/bookingStatusColor';
 import { useBookingForm } from '@/features/manage/hooks/useBookingForm';
 import { useFocusEffect } from '@react-navigation/native';
+import { getLocalizedBookingStatusName } from '@/features/manage/utils/bookingStatusLabel';
 
 type TabType = { label: string; value: number }
 
@@ -26,7 +27,7 @@ const DetailBookingItem = ({ navigation, route }: RootScreenProps<Paths.DetailBo
     const styles = $styles(colors);
     const { t } = useTranslation();
     const { detailBookingItem } = useAppSelector((state) => state.booking);
-    const { getDetailBookingItem } = useBookingForm();
+    const { getDetailBookingItem, postCancelBooking } = useBookingForm();
     const tab1Opacity = useRef(new Animated.Value(1)).current;
     const tab1TranslateX = useRef(new Animated.Value(0)).current;
     const tab2Opacity = useRef(new Animated.Value(0)).current;
@@ -34,8 +35,14 @@ const DetailBookingItem = ({ navigation, route }: RootScreenProps<Paths.DetailBo
 
     const [activeTab, setActiveTab] = useState<TabType>({ label: t('calenderDashboard.calenderTab.schedule'), value: 1 });
 
+    const localizedStatus = getLocalizedBookingStatusName(
+        detailBookingItem?.status ?? null,
+        detailBookingItem?.statusObj?.name,
+        t,
+    );
+
     const statusColor = getBookingStatusColor(
-        detailBookingItem?.statusObj?.name ?? detailBookingItem?.status,
+        detailBookingItem?.status ?? detailBookingItem?.statusObj?.name,
         colors,
         'white',
     );
@@ -48,11 +55,34 @@ const DetailBookingItem = ({ navigation, route }: RootScreenProps<Paths.DetailBo
             okText: t('detailBookingItem.deleteBooking.okText'),
             cancelText: t('detailBookingItem.deleteBooking.cancelText'),
             onConfirm: () => {
-                console.log('Cancel booking:', bookingId);
+                handleCancelBookingApi();
             },
             onCancel: () => {
                 console.log('Cancel booking:', bookingId);
             },
+        });
+    };
+
+    const handleCancelBookingApi = () => {
+        postCancelBooking(bookingId as number).then((response) => {
+            if (response) {
+                alertService.showAlert({
+                    title: t('bookingList.successTitle'),
+                    message: t('bookingList.successMessage'),
+                    typeAlert: 'Confirm',
+                    onConfirm: () => {
+                        getDetailBookingItem(bookingId as string);
+                    },
+                });
+
+            } else {
+                alertService.showAlert({
+                    title: t('bookingList.errorTitle'),
+                    message: t('bookingList.errorMessage'),
+                    typeAlert: 'Error',
+                    onConfirm: () => { },
+                });
+            }
         });
     };
 
@@ -126,7 +156,7 @@ const DetailBookingItem = ({ navigation, route }: RootScreenProps<Paths.DetailBo
                 iconLeft={<ArrowLeft size={24} color={colors.background} />}
                 onBack={() => navigation.goBack()}
                 bgColor={colors.yellow}
-                status={detailBookingItem?.statusObj?.name}
+                status={localizedStatus}
                 statusColor={statusColor}
                 statusBgColor={colors.yellow}
             />
@@ -165,7 +195,7 @@ const DetailBookingItem = ({ navigation, route }: RootScreenProps<Paths.DetailBo
                     </View>
                 </Animated.View>
             </View>
-            {detailBookingItem?.status == 0 && (
+            {(detailBookingItem?.status === 0 || detailBookingItem?.status === 1 || detailBookingItem?.status === 2) && (
                 <>
                     <View style={styles.buttonContainer}>
                         <Button

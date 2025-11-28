@@ -334,17 +334,17 @@ const CalenderWeedComponent = ({ selectedDate, dateRange, onPressScheduleItem, s
                 const getColorByStatus = (status: number) => {
                     switch (status) {
                         case 0:
-                            return { color: '#E1F5FE', borderColor: '#E1F5FE' };
+                            return { color: colors.blue, borderColor: colors.blue };
                         case 1:
-                            return { color: '#66BB6A', borderColor: '#66BB6A' };
+                            return { color: colors.yellow, borderColor: colors.yellow };
                         case 2:
-                            return { color: '#AB47BC', borderColor: '#AB47BC' };
+                            return { color: colors.purple, borderColor: colors.purple };
                         case 3:
-                            return { color: '#EF4444', borderColor: '#EF4444' };
+                            return { color: colors.red, borderColor: colors.red };
                             case 4:
-                            return { color: '#FFB74D', borderColor: '#FFB74D' };
+                            return { color: colors.green, borderColor: colors.green };
                         default:
-                            return { color: '#4FC3F7', borderColor: '#4FC3F7' };
+                            return { color: colors.blue, borderColor: colors.blue };
                     }
                 };
 

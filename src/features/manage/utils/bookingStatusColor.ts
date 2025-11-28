@@ -4,21 +4,19 @@ type BookingStatus = string | number | null | undefined
 type ColorToken = keyof Colors
 
 const STATUS_NAME_COLOR_MAP: Record<string, ColorToken> = {
-    "Chờ xác nhận": "blue",
-    "Đã xác nhận": "yellow",
-    "Đang thực hiện": "purple",
-    "Đã hoàn thành": "green",
-    "Hoàn tất": "green",
+    "Chờ CheckIn": "blue",
+    "Chờ Thanh toán": "yellow",
+    "Người dùng CheckIn": "purple",
     "Đã hủy": "red",
+    "Hoàn thành": "green",
 }
 
 const STATUS_ID_COLOR_MAP: Record<number, ColorToken> = {
     0: "blue",
     1: "yellow",
     2: "purple",
-    3: "green",
+    3: "red",
     4: "green",
-    5: "red",
 }
 
 const DEFAULT_FALLBACK_COLOR: ColorToken = "yellow"

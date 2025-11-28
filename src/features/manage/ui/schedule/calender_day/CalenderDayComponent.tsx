@@ -204,17 +204,17 @@ const CalenderDayComponent = ({ selectedDate: _selectedDate, onPressScheduleItem
                 const getColorByStatus = (status: number) => {
                     switch (status) {
                         case 0:
-                            return { color: '#E1F5FE', borderColor: '#E1F5FE' };
+                            return { color: colors.blue, borderColor: colors.blue };
                         case 1:
-                            return { color: '#66BB6A', borderColor: '#66BB6A' };
+                            return { color: colors.yellow, borderColor: colors.yellow };
                         case 2:
-                            return { color: '#AB47BC', borderColor: '#AB47BC' };
+                            return { color: colors.purple, borderColor: colors.purple };
                         case 3:
-                            return { color: '#EF4444', borderColor: '#EF4444' };
+                            return { color: colors.red, borderColor: colors.red };
                             case 4:
-                            return { color: '#FFB74D', borderColor: '#FFB74D' };
+                            return { color: colors.green, borderColor: colors.green };
                         default:
-                            return { color: '#4FC3F7', borderColor: '#4FC3F7' };
+                            return { color: colors.blue, borderColor: colors.blue };
                     }
                 };
 
@@ -239,9 +239,7 @@ const CalenderDayComponent = ({ selectedDate: _selectedDate, onPressScheduleItem
     }, [listBookingManagerByDate]);
 
     const renderScheduleItem = (userId: string, timeSlot: string) => {
-        console.log('convertedScheduleItems', convertedScheduleItems , userId, timeSlot);
         const blocks = getScheduleBlocksForHour(convertedScheduleItems, userId, timeSlot);
-        console.log('blocks', blocks);
         return blocks.map(({ item, index, heightInPixels }) => {
             const startHours = parseInt(item.startTime.substring(0, 2));
             const startMinutes = parseInt(item.startTime.substring(2, 4));
@@ -321,8 +319,6 @@ const CalenderDayComponent = ({ selectedDate: _selectedDate, onPressScheduleItem
         getListStaff();
     }, []);
 
-    console.log('listBookingHourSetting', listBookingManagerByDate);
-
     return (
         <View style={styles.mainContainer}>
             <View style={styles.fixedUserColumn}>
@@ -339,7 +335,7 @@ const CalenderDayComponent = ({ selectedDate: _selectedDate, onPressScheduleItem
                             ios_backgroundColor={colors.backgroundDisabled}
                         /> */}
 
-                        {isTablet ? <TextFieldLabel style={styles.filterLabel} numberOfLines={1} ellipsizeMode="tail">{t('calenderDashboard.calenderHeader.hideStaffWithoutWorkingHours')}</TextFieldLabel> : null}
+                        {/* {isTablet ? <TextFieldLabel style={styles.filterLabel} numberOfLines={1} ellipsizeMode="tail">{t('calenderDashboard.calenderHeader.hideStaffWithoutWorkingHours')}</TextFieldLabel> : null} */}
 
                     </View>
 

@@ -19,6 +19,7 @@ import { useAppSelector } from "@/app/store";
 import { BookingManagerItem } from "../../api/types";
 import Loader from "@/shared/ui/Loader";
 import { getBookingStatusColor } from "@/features/manage/utils/bookingStatusColor";
+import { getLocalizedBookingStatusName } from "@/features/manage/utils/bookingStatusLabel";
 import { useEditBookingForm } from "../../hooks/useEditBookingForm";
 import { useFocusEffect } from "@react-navigation/native";
 interface BookingListComponentProps {
@@ -119,12 +120,13 @@ const BookingListComponent = ({ navigation }: BookingListComponentProps) => {
         const statusColor = getBookingStatusColor(item.status, colors, 'border');
         const formattedDate = formatDate(item.bookingDate);
         const nameService = item.services.map((service) => service.serviceName).join(', ');
+        const statusLabel = getLocalizedBookingStatusName(item.status, item.statusObj.name, t);
         return (
             <View style={styles.bookingCard}>
                 <View style={styles.header}>
                     <View style={styles.headerLeft}>
                         <View style={[styles.statusBadge, { borderColor: statusColor, borderWidth: 1 }]}>
-                            <TextFieldLabel style={[styles.statusText, { color: statusColor }]}>{item.statusObj.name}</TextFieldLabel>
+                            <TextFieldLabel style={[styles.statusText, { color: statusColor }]}>{statusLabel}</TextFieldLabel>
                         </View>
                         {isTablet && (
                             <TextFieldLabel style={styles.bookingId}>{item.code}</TextFieldLabel>

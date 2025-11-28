@@ -4,7 +4,7 @@ import { Colors, useAppTheme } from '@/shared/theme';
 import StatusBarComponent from '@/shared/ui/StatusBar';
 import { StyleSheet, View, Animated } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import Loader from '@/shared/ui/Loader';
 import MHeader from '@/shared/ui/MHeader';
@@ -34,10 +34,36 @@ const getCurrentWeekRange = (): { start: Date; end: Date } => {
     return { start, end };
 };
 
+const areDatesEqual = (a: Date | null, b: Date | null) => {
+    if (!a && !b) return true;
+    if (!a || !b) return false;
+    return a.getTime() === b.getTime();
+};
+
 const BookingManageScreen = ({ navigation }: RootScreenProps<Paths.BookingManage>) => {
     const { t } = useTranslation();
     const { theme: { colors } } = useAppTheme();
-    const { getDetailBookingItem, getHistoryBookingItem } = useBookingForm();
+    const {
+        getDetailBookingItem,
+        getHistoryBookingItem,
+        getListBookingStatus,
+        getListBookingManagerByDate,
+        getListBookingManagerByRange,
+        getListBookingManager,
+        dateFrom,
+        setDateFrom,
+        dateTo,
+        setDateTo,
+        bookingDate,
+        setBookingDate,
+        status,
+        bookingCode,
+        customerName,
+        phone,
+        search,
+        setSearch,
+        loading,
+    } = useBookingForm();
     const { listStaff } = useSelector((state: RootState) => state.staff);
     const [viewMode, setViewMode] = useState<'Ngày' | 'Tuần' | 'Tháng'>('Ngày');
     const [anchorDate, setAnchorDate] = useState<Date>(new Date());
@@ -58,7 +84,9 @@ const BookingManageScreen = ({ navigation }: RootScreenProps<Paths.BookingManage
         status: '',
     });
     const styles = $styles(colors);
-    const { getListBookingStatus, getListBookingManagerByDate, getListBookingManager, getListBookingManagerByRange, loading } = useBookingForm();
+    const dateFromKey = useMemo(() => dateFrom ? dateFrom.toISOString() : 'null', [dateFrom]);
+    const dateToKey = useMemo(() => dateTo ? dateTo.toISOString() : 'null', [dateTo]);
+    const bookingDateKey = useMemo(() => bookingDate ? bookingDate.toISOString() : 'null', [bookingDate]);
     const tab1Opacity = useRef(new Animated.Value(1)).current;
     const tab1TranslateX = useRef(new Animated.Value(0)).current;
     const tab2Opacity = useRef(new Animated.Value(0)).current;
@@ -76,7 +104,6 @@ const BookingManageScreen = ({ navigation }: RootScreenProps<Paths.BookingManage
 
     const handleDateChange = (d: Date) => {
         setAnchorDate(d);
-
         if (viewMode === 'Ngày') {
             const s = new Date(d);
             s.setHours(0, 0, 0, 0);
@@ -216,26 +243,70 @@ const BookingManageScreen = ({ navigation }: RootScreenProps<Paths.BookingManage
     }, [searchText]);
 
     useEffect(() => {
-        if (activeTab.value === 1) {
-            if (viewMode === 'Ngày') {
-                getListBookingManagerByDate(anchorDate, debouncedSearchText);
-            } else if (viewMode === 'Tuần') {
-                if (activeRange?.start && activeRange?.end) {
-                    getListBookingHourSettingByStaffId(selectedUserId);
-                    getListBookingManagerByRange(activeRange.start, activeRange.end, debouncedSearchText, selectedUserId);
-                }
-            } else if (viewMode === 'Tháng') {
-                const startDate = new Date(anchorDate.getFullYear(), anchorDate.getMonth(), 1);
-                startDate.setHours(0, 0, 0, 0);
-                const endDate = new Date(anchorDate.getFullYear(), anchorDate.getMonth() + 1, 0);
-                endDate.setHours(23, 59, 59, 999);
-                getListBookingManagerByRange(startDate, endDate, debouncedSearchText);
+        if (activeTab.value !== 1) return;
+
+        if (viewMode === 'Ngày') {
+            getListBookingManagerByDate(anchorDate, debouncedSearchText);
+        } else if (viewMode === 'Tuần') {
+            if (activeRange?.start && activeRange?.end) {
+                getListBookingHourSettingByStaffId(selectedUserId);
+                getListBookingManagerByRange(activeRange.start, activeRange.end, debouncedSearchText, selectedUserId);
+            }
+        } else if (viewMode === 'Tháng') {
+            const startDate = new Date(anchorDate.getFullYear(), anchorDate.getMonth(), 1);
+            startDate.setHours(0, 0, 0, 0);
+            const endDate = new Date(anchorDate.getFullYear(), anchorDate.getMonth() + 1, 0);
+            endDate.setHours(23, 59, 59, 999);
+            getListBookingManagerByRange(startDate, endDate, debouncedSearchText);
+        }
+    }, [anchorDate, viewMode, activeTab.value, debouncedSearchText, activeRange, selectedUserId, getListBookingManagerByDate, getListBookingManagerByRange, getListBookingHourSettingByStaffId]);
+
+    useEffect(() => {
+        const normalizedSearch = debouncedSearchText?.trim() ? debouncedSearchText.trim() : undefined;
+        if (search === normalizedSearch) return;
+        setSearch(normalizedSearch);
+    }, [debouncedSearchText, search, setSearch]);
+
+    useEffect(() => {
+        if (viewMode === 'Ngày') {
+            if (!areDatesEqual(bookingDate, anchorDate)) {
+                setBookingDate(anchorDate);
+            }
+            if (dateFrom) setDateFrom(null);
+            if (dateTo) setDateTo(null);
+            return;
+        }
+
+        if (viewMode === 'Tuần') {
+            if (!activeRange?.start || !activeRange?.end) return;
+            if (bookingDate) setBookingDate(null);
+            if (!areDatesEqual(dateFrom, activeRange.start)) {
+                setDateFrom(activeRange.start);
+            }
+            if (!areDatesEqual(dateTo, activeRange.end)) {
+                setDateTo(activeRange.end);
+            }
+            return;
+        }
+
+        if (viewMode === 'Tháng') {
+            const startDate = new Date(anchorDate.getFullYear(), anchorDate.getMonth(), 1);
+            startDate.setHours(0, 0, 0, 0);
+            const endDate = new Date(anchorDate.getFullYear(), anchorDate.getMonth() + 1, 0);
+            endDate.setHours(23, 59, 59, 999);
+            if (bookingDate) setBookingDate(null);
+            if (!areDatesEqual(dateFrom, startDate)) {
+                setDateFrom(startDate);
+            }
+            if (!areDatesEqual(dateTo, endDate)) {
+                setDateTo(endDate);
             }
         }
-        if (activeTab.value === 2) {
-            getListBookingManager();
-        }
-    }, [anchorDate, viewMode, activeTab.value, debouncedSearchText, activeRange, selectedUserId]);
+    }, [viewMode, anchorDate, activeRange, bookingDate, dateFrom, dateTo, setBookingDate, setDateFrom, setDateTo]);
+
+    useEffect(() => {
+        getListBookingManager();
+    }, [dateFromKey, dateToKey, bookingDateKey, status, bookingCode, customerName, phone, search, getListBookingManager]);
 
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
@@ -273,6 +344,28 @@ const BookingManageScreen = ({ navigation }: RootScreenProps<Paths.BookingManage
                     ]}
                     pointerEvents={activeTab.value === 2 ? 'auto' : 'none'}
                 >
+
+                    <CalendarHeader
+                        searchText={searchText}
+                        setSearchText={setSearchText}
+                        selectedDate={anchorDate}
+                        onChange={handleDateChange}
+                        onChangeRange={handleRangeChange}
+                        viewMode={viewMode}
+                        onViewModeChange={(mode) => {
+                            setViewMode(mode);
+                            if (mode === 'Tuần') {
+                                const start = getStartOfWeek(anchorDate);
+                                const end = new Date(start);
+                                end.setDate(end.getDate() + 6);
+                                end.setHours(23, 59, 59, 999);
+                                setActiveRange({ start, end });
+                            } else {
+                                setActiveRange(null);
+                            }
+                        }}
+                    />
+
                     <View style={styles.content}>
                         <BookingListComponent navigation={navigation} />
                     </View>
@@ -318,7 +411,6 @@ const BookingManageScreen = ({ navigation }: RootScreenProps<Paths.BookingManage
             <ModalFliterComponent showAdvanced={showAdvanced} setShowAdvanced={setShowAdvanced} form={form} setForm={setForm} />
 
             <Loader loading={loading} title={t('loading.processing')} />
-
         </SafeAreaView >
     );
 };

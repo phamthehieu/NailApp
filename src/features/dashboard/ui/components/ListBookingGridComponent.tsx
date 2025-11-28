@@ -13,6 +13,7 @@ import { useAppSelector } from "@/app/store";
 import { BookingManagerItem, ServiceItem } from "@/features/manage/api/types";
 import Loader from "@/shared/ui/Loader";
 import { getBookingStatusColor } from "@/features/manage/utils/bookingStatusColor";
+import { getLocalizedBookingStatusName } from "@/features/manage/utils/bookingStatusLabel";
 import type { DashBoardHookResult } from "../../hooks/useDashBoardHook";
 import { isTablet } from "@/shared/lib/useIsTablet";
 interface ListBookingFormProps {
@@ -132,6 +133,7 @@ const ListBookingGridComponent = ({ navigation, dashboardHook }: ListBookingForm
         const staffLabel = `W/ ${staffName || t('bookingList.unassignedStaff', { defaultValue: '--' })}`;
         const serviceName = service?.serviceName || booking.description || t('bookingList.noServiceName', { defaultValue: '--' });
         const bookingDescription = booking.description && booking.description !== serviceName ? booking.description : '';
+        const statusLabel = getLocalizedBookingStatusName(booking.status, booking.statusObj?.name, t);
         return (
             <View style={[styles.bookingCard, { borderColor: statusColor, width: itemWidth }]}>
                 <View style={styles.cardHeader}>
@@ -142,7 +144,7 @@ const ListBookingGridComponent = ({ navigation, dashboardHook }: ListBookingForm
 
                     <View style={styles.assignmentButton}>
                         <View style={[styles.statusBadge, { borderColor: statusColor, borderWidth: 1 }]}>
-                            <TextFieldLabel style={[styles.statusText, { color: statusColor }]}>{booking.statusObj.name}</TextFieldLabel>
+                            <TextFieldLabel style={[styles.statusText, { color: statusColor }]}>{statusLabel}</TextFieldLabel>
                         </View>
                     </View>
                 </View>
