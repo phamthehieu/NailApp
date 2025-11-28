@@ -133,20 +133,26 @@ const CustomerInformationComponent = ({ showDob = true, value, onChange }: Custo
     const { getHistoryBookingItem } = useBookingForm();
     const parseDateOfBirth = useCallback((customer: customerInfo): Date | null => {
         const currentYear = new Date().getFullYear();
+        const rawDob = customer.dateOfBirth;
 
-        if (customer.dateOfBirth && customer.dateOfBirth !== "0001-01-01T00:00:00") {
-            const parsedDate = new Date(customer.dateOfBirth);
+        if (typeof rawDob === "string" && rawDob && rawDob !== "0001-01-01T00:00:00") {
+            const parsedDate = new Date(rawDob);
             if (!isNaN(parsedDate.getTime())) {
-                const month = parsedDate.getMonth();
-                const day = parsedDate.getDate();
-                return new Date(currentYear, month, day);
+                return new Date(currentYear, parsedDate.getMonth(), parsedDate.getDate());
             }
         }
 
-        if (customer.monthBirth && customer.monthBirth > 0 && customer.dayBirth && customer.dayBirth > 0) {
-            const month = customer.monthBirth - 1;
-            const day = customer.dayBirth;
-            return new Date(currentYear, month, day);
+        const numericDay = typeof rawDob === "number" && rawDob > 0 ? rawDob : customer.dayBirth ?? null;
+        const numericMonthSource =
+            typeof customer.monthOfBirth === "number" && customer.monthOfBirth > 0
+                ? customer.monthOfBirth
+                : customer.monthBirth;
+        const numericMonth = numericMonthSource && numericMonthSource > 0 ? numericMonthSource - 1 : null;
+        const numericYear =
+            typeof customer.yearOfBirth === "number" && customer.yearOfBirth > 0 ? customer.yearOfBirth : currentYear;
+
+        if (numericDay && numericMonth !== null) {
+            return new Date(numericYear, numericMonth, numericDay);
         }
 
         return null;

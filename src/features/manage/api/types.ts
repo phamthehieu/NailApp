@@ -218,8 +218,9 @@ export interface customerInfo {
     name: string
     phoneNumber: string
     email: string
-    dateOfBirth: string
-    yearOfBirth?: number
+    dateOfBirth?: string | number | null
+    monthOfBirth?: number | null
+    yearOfBirth?: number | null
     appUserId: any
     appUserObj: any
     tenantId: number
@@ -237,8 +238,8 @@ export interface customerInfo {
     timesOfServiceUsage: number
     avatarUrl: string
     isNewAvatar: boolean
-    monthBirth?: number
-    dayBirth?: number
+    monthBirth?: number | null
+    dayBirth?: number | null
     isSendReview: boolean
     historyUsageService: any[]
     id: number
@@ -256,7 +257,8 @@ export interface CreateUserBookingRequest {
     name: string | null
     phoneNumber: string | null
     email: string | null
-    dateOfBirth: string | null
+    dateOfBirth: number | null
+    monthOfBirth: number | null
     yearOfBirth: number | null
     gender: number | null
     systemCatalogId: number | null
