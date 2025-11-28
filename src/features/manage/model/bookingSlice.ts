@@ -66,14 +66,18 @@ const bookingSlice = createSlice({
     reducers: {
         setListBookingManager(state, action: PayloadAction<ListBookingManagerResponse>) {
             state.listBookingManager = action.payload.items;
-            state.listBookingManagerByDate = action.payload.items;
-            state.listBookingManagerByRange = action.payload.items;
             state.pageIndex = action.payload.pageIndex;
             state.totalItems = action.payload.totalItems;
             state.pageSize = action.payload.pageSize;
             state.totalPages = action.payload.totalPages;
             state.loading = false;
             state.error = null;
+        },
+        setListBookingManagerByDate(state, action: PayloadAction<ListBookingManagerResponse>) {
+            state.listBookingManagerByDate = action.payload.items;
+        },
+        setListBookingManagerByRange(state, action: PayloadAction<ListBookingManagerResponse>) {
+            state.listBookingManagerByRange = action.payload.items;
         },
         setLoading(state, action: PayloadAction<boolean>) {
             state.loading = action.payload;
@@ -155,6 +159,8 @@ const bookingSlice = createSlice({
 
 export const {
     setListBookingManager,
+    setListBookingManagerByDate,
+    setListBookingManagerByRange,
     setLoading,
     setError,
     clearBookingListState,

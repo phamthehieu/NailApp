@@ -242,7 +242,7 @@ const BookingListComponent = ({ navigation }: BookingListComponentProps) => {
                 numColumns={isTablet ? 3 : 1}
                 contentContainerStyle={styles.listContainer}
                 showsVerticalScrollIndicator={false}
-                columnWrapperStyle={isTablet ? styles.columnWrapper : undefined}
+                // columnWrapperStyle={isTablet ? styles.columnWrapper : undefined}
                 onEndReached={handleLoadMore}
                 onEndReachedThreshold={0.1}
                 removeClippedSubviews={false}
@@ -309,6 +309,7 @@ const $styles = (colors: Colors, isTablet: boolean) =>
             borderRadius: 12,
             padding: 16,
             marginBottom: 16,
+            margin: 4,
             borderWidth: 0.2,
             borderColor: colors.border,
             ...(isTablet && {

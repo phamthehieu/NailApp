@@ -1,7 +1,7 @@
 import { useAppDispatch, useAppSelector } from "@/app/store";
 import { useCallback, useState } from "react";
 import { getDetailBookingItemApi, getHistoryBookingItemApi, getlistBookingManagerApi, getListBookingStatusApi, getListTimeSlotApi, postCancelBookingApi, putCheckinBookingApi, putEditBookingApi } from "../api/BookingApi";
-import { setListBookingManager, setListBookingStatus, appendListBookingManager, resetPageIndex, setDetailBookingItem, setHistoryBookingItem, appendHistoryBookingItem, setFilters, resetFilters } from "../model/bookingSlice";
+import { setListBookingManager, setListBookingManagerByDate, setListBookingManagerByRange, setListBookingStatus, appendListBookingManager, resetPageIndex, setDetailBookingItem, setHistoryBookingItem, appendHistoryBookingItem, setFilters, resetFilters } from "../model/bookingSlice";
 import { alertService } from "@/services/alertService";
 import { useTranslation } from "react-i18next";
 import { EditBookingRequest } from "../api/types";
@@ -104,7 +104,7 @@ export function useBookingForm() {
         try {
             const pageSizeDate = 10000;
             const response = await getlistBookingManagerApi(undefined, undefined, bookingDate, undefined, undefined, undefined, undefined, searchText, undefined, undefined, pageSizeDate, undefined);
-            dispatch(setListBookingManager(response));
+            dispatch(setListBookingManagerByDate(response));
         } catch (error: any) {
             console.error(error);
             alertService.showAlert({
@@ -124,7 +124,7 @@ export function useBookingForm() {
             setLoading(true);
             const pageSizeDate = 10000;
             const response = await getlistBookingManagerApi(startDate, endDate, undefined, undefined, undefined, undefined, undefined, searchText, undefined, undefined, pageSizeDate, undefined, staffId);
-            dispatch(setListBookingManager(response));
+            dispatch(setListBookingManagerByRange(response));
         } catch (error: any) {
             console.error(error);
             alertService.showAlert({

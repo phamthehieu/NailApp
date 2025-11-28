@@ -87,10 +87,7 @@ const CalenderWeedComponent = ({ selectedDate, dateRange, onPressScheduleItem, s
     }, [listBookingHourSettingByStaffId]);
 
     const displayTimeSlots = useMemo(() => {
-        return timeSlots.filter(slot => {
-            const h = parseInt(slot.time.substring(0, 2));
-            return h >= minVisibleHour && h <= maxVisibleHour;
-        });
+       return timeSlots;
     }, [minVisibleHour, maxVisibleHour]);
 
     const isTablet = useIsTablet();
@@ -234,10 +231,12 @@ const CalenderWeedComponent = ({ selectedDate, dateRange, onPressScheduleItem, s
             const showTitle = widthInPixels >= 28 && heightInPixels >= 18;
             const showTime = widthInPixels >= 56 && heightInPixels >= 22;
 
+            const originalBooking = bookingDataMap.get(item.id);
+
             return (
                 <Pressable
                     onPress={() => {
-                        onPressScheduleItem(item);
+                        onPressScheduleItem(originalBooking);
                     }}
                     key={`${userId}-${item.id}-${index}-${timeSlot}`}
                     style={[
@@ -298,8 +297,9 @@ const CalenderWeedComponent = ({ selectedDate, dateRange, onPressScheduleItem, s
         );
     };
 
-    const convertedScheduleItems = useMemo(() => {
+    const { convertedScheduleItems, bookingDataMap } = useMemo(() => {
         const items: ScheduleItem[] = [];
+        const bookingMap = new Map<string, BookingManagerItem>();
 
         listBookingManagerByRange.forEach((booking: BookingManagerItem) => {
             if (!booking.services || booking.services.length === 0) return;
@@ -341,7 +341,7 @@ const CalenderWeedComponent = ({ selectedDate, dateRange, onPressScheduleItem, s
                             return { color: colors.purple, borderColor: colors.purple };
                         case 3:
                             return { color: colors.red, borderColor: colors.red };
-                            case 4:
+                        case 4:
                             return { color: colors.green, borderColor: colors.green };
                         default:
                             return { color: colors.blue, borderColor: colors.blue };
@@ -361,13 +361,14 @@ const CalenderWeedComponent = ({ selectedDate, dateRange, onPressScheduleItem, s
                     borderColor,
                     date: new Date(bookingDate),
                 });
+
+                bookingMap.set(itemId, booking);
             });
         });
 
-        return items;
-    }, [listBookingManagerByRange]);
+        return { convertedScheduleItems: items, bookingDataMap: bookingMap };
+    }, [listBookingManagerByRange, colors]);
 
-    console.log('listBookingHourSettingByStaffId', listBookingHourSettingByStaffId);
     return (
         <View style={styles.mainContainer}>
             <View style={styles.fixedUserColumn}>

@@ -204,7 +204,7 @@ const BookingManageScreen = ({ navigation }: RootScreenProps<Paths.BookingManage
     const handlePressScheduleItem = (item: any) => {
         console.log('item', item);
         getDetailBookingItem(item.id);
-        getHistoryBookingItem(item.customerId);
+        getHistoryBookingItem(item.customer.id);
         navigation.navigate(Paths.DetailBookingItem, { bookingId: item.id });
     };
 
@@ -305,8 +305,9 @@ const BookingManageScreen = ({ navigation }: RootScreenProps<Paths.BookingManage
     }, [viewMode, anchorDate, activeRange, bookingDate, dateFrom, dateTo, setBookingDate, setDateFrom, setDateTo]);
 
     useEffect(() => {
+        if (activeTab.value !== 2) return;
         getListBookingManager();
-    }, [dateFromKey, dateToKey, bookingDateKey, status, bookingCode, customerName, phone, search, getListBookingManager]);
+    }, [activeTab.value, dateFromKey, dateToKey, bookingDateKey, status, bookingCode, customerName, phone, search, getListBookingManager]);
 
     return (
         <SafeAreaView style={styles.container} edges={['top']}>

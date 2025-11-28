@@ -94,7 +94,7 @@ export const getlistBookingManagerApi = async (
         params.append('CustomerPhone', phone);
     }
     if (search) {
-        params.append('Search', search);
+        params.append('StaffName', search);
     }
     if (sortBy) {
         params.append('SortBy', sortBy);
