@@ -102,8 +102,6 @@ export function useBookingForm() {
 
     const getListBookingManagerByDate = useCallback(async (bookingDate: Date, searchText: string) => {
         try {
-            if (loading) return;
-            setLoading(true);
             const pageSizeDate = 10000;
             const response = await getlistBookingManagerApi(undefined, undefined, bookingDate, undefined, undefined, undefined, undefined, searchText, undefined, undefined, pageSizeDate, undefined);
             dispatch(setListBookingManager(response));

@@ -41,18 +41,25 @@ export const getScheduleBlocksForHour = (
   timeSlotHHmm: string,
 ) => {
   const timeSlotHour = parseInt(timeSlotHHmm.substring(0, 2));
+  const timeSlotMinutes = parseInt(timeSlotHHmm.substring(2, 4));
+  const timeSlotStart = timeSlotHour + timeSlotMinutes / 60;
+  const timeSlotEnd = timeSlotStart + 1; // Mỗi timeSlot là 1 giờ
 
   const filtered = items.filter(item => {
     if (item.userId !== userId) return false;
-    const itemStartHour = parseInt(item.startTime.substring(0, 2));
-    const itemEndHour = parseInt(item.endTime.substring(0, 2));
-    return timeSlotHour >= itemStartHour && timeSlotHour <= itemEndHour;
+    
+    const startHours = parseInt(item.startTime.substring(0, 2));
+    const startMinutes = parseInt(item.startTime.substring(2, 4));
+    
+    const itemStartDecimal = startHours + startMinutes / 60;
+    
+    // Item được hiển thị trong timeSlot nếu nó bắt đầu trong giờ đó
+    return itemStartDecimal >= timeSlotStart && itemStartDecimal < timeSlotEnd;
   });
 
   return filtered
     .map((item, index) => {
-      const itemStartHour = parseInt(item.startTime.substring(0, 2));
-      if (timeSlotHour !== itemStartHour) return null;
+      // Không cần kiểm tra itemStartHour nữa vì đã filter ở trên
 
       const startHours = parseInt(item.startTime.substring(0, 2));
       const startMinutes = parseInt(item.startTime.substring(2, 4));

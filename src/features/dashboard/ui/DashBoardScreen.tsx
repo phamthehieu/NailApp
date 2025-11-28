@@ -9,11 +9,11 @@ import MHeader from "@/shared/ui/MHeader";
 import Loader from "@/shared/ui/Loader";
 import { useCallback, useEffect, useRef, useState } from "react";
 import HeaderDashBoardComponent from "./components/HeaderDashBoardComponent";
-import { useStaffForm } from "@/features/manage/hooks/useStaffForm";
 import ListBookingForm from "./components/ListBookingFormComponent";
 import { useDashBoardHook } from "../hooks/useDashBoardHook";
 import ListBookingGridComponent from "./components/ListBookingGridComponent";
 import { useFocusEffect } from "@react-navigation/native";
+import { useEditBookingForm } from "@/features/manage/hooks/useEditBookingForm";
 
 
 const DashBoardScreen = ({ navigation }: RootScreenProps<Paths.DashBoard>) => {
@@ -21,7 +21,7 @@ const DashBoardScreen = ({ navigation }: RootScreenProps<Paths.DashBoard>) => {
     const styles = $styles(colors);
     const { t } = useTranslation();
     const [loading, setLoading] = useState(false);
-    const { getListStaff } = useStaffForm();
+    const { getListStaffManager } = useEditBookingForm();
     const { getListBookingByDashBoard } = useDashBoardHook();
     const dashboardHook = useDashBoardHook();
     const tab1Opacity = useRef(new Animated.Value(1)).current;
@@ -31,8 +31,8 @@ const DashBoardScreen = ({ navigation }: RootScreenProps<Paths.DashBoard>) => {
     const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
 
     useEffect(() => {
-        getListStaff();
-        
+        getListStaffManager();
+
     }, [navigation]);
 
     useEffect(() => {

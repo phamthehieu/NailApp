@@ -155,11 +155,9 @@ const CalenderDayComponent = ({ selectedDate: _selectedDate, onPressScheduleItem
     }, [filteredListStaff, selectedDayWorkingRange, dayOfWeek, getWorkingHoursForStaff]);
 
     const displayTimeSlots = useMemo(() => {
-        return timeSlots.filter(slot => {
-            const h = parseInt(slot.time.substring(0, 2));
-            return h >= minVisibleHour && h <= maxVisibleHour;
-        });
-    }, [minVisibleHour, maxVisibleHour]);
+        // Luôn hiển thị tất cả 24 giờ từ 0h đến 23h
+        return timeSlots;
+    }, []);
 
     const isTablet = useIsTablet();
 
@@ -241,7 +239,9 @@ const CalenderDayComponent = ({ selectedDate: _selectedDate, onPressScheduleItem
     }, [listBookingManagerByDate]);
 
     const renderScheduleItem = (userId: string, timeSlot: string) => {
+        console.log('convertedScheduleItems', convertedScheduleItems , userId, timeSlot);
         const blocks = getScheduleBlocksForHour(convertedScheduleItems, userId, timeSlot);
+        console.log('blocks', blocks);
         return blocks.map(({ item, index, heightInPixels }) => {
             const startHours = parseInt(item.startTime.substring(0, 2));
             const startMinutes = parseInt(item.startTime.substring(2, 4));
@@ -321,7 +321,7 @@ const CalenderDayComponent = ({ selectedDate: _selectedDate, onPressScheduleItem
         getListStaff();
     }, []);
 
-    console.log('listBookingHourSetting', listBookingHourSetting);
+    console.log('listBookingHourSetting', listBookingManagerByDate);
 
     return (
         <View style={styles.mainContainer}>
@@ -492,13 +492,13 @@ const CalenderDayComponent = ({ selectedDate: _selectedDate, onPressScheduleItem
                                                             key={`${slot.time}-${staff.id}`}
                                                             style={[
                                                                 styles.scheduleCell,
-                                                                !working && styles.nonWorkingHoursCell
+                                                                // !working && styles.nonWorkingHoursCell
                                                             ]}
                                                         >
                                                             {renderQuarterHourLines()}
                                                             {renderScheduleItem(staff.id.toString(), slot.time)}
 
-                                                            {hasWorkingHours && slotHour === staffHoursStart && slotMinutes === 0 && staffMinutesStart > 0 && (
+                                                            {/* {hasWorkingHours && slotHour === staffHoursStart && slotMinutes === 0 && staffMinutesStart > 0 && (
                                                                 <View style={[
                                                                     styles.partialOverlay,
                                                                     {
@@ -519,7 +519,7 @@ const CalenderDayComponent = ({ selectedDate: _selectedDate, onPressScheduleItem
                                                                         opacity: 0.8
                                                                     }
                                                                 ]} />
-                                                            )}
+                                                            )} */}
                                                         </View>
                                                     );
                                                 })}

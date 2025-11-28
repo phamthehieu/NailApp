@@ -262,6 +262,7 @@ const vi = {
     errorCreateBooking: 'Tạo đặt lịch thất bại. Vui lòng thử lại.',
     bookingCreatedSuccessfully: 'Đặt lịch thành công.',
     success: 'Thành công',
+    duplicateServiceError: 'Không được phép chọn dịch vụ trùng nhau',
   },
   editBooking: {
     title: 'Cập nhật thông tin đặt lịch',

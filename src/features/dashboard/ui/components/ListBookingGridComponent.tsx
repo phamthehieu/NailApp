@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef, useMemo } from "react";
+import React, { useState, useCallback, useRef, useMemo, useEffect } from "react";
 import { View, StyleSheet, FlatList, RefreshControl, TouchableOpacity, Dimensions } from "react-native";
 import { User, MoreHorizontal, ChevronDown } from "lucide-react-native";
 import { TextFieldLabel } from "@/shared/ui/Text";
@@ -35,6 +35,7 @@ const ListBookingGridComponent = ({ navigation, dashboardHook }: ListBookingForm
 
     const [refreshing, setRefreshing] = useState(false);
     const isLoadingMoreRef = useRef(false);
+    const [dimensions, setDimensions] = useState(() => Dimensions.get('window'));
 
     const formatBookingDateTime = (dateString: string, timeString?: string) => {
         let dateLabel = dateString;
@@ -105,19 +106,17 @@ const ListBookingGridComponent = ({ navigation, dashboardHook }: ListBookingForm
         });
     }, [listBookingManager, staffId]);
 
-    const formatPrice = (price?: number | null) => {
-        if (price === null || price === undefined) {
-            return '0 pts';
-        }
-        return new Intl.NumberFormat('en-US', {
-            style: 'currency',
-            currency: 'USD',
-            minimumFractionDigits: 0,
-        }).format(price);
-    };
+    useEffect(() => {
+        const subscription = Dimensions.addEventListener('change', ({ window }) => {
+            setDimensions(window);
+        });
 
-    const numColumns = isTablet() ? 3 : 1;
-    const screenWidth = Dimensions.get('window').width;
+        return () => subscription?.remove();
+    }, []);
+
+    const isLandscape = dimensions.width > dimensions.height;
+    const numColumns = isTablet() && isLandscape ? 3 : 1;
+    const screenWidth = dimensions.width;
     const paddingHorizontal = 16 * 2;
     const gap = 12;
     const itemWidth = numColumns > 1

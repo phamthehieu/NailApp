@@ -509,13 +509,13 @@ const CalenderWeedComponent = ({ selectedDate, dateRange, onPressScheduleItem, s
                                                         key={`${slot.time}-day-${dayIndex}`}
                                                         style={[
                                                             styles.scheduleCell,
-                                                            showWorkingHours && !working && styles.nonWorkingHoursCell
+                                                            // showWorkingHours && !working && styles.nonWorkingHoursCell
                                                         ]}
                                                     >
                                                         {renderQuarterHourLines()}
                                                         {renderScheduleItem(selectedUserId.toString(), slot.time, day.date)}
 
-                                                        {showWorkingHours && slotHour === dayHoursStart && slotMinutes === 0 && dayMinutesStart > 0 && (
+                                                        {/* {showWorkingHours && slotHour === dayHoursStart && slotMinutes === 0 && dayMinutesStart > 0 && (
                                                             <View style={[
                                                                 styles.partialOverlay,
                                                                 {
@@ -536,7 +536,7 @@ const CalenderWeedComponent = ({ selectedDate, dateRange, onPressScheduleItem, s
                                                                     opacity: 0.8
                                                                 }
                                                             ]} />
-                                                        )}
+                                                        )} */}
                                                     </View>
                                                 );
                                             })}

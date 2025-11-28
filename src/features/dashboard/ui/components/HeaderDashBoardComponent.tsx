@@ -2,7 +2,7 @@ import { Colors, useAppTheme } from "@/shared/theme";
 import { Pressable, StyleSheet, TextInput, TouchableOpacity, View } from "react-native";
 import { TextFieldLabel } from "@/shared/ui/Text";
 import { useSelector } from "react-redux";
-import { RootState } from "@/app/store";
+import { RootState, useAppSelector } from "@/app/store";
 import { Dropdown } from "react-native-element-dropdown";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -34,7 +34,7 @@ const HeaderDashBoardComponent = ({ dashboardHook, viewMode, setViewMode, onBook
     const { theme: { colors } } = useAppTheme();
     const { width } = useWindowDimensions();
     const styles = useMemo(() => $styles(colors, width), [colors, width]);
-    const { listStaff } = useSelector((state: RootState) => state.staff);
+    const listStaff = useAppSelector((state: RootState) => state.editBooking.listStaffManager);
     const { t, i18n } = useTranslation();
     const textInputRef = useRef<TextInput>(null);
     const currentLanguage = i18n.language;
@@ -104,13 +104,15 @@ const HeaderDashBoardComponent = ({ dashboardHook, viewMode, setViewMode, onBook
     };
 
     useEffect(() => {
-        setListDropdown([
-            { label: t('dashboard.allStaff'), value: null },
-            ...listStaff.map(user => ({
-                label: user.displayName,
-                value: user.id.toString()
-            }))
-        ]);
+        if (listStaff) {
+            setListDropdown([
+                { label: t('dashboard.allStaff'), value: null },
+                ...listStaff.map(user => ({
+                    label: user.name,
+                    value: user.id.toString()
+                }))
+            ]);
+        }
         setStaffId(null);
     }, [listStaff, t]);
 

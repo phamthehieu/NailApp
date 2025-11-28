@@ -26,7 +26,6 @@ const AddNewBookingScreen = ({ navigation }: RootScreenProps<Paths.AddNewBooking
     const { t } = useTranslation();
     const { getListBookingSetting, loading, getListService, getListBookingFrequency, postCreateUserBooking, postCreateBooking, getListStaffManager } = useEditBookingForm();
     const listBookingSetting = useAppSelector((state: RootState) => state.editBooking.listBookingSetting);
-    const { getListBookingManager } = useBookingForm();
 
     const steps = useMemo(() => ([
         { label: t('bookingInformation.customerInfo'), icon: UserRound },
@@ -136,10 +135,13 @@ const AddNewBookingScreen = ({ navigation }: RootScreenProps<Paths.AddNewBooking
             return false;
         }
 
-        if (bookingData.services.length > 1) {
+        // Kiểm tra xem có service nào trùng serviceId không
+        const serviceIds = bookingData.services.map(service => service.serviceId).filter(id => id > 0);
+        const uniqueServiceIds = new Set(serviceIds);
+        if (serviceIds.length !== uniqueServiceIds.size) {
             alertService.showAlert({
                 title: t('addNewBooking.validationError'),
-                message: t('addNewBooking.singleServiceError'),
+                message: t('addNewBooking.duplicateServiceError', { defaultValue: 'Không được phép chọn dịch vụ trùng nhau' }),
                 typeAlert: 'Error',
                 onConfirm: () => { },
             });

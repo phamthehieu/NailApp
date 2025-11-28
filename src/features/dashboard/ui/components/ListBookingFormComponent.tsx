@@ -156,9 +156,9 @@ const ListBookingFormComponent = ({ navigation, dashboardHook }: ListBookingForm
 
                 <View style={styles.pointsContainer}>
                     <TextFieldLabel style={styles.pointsText}>{priceLabel}</TextFieldLabel>
-                    <TouchableOpacity style={styles.moreButton} onPress={() => { }}>
+                    {/* <TouchableOpacity style={styles.moreButton} onPress={() => { }}>
                         <MoreHorizontal size={20} color={colors.text} />
-                    </TouchableOpacity>
+                    </TouchableOpacity> */}
                 </View>
             </View>
         );

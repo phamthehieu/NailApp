@@ -216,13 +216,14 @@ const BookingManageScreen = ({ navigation }: RootScreenProps<Paths.BookingManage
     }, [searchText]);
 
     useEffect(() => {
-
         if (activeTab.value === 1) {
             if (viewMode === 'Ngày') {
                 getListBookingManagerByDate(anchorDate, debouncedSearchText);
             } else if (viewMode === 'Tuần') {
-                getListBookingHourSettingByStaffId(selectedUserId);
-                getListBookingManagerByRange(activeRange?.start, activeRange?.end, debouncedSearchText, selectedUserId);
+                if (activeRange?.start && activeRange?.end) {
+                    getListBookingHourSettingByStaffId(selectedUserId);
+                    getListBookingManagerByRange(activeRange.start, activeRange.end, debouncedSearchText, selectedUserId);
+                }
             } else if (viewMode === 'Tháng') {
                 const startDate = new Date(anchorDate.getFullYear(), anchorDate.getMonth(), 1);
                 startDate.setHours(0, 0, 0, 0);
@@ -234,7 +235,7 @@ const BookingManageScreen = ({ navigation }: RootScreenProps<Paths.BookingManage
         if (activeTab.value === 2) {
             getListBookingManager();
         }
-    }, [anchorDate, viewMode, activeTab, debouncedSearchText, activeRange, selectedUserId]);
+    }, [anchorDate, viewMode, activeTab.value, debouncedSearchText, activeRange, selectedUserId]);
 
     return (
         <SafeAreaView style={styles.container} edges={['top']}>

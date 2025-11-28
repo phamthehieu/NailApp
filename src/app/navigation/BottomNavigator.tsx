@@ -53,6 +53,17 @@ const BottomNavigator = () => {
         >
 
             <Tab.Screen
+                name={Paths.BookingManage}
+                component={BookingManageScreen}
+                options={{
+                    tabBarLabel: ({ color }: { color: string }) => renderLabel(Paths.BookingManage, color),
+                    tabBarIcon: ({ color, size }: { color: string; size: number }) => (
+                        <CalendarCheck color={color} size={size} />
+                    ),
+                }}
+            />
+
+            <Tab.Screen
                 name={Paths.DashBoard}
                 component={DashBoardScreen}
                 options={{
@@ -63,16 +74,6 @@ const BottomNavigator = () => {
                 }}
             />
 
-            <Tab.Screen
-                name={Paths.BookingManage}
-                component={BookingManageScreen}
-                options={{
-                    tabBarLabel: ({ color }: { color: string }) => renderLabel(Paths.BookingManage, color),
-                    tabBarIcon: ({ color, size }: { color: string; size: number }) => (
-                        <CalendarCheck color={color} size={size} />
-                    ),
-                }}
-            />
 
             <Tab.Screen
                 name={Paths.Checkin}
