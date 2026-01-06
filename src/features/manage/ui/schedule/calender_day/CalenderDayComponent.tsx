@@ -17,6 +17,7 @@ import { TextFieldLabel } from '@/shared/ui/Text';
 import { useSelector } from 'react-redux';
 import { RootState, useAppSelector } from '@/app/store';
 import { useStaffForm } from '@/features/manage/hooks/useStaffForm';
+import { ArrowBigLeft, ArrowBigRight, ArrowLeft, ArrowRight } from 'lucide-react-native';
 
 type Props = {
     selectedDate: Date;
@@ -44,6 +45,8 @@ const CalenderDayComponent = ({
     const timeSlotHeight = 80;
     const [hideStaffWithoutWorkingHours, setHideStaffWithoutWorkingHours] =
         useState(false);
+    const [currentPage, setCurrentPage] = useState(1);
+    const pageSize = 5;
 
     const getDayOfWeek = (date: Date): string => {
         const days = [
@@ -157,18 +160,34 @@ const CalenderDayComponent = ({
         return timeSlots;
     }, []);
 
+    const totalPagesLocal = useMemo(() => {
+        return Math.max(1, Math.ceil(filteredListStaff.length / pageSize));
+    }, [filteredListStaff.length, pageSize]);
+
+    useEffect(() => {
+        // Nếu lọc làm giảm số staff, đảm bảo currentPage không vượt quá tổng trang
+        if (currentPage > totalPagesLocal) {
+            setCurrentPage(totalPagesLocal);
+        }
+    }, [currentPage, totalPagesLocal]);
+
+    const visibleStaff = useMemo(() => {
+        const start = (currentPage - 1) * pageSize;
+        return filteredListStaff.slice(start, start + pageSize);
+    }, [filteredListStaff, currentPage, pageSize]);
+
     const isTablet = useIsTablet();
 
     const windowWidth = Dimensions.get('window').width;
     const timeColumnWidth = isTablet ? 120 : 90;
 
     const staffColumnWidth = useMemo(() => {
-        const staffCount = Math.max(filteredListStaff.length, 1);
+        const staffCount = Math.max(visibleStaff.length, 1);
         const availableWidth = windowWidth - timeColumnWidth;
         const baseWidth = availableWidth / staffCount;
         const minWidth = 200;
         return Math.max(minWidth, baseWidth);
-    }, [windowWidth, timeColumnWidth, filteredListStaff.length]);
+    }, [windowWidth, timeColumnWidth, visibleStaff.length]);
 
     const styles = $styles(colors, staffColumnWidth, timeSlotHeight, isTablet);
 
@@ -361,7 +380,7 @@ const CalenderDayComponent = ({
     }, []);
 
     return (
-        <ScrollView>
+        <View style={{ flex: 1 }}>
             <View style={styles.mainContainer}>
                 <View style={styles.fixedTimeColumn}>
                     <Pressable
@@ -402,15 +421,39 @@ const CalenderDayComponent = ({
                             scrollEnabled={false}
                             pointerEvents="none">
                             <View style={styles.headerRow}>
-                                {filteredListStaff.map(staff => (
+                                {visibleStaff.map(staff => (
                                     <View
                                         key={staff.id}
-                                        style={[styles.staffHeaderCell, { width: staffColumnWidth }]}>
+                                        style={[
+                                            styles.staffHeaderCell,
+                                            { width: staffColumnWidth },
+                                        ]}
+                                    >
                                         <UserAvatar listStaff={staff} />
                                     </View>
                                 ))}
                             </View>
                         </ScrollView>
+                    </View>
+
+                    <View style={styles.fixedPagination}>
+                        {currentPage > 1 && (
+                            <Pressable
+                                onPress={() => setCurrentPage(currentPage - 1)}
+                                style={styles.paginationButton}
+                            >
+                                <ArrowBigLeft size={24} color={colors.yellow} />
+                            </Pressable>
+                        )}
+                        <View style={{ flex: 1 }} />
+                        {currentPage < totalPagesLocal && (
+                            <Pressable
+                                onPress={() => setCurrentPage(currentPage + 1)}
+                                style={styles.paginationButton}
+                            >
+                                <ArrowBigRight size={24} color={colors.yellow} />
+                            </Pressable>
+                        )}
                     </View>
 
                     <ScrollView
@@ -442,7 +485,7 @@ const CalenderDayComponent = ({
                             }}>
                             <View style={styles.container}>
                                 <View style={styles.staffColumnsContainer}>
-                                    {filteredListStaff.map(staff => {
+                                    {visibleStaff.map(staff => {
                                         const staffWorkingHours = getWorkingHoursForStaff(
                                             staff.id,
                                             dayOfWeek,
@@ -494,29 +537,6 @@ const CalenderDayComponent = ({
                                                                     staff.id.toString(),
                                                                     slot.time,
                                                                 )}
-
-                                                                {/* {hasWorkingHours && slotHour === staffHoursStart && slotMinutes === 0 && staffMinutesStart > 0 && (
-                                                                <View style={[
-                                                                    styles.partialOverlay,
-                                                                    {
-                                                                        height: (staffMinutesStart / 60) * timeSlotHeight,
-                                                                        backgroundColor: colors.bacgroundCalendar,
-                                                                        opacity: 0.8
-                                                                    }
-                                                                ]} />
-                                                            )}
-
-                                                            {hasWorkingHours && slotHour === staffHoursEnd && slotMinutes === 0 && staffMinutesEnd < 60 && (
-                                                                <View style={[
-                                                                    styles.partialOverlay,
-                                                                    {
-                                                                        top: (staffMinutesEnd / 60) * timeSlotHeight,
-                                                                        height: ((60 - staffMinutesEnd) / 60) * timeSlotHeight,
-                                                                        backgroundColor: colors.bacgroundCalendar,
-                                                                        opacity: 0.8
-                                                                    }
-                                                                ]} />
-                                                            )} */}
                                                             </View>
                                                         );
                                                     })}
@@ -530,7 +550,7 @@ const CalenderDayComponent = ({
                     </ScrollView>
                 </View>
             </View>
-        </ScrollView>
+        </View>
     );
 };
 
@@ -602,7 +622,36 @@ const $styles = (
             borderBottomWidth: 1,
             borderColor: colors.borderTable,
             backgroundColor: colors.backgroundTable,
-            zIndex: 100,
+            zIndex: 1,
+        },
+        headerWrapper: {
+            position: 'relative',
+            backgroundColor: colors.backgroundTable,
+            paddingTop: 0,
+        },
+        fixedPagination: {
+            position: 'absolute',
+            top: 24,
+            left: 0,
+            right: 0,
+            flexDirection: 'row',
+            alignItems: 'center',
+            paddingHorizontal: 12,
+            zIndex: 1000,
+        },
+        paginationButton: {
+            width: 42,
+            height: 42,
+            borderRadius: 30,
+            borderWidth: 1,
+            borderColor: colors.yellow,
+            justifyContent: 'center',
+            alignItems: 'center',
+            backgroundColor: colors.backgroundTable,
+        },
+        paginationButtonIcon: {
+            fontSize: 28,
+            color: colors.yellow,
         },
         staffHeaderCell: {
             width: staffColumnWidth,
