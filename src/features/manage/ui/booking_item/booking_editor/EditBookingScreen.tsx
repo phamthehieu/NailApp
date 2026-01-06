@@ -1,7 +1,7 @@
     import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
     import { TextFieldLabel } from "@/shared/ui/Text";
-    import { RootScreenProps } from "@/app/navigation/types";
-    import { Paths } from "@/app/navigation/paths";
+    import { RootScreenProps } from "@/app/providers/navigation/types";
+    import { Paths } from "@/app/providers/navigation/paths";
     import { Colors, useAppTheme } from "@/shared/theme";
     import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from "react-native";
     import { ArrowLeft, ChevronDown } from "lucide-react-native";

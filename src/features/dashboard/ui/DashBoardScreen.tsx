@@ -1,5 +1,5 @@
-import { Paths } from "@/app/navigation/paths";
-import { RootScreenProps } from "@/app/navigation/types";
+import { Paths } from "@/app/providers/navigation/paths";
+import { RootScreenProps } from "@/app/providers/navigation/types";
 import { Colors, useAppTheme } from "@/shared/theme";
 import { Animated, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -84,10 +84,6 @@ const DashBoardScreen = ({ navigation }: RootScreenProps<Paths.DashBoard>) => {
             ]).start();
         }
     }, [viewMode]);
-
-    useFocusEffect(useCallback(() => {
-        getListBookingByDashBoard();
-    }, [navigation]));
 
     return (
         <SafeAreaView style={styles.container} edges={['top']}>

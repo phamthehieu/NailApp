@@ -11,7 +11,7 @@ import { useWindowDimensions } from "react-native";
 import { TextField } from "@/shared/ui/TextField";
 import { CalendarWeekPickerModal } from "@/shared/ui/CalendarPickers";
 import type { DashBoardHookResult } from "../../hooks/useDashBoardHook";
-import { Paths } from "@/app/navigation/paths";
+import { Paths } from "@/app/providers/navigation/paths";
 
 const getStartOfDay = (date: Date) => {
     const d = new Date(date);
@@ -87,10 +87,12 @@ const HeaderDashBoardComponent = ({ dashboardHook, viewMode, setViewMode, onBook
                 return `${d}/${m}/${y}`;
             }
             const d1 = start.getDate();
+            const m1 = start.getMonth() + 1;
+            const y1 = start.getFullYear();
             const d2 = end.getDate();
             const m2 = end.getMonth() + 1;
             const y2 = end.getFullYear();
-            return `${d1} -${d2}/${m2}/${y2}`;
+            return `${d1}/${m1}/${y1} -${d2}/${m2}/${y2}`;
         };
 
         if (committedRange) {

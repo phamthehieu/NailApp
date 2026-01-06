@@ -1,5 +1,5 @@
-import { Paths } from '@app/navigation/paths';
-import { RootScreenProps } from '@app/navigation/types';
+import { Paths } from '@/app/providers/navigation/paths';
+import { RootScreenProps } from '@/app/providers/navigation/types';
 import { useAppTheme } from '@shared/theme';
 import ENV from '@/shared/config/env';
 import { useEffect } from 'react';

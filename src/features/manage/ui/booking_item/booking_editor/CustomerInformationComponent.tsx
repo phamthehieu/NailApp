@@ -535,7 +535,7 @@ const CustomerInformationComponent = ({ showDob = true, value, onChange }: Custo
                                         renderItem={renderItem}
                                     />
                                 </View>
-                                <View style={styles.colSmall}>
+                                {/* <View style={styles.colSmall}>
                                     <View style={styles.labelRow}>
                                         <TextFieldLabel text={t('bookingInformation.dobYear')} style={styles.labelText} />
                                     </View>
@@ -559,7 +559,7 @@ const CustomerInformationComponent = ({ showDob = true, value, onChange }: Custo
                                         selectedTextProps={{ allowFontScaling: false }}
                                         renderItem={renderItem}
                                     />
-                                </View>
+                                </View> */}
                             </>
                         )}
                     </View>

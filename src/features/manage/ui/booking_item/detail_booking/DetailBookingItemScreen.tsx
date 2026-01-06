@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { RootScreenProps } from '@/app/navigation/types';
-import { Paths } from '@/app/navigation/paths';
+import { RootScreenProps } from '@/app/providers/navigation/types';
+import { Paths } from '@/app/providers/navigation/paths';
 import MHeader from '@/shared/ui/MHeader';
 import { Colors, useAppTheme } from '@/shared/theme';
 import { useTranslation } from 'react-i18next';

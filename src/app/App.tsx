@@ -4,8 +4,8 @@ import { initialWindowMetrics, SafeAreaProvider } from 'react-native-safe-area-c
 
 import { Provider } from 'react-redux';
 import { initI18n } from '@shared/i18n';
-import { AppNavigator } from '@app/navigation/AppNavigator';
-import { useNavigationPersistence } from '@app/navigation/navigationUtilities';
+import { AppNavigator } from '@/app/providers/navigation/AppNavigator';
+import { useNavigationPersistence } from '@/app/providers/navigation/navigationUtilities';
 import { ThemeProvider } from '@shared/theme/context';
 import { NetworkStatusBanner } from '@shared/ui/NetworkStatusBanner';
 import { loadDateFnsLocale } from '@shared/lib/formatDate';

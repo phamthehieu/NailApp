@@ -5,8 +5,8 @@ import { useTranslation } from "react-i18next";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { Colors, useAppTheme } from "@/shared/theme";
-import { RootScreenProps } from "@/app/navigation/types";
-import { Paths } from "@/app/navigation/paths";
+import { RootScreenProps } from "@/app/providers/navigation/types";
+import { Paths } from "@/app/providers/navigation/paths";
 import StatusBarComponent from "@/shared/ui/StatusBar";
 import MHeader from "@/shared/ui/MHeader";
 import { Button } from "@/shared/ui/Button";

@@ -59,6 +59,16 @@ export function useDashBoardHook() {
         await getListBookingByDashBoard(true);
     }, [getListBookingByDashBoard]);
 
+    const resetFilters = useCallback(() => {
+        setDateFrom(null);
+        setDateTo(null);
+        setBookingDate(new Date());
+        setStatus(null);
+        setBookingCode(undefined);
+        setCustomerName(undefined);
+        setPhone(undefined);
+    }, []);
+
     return {
         getListBookingByDashBoard,
         loading,
@@ -88,6 +98,7 @@ export function useDashBoardHook() {
         staffId,
         setStaffId,
         loadMoreBookings,
+        resetFilters,
     }
 }
 

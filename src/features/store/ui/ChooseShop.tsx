@@ -1,5 +1,5 @@
-import { Paths } from '@/app/navigation/paths';
-import { RootScreenProps } from '@/app/navigation/types';
+import { Paths } from '@/app/providers/navigation/paths';
+import { RootScreenProps } from '@/app/providers/navigation/types';
 import { Colors, useAppTheme } from '@/shared/theme';
 import StatusBarComponent from '@/shared/ui/StatusBar';
 import { StyleSheet, KeyboardAvoidingView, Platform, View, FlatList, RefreshControl, Animated, TouchableOpacity, Dimensions, PanResponderInstance, PanResponder } from 'react-native';
