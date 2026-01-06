@@ -1,5 +1,11 @@
 import React, { useRef, useMemo, useEffect, useCallback, useState } from 'react';
-import { View, StyleSheet, ScrollView, Pressable } from 'react-native';
+import {
+    View,
+    StyleSheet,
+    ScrollView,
+    Pressable,
+    Dimensions,
+} from 'react-native';
 import UserAvatar from './UserAvatar';
 import { timeSlots } from '../../../data/TimeSlots';
 import { ScheduleItem } from '../../../data/scheduleItems';
@@ -17,45 +23,66 @@ type Props = {
     onPressScheduleItem: (item: any) => void;
 };
 
-const CalenderDayComponent = ({ selectedDate: _selectedDate, onPressScheduleItem }: Props) => {
-    const { theme: { colors } } = useAppTheme();
+const CalenderDayComponent = ({
+    selectedDate: _selectedDate,
+    onPressScheduleItem,
+}: Props) => {
+    const {
+        theme: { colors },
+    } = useAppTheme();
     const { getListStaff } = useStaffForm();
-    const listBookingManagerByDate = useAppSelector((state) => state.booking.listBookingManagerByDate);
+    const listBookingManagerByDate = useAppSelector(
+        state => state.booking.listBookingManagerByDate,
+    );
     const timeScrollRef = useRef<ScrollView>(null);
     const headerScrollRef = useRef<ScrollView>(null);
     const bodyScrollRef = useRef<ScrollView>(null);
     const verticalScrollRef = useRef<ScrollView>(null);
-    const { listStaff, listBookingHourSetting } = useSelector((state: RootState) => state.staff);
-    const staffColumnWidth = 200;
+    const { listStaff, listBookingHourSetting } = useSelector(
+        (state: RootState) => state.staff,
+    );
     const timeSlotHeight = 80;
-    const [hideStaffWithoutWorkingHours, setHideStaffWithoutWorkingHours] = useState(false);
+    const [hideStaffWithoutWorkingHours, setHideStaffWithoutWorkingHours] =
+        useState(false);
 
     const getDayOfWeek = (date: Date): string => {
-        const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        const days = [
+            'Sunday',
+            'Monday',
+            'Tuesday',
+            'Wednesday',
+            'Thursday',
+            'Friday',
+            'Saturday',
+        ];
         return days[date.getDay()];
     };
 
-    const getWorkingHoursForStaff = useCallback((staffId: number, dayOfWeek: string) => {
-        const bookingHour = listBookingHourSetting.find(
-            item => item.staffId === staffId &&
-                item.dayOfTheWeek === dayOfWeek &&
-                item.active === true
-        );
+    const getWorkingHoursForStaff = useCallback(
+        (staffId: number, dayOfWeek: string) => {
+            const bookingHour = listBookingHourSetting.find(
+                item =>
+                    item.staffId === staffId &&
+                    item.dayOfTheWeek === dayOfWeek &&
+                    item.active === true,
+            );
 
-        if (!bookingHour) {
-            return null;
-        }
+            if (!bookingHour) {
+                return null;
+            }
 
-        const startTime = bookingHour.startTime;
-        const endTime = bookingHour.endTime;
+            const startTime = bookingHour.startTime;
+            const endTime = bookingHour.endTime;
 
-        const startHour = parseInt(startTime.substring(0, 2));
-        const startMinute = parseInt(startTime.substring(3, 5));
-        const endHour = parseInt(endTime.substring(0, 2));
-        const endMinute = parseInt(endTime.substring(3, 5));
+            const startHour = parseInt(startTime.substring(0, 2));
+            const startMinute = parseInt(startTime.substring(3, 5));
+            const endHour = parseInt(endTime.substring(0, 2));
+            const endMinute = parseInt(endTime.substring(3, 5));
 
-        return { startHour, startMinute, endHour, endMinute };
-    }, [listBookingHourSetting]);
+            return { startHour, startMinute, endHour, endMinute };
+        },
+        [listBookingHourSetting],
+    );
 
     const dayOfWeek = getDayOfWeek(_selectedDate);
 
@@ -67,11 +94,16 @@ const CalenderDayComponent = ({ selectedDate: _selectedDate, onPressScheduleItem
             const workingHours = getWorkingHoursForStaff(staff.id, dayOfWeek);
             return workingHours !== null;
         });
-    }, [listStaff, hideStaffWithoutWorkingHours, dayOfWeek, getWorkingHoursForStaff]);
+    }, [
+        listStaff,
+        hideStaffWithoutWorkingHours,
+        dayOfWeek,
+        getWorkingHoursForStaff,
+    ]);
 
     const selectedDayWorkingRange = useMemo(() => {
         const activeEntries = listBookingHourSetting.filter(
-            (item) => item.dayOfTheWeek === dayOfWeek && item.active
+            item => item.dayOfTheWeek === dayOfWeek && item.active,
         );
 
         if (activeEntries.length === 0) {
@@ -92,16 +124,20 @@ const CalenderDayComponent = ({ selectedDate: _selectedDate, onPressScheduleItem
         let minMinutes: number | null = null;
         let maxMinutes: number | null = null;
 
-        activeEntries.forEach((entry) => {
+        activeEntries.forEach(entry => {
             const startMinutes = parseTimeToMinutes(entry.startTime);
             const endMinutes = parseTimeToMinutes(entry.endTime);
 
             if (startMinutes !== null) {
-                minMinutes = minMinutes === null ? startMinutes : Math.min(minMinutes, startMinutes);
+                minMinutes =
+                    minMinutes === null
+                        ? startMinutes
+                        : Math.min(minMinutes, startMinutes);
             }
 
             if (endMinutes !== null) {
-                maxMinutes = maxMinutes === null ? endMinutes : Math.max(maxMinutes, endMinutes);
+                maxMinutes =
+                    maxMinutes === null ? endMinutes : Math.max(maxMinutes, endMinutes);
             }
         });
 
@@ -113,16 +149,26 @@ const CalenderDayComponent = ({ selectedDate: _selectedDate, onPressScheduleItem
             startHour: Math.floor(minMinutes / 60),
             startMinute: minMinutes % 60,
             endHour: Math.floor(maxMinutes / 60),
-            endMinute: maxMinutes % 60
+            endMinute: maxMinutes % 60,
         };
     }, [listBookingHourSetting, dayOfWeek]);
 
     const displayTimeSlots = useMemo(() => {
-        // Luôn hiển thị tất cả 24 giờ từ 0h đến 23h
         return timeSlots;
     }, []);
 
     const isTablet = useIsTablet();
+
+    const windowWidth = Dimensions.get('window').width;
+    const timeColumnWidth = isTablet ? 120 : 90;
+
+    const staffColumnWidth = useMemo(() => {
+        const staffCount = Math.max(filteredListStaff.length, 1);
+        const availableWidth = windowWidth - timeColumnWidth;
+        const baseWidth = availableWidth / staffCount;
+        const minWidth = 200;
+        return Math.max(minWidth, baseWidth);
+    }, [windowWidth, timeColumnWidth, filteredListStaff.length]);
 
     const styles = $styles(colors, staffColumnWidth, timeSlotHeight, isTablet);
 
@@ -152,15 +198,24 @@ const CalenderDayComponent = ({ selectedDate: _selectedDate, onPressScheduleItem
             booking.services.forEach((service, serviceIndex) => {
                 if (!service.staff || !service.staff.id) return;
 
-                const serviceStartDate = new Date(baseDate.getTime() + accumulatedMinutes * 60 * 1000);
+                const serviceStartDate = new Date(
+                    baseDate.getTime() + accumulatedMinutes * 60 * 1000,
+                );
                 const serviceStartHour = serviceStartDate.getHours();
                 const serviceStartMinute = serviceStartDate.getMinutes();
-                const startTimeHHmm = `${String(serviceStartHour).padStart(2, '0')}${String(serviceStartMinute).padStart(2, '0')}`;
+                const startTimeHHmm = `${String(serviceStartHour).padStart(
+                    2,
+                    '0',
+                )}${String(serviceStartMinute).padStart(2, '0')}`;
 
-                const serviceEndDate = new Date(serviceStartDate.getTime() + service.serviceTime * 60 * 1000);
+                const serviceEndDate = new Date(
+                    serviceStartDate.getTime() + service.serviceTime * 60 * 1000,
+                );
                 const serviceEndHour = serviceEndDate.getHours();
                 const serviceEndMinute = serviceEndDate.getMinutes();
-                const endTimeHHmm = `${String(serviceEndHour).padStart(2, '0')}${String(serviceEndMinute).padStart(2, '0')}`;
+                const endTimeHHmm = `${String(serviceEndHour).padStart(2, '0')}${String(
+                    serviceEndMinute,
+                ).padStart(2, '0')}`;
 
                 accumulatedMinutes += service.serviceTime;
 
@@ -202,7 +257,18 @@ const CalenderDayComponent = ({ selectedDate: _selectedDate, onPressScheduleItem
     }, [listBookingManagerByDate]);
 
     const renderScheduleItem = (userId: string, timeSlot: string) => {
-        const blocks = getScheduleBlocksForHour(convertedScheduleItems, userId, timeSlot);
+        const blocks = getScheduleBlocksForHour(
+            convertedScheduleItems,
+            userId,
+            timeSlot,
+        );
+
+        if (!blocks.length) return null;
+
+        const minItemWidth = 200;
+        const idealWidth = staffColumnWidth / blocks.length;
+        const itemWidth = Math.max(idealWidth, minItemWidth);
+
         return blocks.map(({ item, index, heightInPixels }) => {
             const startHours = parseInt(item.startTime.substring(0, 2));
             const startMinutes = parseInt(item.startTime.substring(2, 4));
@@ -235,27 +301,38 @@ const CalenderDayComponent = ({ selectedDate: _selectedDate, onPressScheduleItem
                         {
                             height: heightInPixelsAdjusted,
                             top: topPosition,
-                            width: staffColumnWidth - 6 - index * 6,
-                            left: index * 6,
+                            width: itemWidth - 6,
+                            left: index * itemWidth,
                             backgroundColor: item.color,
                             borderLeftColor: item.borderColor,
                             zIndex: 10 - index,
-                        }
-                    ]}
-                >
+                        },
+                    ]}>
                     {showTitle && (
-                        <TextFieldLabel style={[
-                            styles.scheduleItemTitle,
-                            heightInPixelsAdjusted < 40 && styles.smallScheduleItemTitle
-                        ]} numberOfLines={1} ellipsizeMode="tail">
-                            {item.title} -/- {formatTime(item.startTime)} - {formatTime(item.endTime)}
+                        <TextFieldLabel
+                            style={[
+                                styles.scheduleItemTitle,
+                                heightInPixelsAdjusted < 40 && styles.smallScheduleItemTitle,
+                            ]}
+                            numberOfLines={1}
+                            ellipsizeMode="tail">
+                            {item.title}{' '}
+                            {!showTime && (
+                                <>
+                                    {' '}
+                                    -/- {formatTime(item.startTime)} - {formatTime(item.endTime)}
+                                </>
+                            )}
                         </TextFieldLabel>
                     )}
-                    {/* {showTime && (
-                        <TextFieldLabel style={styles.scheduleItemTime} numberOfLines={1} ellipsizeMode="clip">
+                    {showTime && (
+                        <TextFieldLabel
+                            style={styles.scheduleItemTime}
+                            numberOfLines={1}
+                            ellipsizeMode="clip">
                             {formatTime(item.startTime)} - {formatTime(item.endTime)}
                         </TextFieldLabel>
-                    )} */}
+                    )}
                 </Pressable>
             );
         });
@@ -284,112 +361,141 @@ const CalenderDayComponent = ({ selectedDate: _selectedDate, onPressScheduleItem
     }, []);
 
     return (
-        <View style={styles.mainContainer}>
-            <View style={styles.fixedTimeColumn}>
-                <Pressable onPress={() => setHideStaffWithoutWorkingHours(!hideStaffWithoutWorkingHours)} style={styles.timeColumnHeader}>
-                    <View style={styles.filterContainer} />
-                </Pressable>
+        <ScrollView>
+            <View style={styles.mainContainer}>
+                <View style={styles.fixedTimeColumn}>
+                    <Pressable
+                        onPress={() =>
+                            setHideStaffWithoutWorkingHours(!hideStaffWithoutWorkingHours)
+                        }
+                        style={styles.timeColumnHeader}>
+                        <View style={styles.filterContainer} />
+                    </Pressable>
 
-                <ScrollView
-                    ref={timeScrollRef}
-                    showsVerticalScrollIndicator={false}
-                    scrollEnabled={false}
-                    nestedScrollEnabled={false}
-                    pointerEvents="none"
-                >
-                    <View style={styles.timeColumnContent}>
-                        {displayTimeSlots.map((slot) => (
-                            <View key={slot.time} style={[styles.timeColumnRow, { height: timeSlotHeight }]}>
-                                <TextFieldLabel style={styles.timeText}>{slot.label}</TextFieldLabel>
-                            </View>
-                        ))}
-                    </View>
-                </ScrollView>
-            </View>
-
-            <View style={styles.scrollableContent}>
-                <View style={styles.fixedHeader}>
                     <ScrollView
-                        horizontal
-                        showsHorizontalScrollIndicator={false}
-                        ref={headerScrollRef}
-                        scrollEventThrottle={16}
+                        ref={timeScrollRef}
+                        showsVerticalScrollIndicator={false}
                         scrollEnabled={false}
-                        pointerEvents="none"
-                    >
-                        <View style={styles.headerRow}>
-                            {filteredListStaff.map((staff) => (
-                                <View key={staff.id} style={[styles.staffHeaderCell, { width: staffColumnWidth }]}>
-                                    <UserAvatar listStaff={staff} />
+                        nestedScrollEnabled={false}
+                        pointerEvents="none">
+                        <View style={styles.timeColumnContent}>
+                            {displayTimeSlots.map(slot => (
+                                <View
+                                    key={slot.time}
+                                    style={[styles.timeColumnRow, { height: timeSlotHeight }]}>
+                                    <TextFieldLabel style={styles.timeText}>
+                                        {slot.label}
+                                    </TextFieldLabel>
                                 </View>
                             ))}
                         </View>
                     </ScrollView>
                 </View>
 
-                <ScrollView
-                    ref={verticalScrollRef}
-                    showsVerticalScrollIndicator={false}
-                    contentContainerStyle={{ paddingTop: 80 }}
-                    scrollEventThrottle={16}
-                    onScroll={(event) => {
-                        if (timeScrollRef.current) {
-                            timeScrollRef.current.scrollTo({
-                                y: event.nativeEvent.contentOffset.y,
-                                animated: false
-                            });
-                        }
-                    }}
-                >
+                <View style={styles.scrollableContent}>
+                    <View style={styles.fixedHeader}>
+                        <ScrollView
+                            horizontal
+                            showsHorizontalScrollIndicator={false}
+                            ref={headerScrollRef}
+                            scrollEventThrottle={16}
+                            scrollEnabled={false}
+                            pointerEvents="none">
+                            <View style={styles.headerRow}>
+                                {filteredListStaff.map(staff => (
+                                    <View
+                                        key={staff.id}
+                                        style={[styles.staffHeaderCell, { width: staffColumnWidth }]}>
+                                        <UserAvatar listStaff={staff} />
+                                    </View>
+                                ))}
+                            </View>
+                        </ScrollView>
+                    </View>
+
                     <ScrollView
-                        horizontal
-                        showsHorizontalScrollIndicator={false}
-                        nestedScrollEnabled={true}
-                        ref={bodyScrollRef}
+                        ref={verticalScrollRef}
+                        showsVerticalScrollIndicator={false}
+                        contentContainerStyle={{ paddingTop: 80 }}
                         scrollEventThrottle={16}
-                        onScroll={(event) => {
-                            if (headerScrollRef.current) {
-                                headerScrollRef.current.scrollTo({
-                                    x: event.nativeEvent.contentOffset.x,
-                                    animated: false
+                        onScroll={event => {
+                            if (timeScrollRef.current) {
+                                timeScrollRef.current.scrollTo({
+                                    y: event.nativeEvent.contentOffset.y,
+                                    animated: false,
                                 });
                             }
-                        }}
-                    >
-                        <View style={styles.container}>
-                            <View style={styles.staffColumnsContainer}>
-                                {filteredListStaff.map((staff) => {
-                                    const staffWorkingHours = getWorkingHoursForStaff(staff.id, dayOfWeek);
-                                    const hasWorkingHours = staffWorkingHours !== null;
-                                    const staffHoursStart = staffWorkingHours?.startHour ?? 0;
-                                    const staffMinutesStart = staffWorkingHours?.startMinute ?? 0;
-                                    const staffHoursEnd = staffWorkingHours?.endHour ?? 0;
-                                    const staffMinutesEnd = staffWorkingHours?.endMinute ?? 0;
+                        }}>
+                        <ScrollView
+                            horizontal
+                            showsHorizontalScrollIndicator={false}
+                            nestedScrollEnabled={true}
+                            ref={bodyScrollRef}
+                            scrollEventThrottle={16}
+                            onScroll={event => {
+                                if (headerScrollRef.current) {
+                                    headerScrollRef.current.scrollTo({
+                                        x: event.nativeEvent.contentOffset.x,
+                                        animated: false,
+                                    });
+                                }
+                            }}>
+                            <View style={styles.container}>
+                                <View style={styles.staffColumnsContainer}>
+                                    {filteredListStaff.map(staff => {
+                                        const staffWorkingHours = getWorkingHoursForStaff(
+                                            staff.id,
+                                            dayOfWeek,
+                                        );
+                                        const hasWorkingHours = staffWorkingHours !== null;
+                                        const staffHoursStart = staffWorkingHours?.startHour ?? 0;
+                                        const staffMinutesStart =
+                                            staffWorkingHours?.startMinute ?? 0;
+                                        const staffHoursEnd = staffWorkingHours?.endHour ?? 0;
+                                        const staffMinutesEnd = staffWorkingHours?.endMinute ?? 0;
 
-                                    return (
-                                        <View key={staff.id} style={[styles.staffColumn, { width: staffColumnWidth }]}>
-                                            <View style={[styles.staffColumnContent, { height: totalTimeHeight }]}>
-                                                {displayTimeSlots.map((slot) => {
-                                                    const slotHour = parseInt(slot.time.substring(0, 2));
-                                                    const slotMinutes = parseInt(slot.time.substring(2, 4));
+                                        return (
+                                            <View
+                                                key={staff.id}
+                                                style={[styles.staffColumn, { width: staffColumnWidth }]}>
+                                                <View
+                                                    style={[
+                                                        styles.staffColumnContent,
+                                                        { height: totalTimeHeight },
+                                                    ]}>
+                                                    {displayTimeSlots.map(slot => {
+                                                        const slotHour = parseInt(
+                                                            slot.time.substring(0, 2),
+                                                        );
+                                                        const slotMinutes = parseInt(
+                                                            slot.time.substring(2, 4),
+                                                        );
 
-                                                    const working = hasDayWorkingHours
-                                                        ? isWorkingHours(slot.time, dayHoursStart, dayMinutesStart, dayHoursEnd, dayMinutesEnd)
-                                                        : false;
+                                                        const working = hasDayWorkingHours
+                                                            ? isWorkingHours(
+                                                                slot.time,
+                                                                dayHoursStart,
+                                                                dayMinutesStart,
+                                                                dayHoursEnd,
+                                                                dayMinutesEnd,
+                                                            )
+                                                            : false;
 
-                                                    return (
-                                                        <View
-                                                            key={`${slot.time}-${staff.id}`}
-                                                            style={[
-                                                                styles.scheduleCell,
-                                                                { height: timeSlotHeight },
-                                                                // !working && styles.nonWorkingHoursCell
-                                                            ]}
-                                                        >
-                                                            {renderQuarterHourLines()}
-                                                            {renderScheduleItem(staff.id.toString(), slot.time)}
+                                                        return (
+                                                            <View
+                                                                key={`${slot.time}-${staff.id}`}
+                                                                style={[
+                                                                    styles.scheduleCell,
+                                                                    { height: timeSlotHeight },
+                                                                    // !working && styles.nonWorkingHoursCell
+                                                                ]}>
+                                                                {renderQuarterHourLines()}
+                                                                {renderScheduleItem(
+                                                                    staff.id.toString(),
+                                                                    slot.time,
+                                                                )}
 
-                                                            {/* {hasWorkingHours && slotHour === staffHoursStart && slotMinutes === 0 && staffMinutesStart > 0 && (
+                                                                {/* {hasWorkingHours && slotHour === staffHoursStart && slotMinutes === 0 && staffMinutesStart > 0 && (
                                                                 <View style={[
                                                                     styles.partialOverlay,
                                                                     {
@@ -411,168 +517,174 @@ const CalenderDayComponent = ({ selectedDate: _selectedDate, onPressScheduleItem
                                                                     }
                                                                 ]} />
                                                             )} */}
-                                                        </View>
-                                                    );
-                                                })}
+                                                            </View>
+                                                        );
+                                                    })}
+                                                </View>
                                             </View>
-                                        </View>
-                                    );
-                                })}
+                                        );
+                                    })}
+                                </View>
                             </View>
-                        </View>
+                        </ScrollView>
                     </ScrollView>
-                </ScrollView>
+                </View>
             </View>
-        </View>
+        </ScrollView>
     );
 };
 
-const $styles = (colors: Colors, staffColumnWidth: number, timeSlotHeight: number, isTablet: boolean) => StyleSheet.create({
-    mainContainer: {
-        flex: 1,
-        flexDirection: 'row',
-    },
-    fixedTimeColumn: {
-        width: isTablet ? 120 : 90,
-        backgroundColor: colors.background,
-        borderRightWidth: 1,
-        borderColor: colors.borderTable,
-        zIndex: 1000,
-    },
-    timeColumnHeader: {
-        height: 80,
-        justifyContent: 'center',
-        alignItems: 'center',
-        borderBottomWidth: 1,
-        borderColor: colors.borderTable,
-        backgroundColor: colors.backgroundTable,
-        paddingHorizontal: 8,
-    },
-    filterContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    timeColumnContent: {
-        position: 'relative',
-    },
-    timeColumnRow: {
-        height: timeSlotHeight,
-        justifyContent: 'center',
-        alignItems: 'center',
-        borderBottomWidth: 1,
-        borderColor: colors.borderTable,
-        backgroundColor: colors.backgroundTable,
-    },
-    scrollableContent: {
-        flex: 1,
-        position: 'relative',
-    },
-    fixedHeader: {
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        zIndex: 1000,
-        backgroundColor: colors.backgroundTable,
-        borderBottomWidth: 1,
-        borderColor: colors.borderTable,
-    },
-    container: {
-        borderTopWidth: 1,
-        borderLeftWidth: 1,
-        borderColor: colors.borderTable,
-    },
-    headerRow: {
-        flexDirection: 'row',
-        height: 80,
-        borderBottomWidth: 1,
-        borderColor: colors.borderTable,
-        backgroundColor: colors.backgroundTable,
-        zIndex: 100,
-    },
-    staffHeaderCell: {
-        width: staffColumnWidth,
-        justifyContent: 'center',
-        alignItems: 'center',
-        borderRightWidth: 1,
-        borderColor: colors.borderTable,
-        backgroundColor: colors.backgroundTable,
-    },
-    staffColumnsContainer: {
-        flexDirection: 'row',
-    },
-    staffColumn: {
-        borderRightWidth: 1,
-        borderColor: colors.borderTable,
-    },
-    staffColumnContent: {
-        position: 'relative',
-        borderLeftWidth: 1,
-        borderColor: colors.borderTable,
-        overflow: 'visible',
-    },
-    timeText: {
-        fontSize: 16,
-        color: colors.text,
-    },
-    scheduleCell: {
-        width: staffColumnWidth,
-        borderBottomWidth: 1,
-        borderRightWidth: 1,
-        borderColor: colors.borderTable,
-        backgroundColor: colors.backgroundTable,
-        position: 'relative',
-        overflow: 'visible',
-    },
-    nonWorkingHoursCell: {
-        backgroundColor: colors.bacgroundCalendar,
-        opacity: 0.8
-    },
-    partialOverlay: {
-        position: 'absolute',
-        left: 0,
-        right: 0,
-        zIndex: 10
-    },
-    quarterHourLine: {
-        position: 'absolute',
-        left: 0,
-        right: 0,
-        height: 1,
-        borderBottomWidth: 1,
-        borderBottomColor: colors.borderTable,
-        borderStyle: 'dashed',
-        opacity: 0.5
-    },
-    scheduleItem: {
-        margin: 2,
-        padding: 4,
-        borderRadius: 4,
-        borderLeftWidth: 3,
-        borderLeftColor: '#4FC3F7',
-        backgroundColor: '#E1F5FE',
-        overflow: 'hidden',
-        zIndex: 10,
-        position: 'absolute',
-    },
-    scheduleItemTitle: {
-        fontSize: 14,
-        fontWeight: '500',
-        color: '#333'
-    },
-    scheduleItemTime: {
-        fontSize: 11,
-        color: colors.black,
-        marginTop: 4
-    },
-    smallScheduleItemTitle: {
-        fontSize: 10,
-        lineHeight: 11,
-        marginTop: 1,
-        paddingVertical: 1
-    }
-});
+const $styles = (
+    colors: Colors,
+    staffColumnWidth: number,
+    timeSlotHeight: number,
+    isTablet: boolean,
+) =>
+    StyleSheet.create({
+        mainContainer: {
+            flex: 1,
+            flexDirection: 'row',
+        },
+        fixedTimeColumn: {
+            width: isTablet ? 120 : 90,
+            backgroundColor: colors.background,
+            borderRightWidth: 1,
+            borderColor: colors.borderTable,
+            zIndex: 1000,
+        },
+        timeColumnHeader: {
+            height: 80,
+            justifyContent: 'center',
+            alignItems: 'center',
+            borderBottomWidth: 1,
+            borderColor: colors.borderTable,
+            backgroundColor: colors.backgroundTable,
+            paddingHorizontal: 8,
+        },
+        filterContainer: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+        },
+        timeColumnContent: {
+            position: 'relative',
+        },
+        timeColumnRow: {
+            height: timeSlotHeight,
+            justifyContent: 'center',
+            alignItems: 'center',
+            borderBottomWidth: 1,
+            borderColor: colors.borderTable,
+            backgroundColor: colors.backgroundTable,
+        },
+        scrollableContent: {
+            flex: 1,
+            position: 'relative',
+        },
+        fixedHeader: {
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            zIndex: 1000,
+            backgroundColor: colors.backgroundTable,
+            borderBottomWidth: 1,
+            borderColor: colors.borderTable,
+        },
+        container: {
+            borderTopWidth: 1,
+            borderLeftWidth: 1,
+            borderColor: colors.borderTable,
+        },
+        headerRow: {
+            flexDirection: 'row',
+            height: 80,
+            borderBottomWidth: 1,
+            borderColor: colors.borderTable,
+            backgroundColor: colors.backgroundTable,
+            zIndex: 100,
+        },
+        staffHeaderCell: {
+            width: staffColumnWidth,
+            justifyContent: 'center',
+            alignItems: 'center',
+            borderRightWidth: 1,
+            borderColor: colors.borderTable,
+            backgroundColor: colors.backgroundTable,
+        },
+        staffColumnsContainer: {
+            flexDirection: 'row',
+        },
+        staffColumn: {
+            borderRightWidth: 1,
+            borderColor: colors.borderTable,
+        },
+        staffColumnContent: {
+            position: 'relative',
+            borderLeftWidth: 1,
+            borderColor: colors.borderTable,
+            overflow: 'visible',
+        },
+        timeText: {
+            fontSize: 16,
+            color: colors.text,
+        },
+        scheduleCell: {
+            width: staffColumnWidth,
+            borderBottomWidth: 1,
+            borderRightWidth: 1,
+            borderColor: colors.borderTable,
+            backgroundColor: colors.backgroundTable,
+            position: 'relative',
+            overflow: 'visible',
+        },
+        nonWorkingHoursCell: {
+            backgroundColor: colors.bacgroundCalendar,
+            opacity: 0.8,
+        },
+        partialOverlay: {
+            position: 'absolute',
+            left: 0,
+            right: 0,
+            zIndex: 10,
+        },
+        quarterHourLine: {
+            position: 'absolute',
+            left: 0,
+            right: 0,
+            height: 1,
+            borderBottomWidth: 1,
+            borderBottomColor: colors.borderTable,
+            borderStyle: 'dashed',
+            opacity: 0.5,
+        },
+        scheduleItem: {
+            margin: 2,
+            padding: 4,
+            borderRadius: 4,
+            borderLeftWidth: 3,
+            borderLeftColor: '#4FC3F7',
+            backgroundColor: '#E1F5FE',
+            overflow: 'hidden',
+            zIndex: 10,
+            position: 'absolute',
+        },
+        scheduleItemTitle: {
+            fontSize: 14,
+            fontWeight: '500',
+            color: '#333',
+        },
+        scheduleItemTime: {
+            fontSize: 11,
+            color: colors.black,
+            marginTop: 4,
+        },
+        smallScheduleItemTitle: {
+            fontSize: 10,
+            lineHeight: 11,
+            marginTop: 1,
+            paddingVertical: 1,
+        },
+    });
 
 export default CalenderDayComponent;
-

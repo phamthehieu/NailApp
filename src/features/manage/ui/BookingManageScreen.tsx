@@ -311,7 +311,6 @@ const BookingManageScreen = ({ navigation }: RootScreenProps<Paths.BookingManage
 
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
-
             <StatusBarComponent backgroundColor={colors.yellow} />
 
             <MHeader
