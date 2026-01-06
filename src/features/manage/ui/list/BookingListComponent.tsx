@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useRef } from "react";
+import React, { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import { View, StyleSheet, FlatList, TouchableOpacity, RefreshControl } from "react-native";
 import { Eye, Pencil, Trash2, User, Info, Calendar, Ban } from "lucide-react-native";
 import { TextFieldLabel } from "@/shared/ui/Text";
@@ -29,7 +29,7 @@ interface BookingListComponentProps {
 const BookingListComponent = ({ navigation }: BookingListComponentProps) => {
     const { theme: { colors } } = useAppTheme();
     const isTablet = useIsTablet();
-    const styles = $styles(colors, isTablet);
+    const styles = useMemo(() => $styles(colors, isTablet), [colors, isTablet]);
     const { t } = useTranslation();
     const { getListBookingManager, loadMoreBookings, loading, loadingMore, resetPagination, getDetailBookingItem, getHistoryBookingItem, postCancelBooking } = useBookingForm();
     const { listBookingManager, pageIndex, totalPages } = useAppSelector((state) => state.booking);
@@ -41,26 +41,35 @@ const BookingListComponent = ({ navigation }: BookingListComponentProps) => {
     const [isBookingPaymentModalVisible, setIsBookingPaymentModalVisible] = useState(false);
     const isLoadingMoreRef = useRef(false);
 
-    const formatDate = (dateString: string) => {
+    const formatDate = useCallback((dateString: string) => {
         const date = new Date(dateString);
         const day = String(date.getDate()).padStart(2, '0');
         const month = String(date.getMonth() + 1).padStart(2, '0');
         const year = date.getFullYear();
         return `${day}/${month}/${year}`;
-    };
+    }, []);
 
-    const handleView = (item: any) => {
-        getDetailBookingItem(item.id);
-        getHistoryBookingItem(item.customer.id);
+
+    const nameAction = useCallback((status: number) => {
+        if (status === 0) {
+            return t('bookingList.checkingBooking');
+        } else if (status === 1 || status === 2) {
+            return t('bookingList.paymentBooking');
+        }
+    }, [t]);
+
+    const handleView = useCallback((item: BookingManagerItem) => {
+        getDetailBookingItem(item.id.toString());
+        getHistoryBookingItem(item.customer.id.toString());
         navigation.navigate(Paths.DetailBookingItem, { bookingId: item.id });
-    };
+    }, [getDetailBookingItem, getHistoryBookingItem, navigation]);
 
-    const handleEdit = (item: any) => {
-        getDetailBookingItem(item.id);
+    const handleEdit = useCallback((item: BookingManagerItem) => {
+        getDetailBookingItem(item.id.toString());
         navigation.navigate(Paths.EditBooking);
-    };
+    }, [getDetailBookingItem, navigation]);
 
-    const handleDelete = (item: any) => {
+    const handleDelete = useCallback((item: BookingManagerItem) => {
         alertService.showAlert({
             title: t('detailBookingItem.deleteBooking.title'),
             message: t('detailBookingItem.deleteBooking.message'),
@@ -74,9 +83,9 @@ const BookingListComponent = ({ navigation }: BookingListComponentProps) => {
                 console.log('Cancel booking:');
             },
         });
-    };
+    }, [t]);
 
-    const handleCancelBooking = (item: any) => {
+    const handleCancelBooking = useCallback((item: BookingManagerItem) => {
         postCancelBooking(item.id).then((response) => {
             if (response) {
                 alertService.showAlert({
@@ -95,10 +104,10 @@ const BookingListComponent = ({ navigation }: BookingListComponentProps) => {
                 });
             }
         });
-    };
+    }, [postCancelBooking, t, getListBookingManager]);
 
-    const handleMainAction = (item: any) => {
-        getDetailBookingItem(item.id);
+    const handleMainAction = useCallback((item: BookingManagerItem) => {
+        getDetailBookingItem(item.id.toString());
         if (item.status === 0) {
             getListService(item.bookingDate, item.bookingHours);
             setIsCheckinBookingModalVisible(true);
@@ -107,16 +116,9 @@ const BookingListComponent = ({ navigation }: BookingListComponentProps) => {
             getListPaymentType();
             setIsBookingPaymentModalVisible(true);
         }
-    };
+    }, [getDetailBookingItem, getListService, getListPaymentType]);
 
-    const nameAction = (status: number) => {
-        if (status === 0) {
-            return t('bookingList.checkingBooking');
-        } else if (status === 1 || status === 2) {
-            return t('bookingList.paymentBooking');
-        }
-    };
-    const renderBookingItem = ({ item }: { item: BookingManagerItem }) => {
+    const renderBookingItem = useCallback(({ item }: { item: BookingManagerItem }) => {
         const statusColor = getBookingStatusColor(item.status, colors, 'border');
         const formattedDate = formatDate(item.bookingDate);
         const nameService = item.services.map((service) => service.serviceName).join(', ');
@@ -189,7 +191,7 @@ const BookingListComponent = ({ navigation }: BookingListComponentProps) => {
                 </View>
             </View>
         );
-    };
+    }, [colors, t, isTablet, styles, formatDate, nameAction, handleView, handleEdit, handleDelete, handleMainAction]);
 
     const handleLoadMore = useCallback(() => {
         if (isLoadingMoreRef.current || loadingMore || loading) {
@@ -213,9 +215,9 @@ const BookingListComponent = ({ navigation }: BookingListComponentProps) => {
                     isLoadingMoreRef.current = false;
                 });
         }
-    }, [loadingMore, loading, pageIndex, totalPages, loadMoreBookings, listBookingManager.length]);
+    }, [loadingMore, loading, pageIndex, totalPages, loadMoreBookings, t]);
 
-    const hasMoreData = totalPages > 0 && pageIndex < totalPages;
+    const hasMoreData = useMemo(() => totalPages > 0 && pageIndex < totalPages, [totalPages, pageIndex]);
 
     const onRefresh = useCallback(async () => {
         setRefreshing(true);
@@ -231,46 +233,54 @@ const BookingListComponent = ({ navigation }: BookingListComponentProps) => {
 
     useFocusEffect(useCallback(() => {
         getListBookingManager();
-    }, [navigation]));
+    }, [getListBookingManager]));
+
+    const refreshControl = useMemo(() => (
+        <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={[colors.yellow]}
+            tintColor={colors.yellow}
+        />
+    ), [refreshing, onRefresh, colors.yellow]);
+
+    const ListEmptyComponentMemo = useMemo(() => (
+        <View style={styles.emptyContainer}>
+            <AutoImage source={require('@assets/icon/no_data.png')} style={styles.emptyImage} />
+            <TextFieldLabel style={styles.emptyText}>{t('bookingList.noBookingFound')}</TextFieldLabel>
+        </View>
+    ), [styles.emptyContainer, styles.emptyImage, styles.emptyText, t]);
+
+    const ListFooterComponentMemo = useMemo(() => {
+        if (!loadingMore || !hasMoreData) return null;
+        return (
+            <View style={styles.footerLoader}>
+                <TextFieldLabel style={styles.footerText}>{t('bookingList.loadingMore')}</TextFieldLabel>
+            </View>
+        );
+    }, [loadingMore, hasMoreData, styles.footerLoader, styles.footerText, t]);
+
+    const keyExtractor = useCallback((item: BookingManagerItem) => item.id.toString(), []);
 
     return (
         <>
             <FlatList
                 data={listBookingManager}
-                keyExtractor={(item) => item.id.toString()}
+                keyExtractor={keyExtractor}
                 renderItem={renderBookingItem}
                 numColumns={isTablet ? 3 : 1}
                 contentContainerStyle={styles.listContainer}
                 showsVerticalScrollIndicator={false}
-                // columnWrapperStyle={isTablet ? styles.columnWrapper : undefined}
                 onEndReached={handleLoadMore}
                 onEndReachedThreshold={0.1}
-                removeClippedSubviews={false}
-                refreshControl={
-                    <RefreshControl
-                        refreshing={refreshing}
-                        onRefresh={onRefresh}
-                        colors={[colors.yellow]}
-                        tintColor={colors.yellow}
-                    />
-                }
-                ListEmptyComponent={
-
-                    <View style={styles.emptyContainer}>
-
-                        <AutoImage source={require('@assets/icon/no_data.png')} style={styles.emptyImage} />
-
-                        <TextFieldLabel style={styles.emptyText}>{t('bookingList.noBookingFound')}</TextFieldLabel>
-
-                    </View>
-                }
-                ListFooterComponent={
-                    loadingMore && hasMoreData ? (
-                        <View style={styles.footerLoader}>
-                            <TextFieldLabel style={styles.footerText}>{t('bookingList.loadingMore')}</TextFieldLabel>
-                        </View>
-                    ) : null
-                }
+                removeClippedSubviews={true}
+                maxToRenderPerBatch={10}
+                updateCellsBatchingPeriod={50}
+                initialNumToRender={10}
+                windowSize={10}
+                refreshControl={refreshControl}
+                ListEmptyComponent={ListEmptyComponentMemo}
+                ListFooterComponent={ListFooterComponentMemo}
             />
 
             <BookingConfirmationModal

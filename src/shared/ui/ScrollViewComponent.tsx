@@ -1,19 +1,12 @@
 import React from 'react';
-import { FlatList, ScrollViewProps } from 'react-native';
+import { ScrollView, ScrollViewProps } from 'react-native';
 
 interface IProps extends ScrollViewProps {}
 
-const ScrollViewComponent = (props: IProps) => {
-  return (
-    <FlatList
-      {...props}
-      data={[]}
-      keyExtractor={(_e, i) => 'dom' + i.toString()}
-      ListEmptyComponent={null}
-      renderItem={null}
-      ListHeaderComponent={() => <>{props.children}</>}
-    />
-  );
-};
+const ScrollViewComponent = React.memo((props: IProps) => {
+  return <ScrollView {...props}>{props.children}</ScrollView>;
+});
+
+ScrollViewComponent.displayName = 'ScrollViewComponent';
 
 export default ScrollViewComponent;

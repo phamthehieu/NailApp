@@ -29,7 +29,7 @@ interface BookingServiceFlatItem {
 
 const ListBookingGridComponent = ({ navigation, dashboardHook }: ListBookingFormProps) => {
     const { theme: { colors } } = useAppTheme();
-    const styles = $styles(colors);
+    const styles = useMemo(() => $styles(colors), [colors]);
     const { t, i18n } = useTranslation();
     const { getListBookingByDashBoard, loadMoreBookings, loading, loadingMore, staffId } = dashboardHook;
     const { listBookingManager, pageIndex, totalPages } = useAppSelector((state) => state.booking);
@@ -38,7 +38,7 @@ const ListBookingGridComponent = ({ navigation, dashboardHook }: ListBookingForm
     const isLoadingMoreRef = useRef(false);
     const [dimensions, setDimensions] = useState(() => Dimensions.get('window'));
 
-    const formatBookingDateTime = (dateString: string, timeString?: string) => {
+    const formatBookingDateTime = useCallback((dateString: string, timeString?: string) => {
         let dateLabel = dateString;
         const dateLocale = i18n.language === 'vi' ? 'vi-VN' : 'en-AU';
         try {
@@ -55,9 +55,9 @@ const ListBookingGridComponent = ({ navigation, dashboardHook }: ListBookingForm
 
         const timeLabel = timeString?.trim() ?? '';
         return { dateLabel, timeLabel };
-    };
+    }, [i18n.language]);
 
-    const getCustomerInitials = (name: string) => {
+    const getCustomerInitials = useCallback((name: string) => {
         if (!name) {
             return '';
         }
@@ -70,7 +70,7 @@ const ListBookingGridComponent = ({ navigation, dashboardHook }: ListBookingForm
         }
 
         return `${parts[0].charAt(0)}${parts[parts.length - 1].charAt(0)}`.toUpperCase();
-    };
+    }, []);
 
     const serviceBookings = useMemo<BookingServiceFlatItem[]>(() => {
         if (!listBookingManager?.length) {
@@ -120,11 +120,13 @@ const ListBookingGridComponent = ({ navigation, dashboardHook }: ListBookingForm
     const screenWidth = dimensions.width;
     const paddingHorizontal = 16 * 2;
     const gap = 12;
-    const itemWidth = numColumns > 1
-        ? (screenWidth - paddingHorizontal - gap * (numColumns - 1)) / numColumns
-        : screenWidth - paddingHorizontal;
+    const itemWidth = useMemo(() => {
+        return numColumns > 1
+            ? (screenWidth - paddingHorizontal - gap * (numColumns - 1)) / numColumns
+            : screenWidth - paddingHorizontal;
+    }, [numColumns, screenWidth, paddingHorizontal, gap]);
 
-    const renderBookingItem = ({ item }: { item: BookingServiceFlatItem }) => {
+    const renderBookingItem = useCallback(({ item }: { item: BookingServiceFlatItem }) => {
         const { booking, service } = item;
         const statusColor = getBookingStatusColor(booking.status, colors, 'border');
         const { dateLabel, timeLabel } = formatBookingDateTime(booking.bookingDate, booking.bookingHours);
@@ -184,7 +186,7 @@ const ListBookingGridComponent = ({ navigation, dashboardHook }: ListBookingForm
                 </View> */}
             </View>
         );
-    };
+    }, [colors, t, formatBookingDateTime, getCustomerInitials, itemWidth]);
 
     const handleLoadMore = useCallback(() => {
         if (isLoadingMoreRef.current || loadingMore || loading) {
@@ -208,9 +210,9 @@ const ListBookingGridComponent = ({ navigation, dashboardHook }: ListBookingForm
                     isLoadingMoreRef.current = false;
                 });
         }
-    }, [loadingMore, loading, pageIndex, totalPages, loadMoreBookings, listBookingManager.length, getListBookingByDashBoard]);
+    }, [loadingMore, loading, pageIndex, totalPages, loadMoreBookings, t]);
 
-    const hasMoreData = totalPages > 0 && pageIndex < totalPages;
+    const hasMoreData = useMemo(() => totalPages > 0 && pageIndex < totalPages, [totalPages, pageIndex]);
 
     const onRefresh = useCallback(async () => {
         setRefreshing(true);
@@ -223,43 +225,52 @@ const ListBookingGridComponent = ({ navigation, dashboardHook }: ListBookingForm
         }
     }, [getListBookingByDashBoard]);
 
+    const refreshControl = useMemo(() => (
+        <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={[colors.yellow]}
+            tintColor={colors.yellow}
+        />
+    ), [refreshing, onRefresh, colors.yellow]);
+
+    const ListEmptyComponentMemo = useMemo(() => (
+        <View style={styles.emptyContainer}>
+            <AutoImage source={require('@assets/icon/no_data.png')} style={styles.emptyImage} />
+            <TextFieldLabel style={styles.emptyText}>{t('bookingList.noBookingFound')}</TextFieldLabel>
+        </View>
+    ), [styles.emptyContainer, styles.emptyImage, styles.emptyText, t]);
+
+    const ListFooterComponentMemo = useMemo(() => {
+        if (!loadingMore || !hasMoreData) return null;
+        return (
+            <View style={styles.footerLoader}>
+                <TextFieldLabel style={styles.footerText}>{t('bookingList.loadingMore')}</TextFieldLabel>
+            </View>
+        );
+    }, [loadingMore, hasMoreData, styles.footerLoader, styles.footerText, t]);
+
+    const keyExtractor = useCallback((item: BookingServiceFlatItem) => item.key, []);
+
     return (
         <>
             <FlatList
                 data={serviceBookings}
-                keyExtractor={(item) => item.key}
+                keyExtractor={keyExtractor}
                 renderItem={renderBookingItem}
                 numColumns={numColumns}
                 contentContainerStyle={styles.listContainer}
                 showsVerticalScrollIndicator={false}
                 onEndReached={handleLoadMore}
                 onEndReachedThreshold={0.1}
-                removeClippedSubviews={false}
-                refreshControl={
-                    <RefreshControl
-                        refreshing={refreshing}
-                        onRefresh={onRefresh}
-                        colors={[colors.yellow]}
-                        tintColor={colors.yellow}
-                    />
-                }
-                ListEmptyComponent={
-
-                    <View style={styles.emptyContainer}>
-
-                        <AutoImage source={require('@assets/icon/no_data.png')} style={styles.emptyImage} />
-
-                        <TextFieldLabel style={styles.emptyText}>{t('bookingList.noBookingFound')}</TextFieldLabel>
-
-                    </View>
-                }
-                ListFooterComponent={
-                    loadingMore && hasMoreData ? (
-                        <View style={styles.footerLoader}>
-                            <TextFieldLabel style={styles.footerText}>{t('bookingList.loadingMore')}</TextFieldLabel>
-                        </View>
-                    ) : null
-                }
+                removeClippedSubviews={true}
+                maxToRenderPerBatch={10}
+                updateCellsBatchingPeriod={50}
+                initialNumToRender={10}
+                windowSize={10}
+                refreshControl={refreshControl}
+                ListEmptyComponent={ListEmptyComponentMemo}
+                ListFooterComponent={ListFooterComponentMemo}
             />
 
             {/* <BookingConfirmationModal
