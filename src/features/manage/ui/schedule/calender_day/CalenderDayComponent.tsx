@@ -1,8 +1,6 @@
 import React, { useRef, useMemo, useEffect, useCallback, useState } from 'react';
-import { View, StyleSheet, ScrollView, Pressable, Switch } from 'react-native';
+import { View, StyleSheet, ScrollView, Pressable } from 'react-native';
 import UserAvatar from './UserAvatar';
-import CurrentTimeLine from './CurrentTimeLine';
-import { users } from '../../../data/users';
 import { timeSlots } from '../../../data/TimeSlots';
 import { ScheduleItem } from '../../../data/scheduleItems';
 import { isWorkingHours, getScheduleBlocksForHour } from '../../../api/schedule';
@@ -13,7 +11,6 @@ import { TextFieldLabel } from '@/shared/ui/Text';
 import { useSelector } from 'react-redux';
 import { RootState, useAppSelector } from '@/app/store';
 import { useStaffForm } from '@/features/manage/hooks/useStaffForm';
-import { useTranslation } from 'react-i18next';
 
 type Props = {
     selectedDate: Date;
@@ -23,14 +20,14 @@ type Props = {
 const CalenderDayComponent = ({ selectedDate: _selectedDate, onPressScheduleItem }: Props) => {
     const { theme: { colors } } = useAppTheme();
     const { getListStaff } = useStaffForm();
-    const { t } = useTranslation();
     const listBookingManagerByDate = useAppSelector((state) => state.booking.listBookingManagerByDate);
     const timeScrollRef = useRef<ScrollView>(null);
     const headerScrollRef = useRef<ScrollView>(null);
     const bodyScrollRef = useRef<ScrollView>(null);
     const verticalScrollRef = useRef<ScrollView>(null);
     const { listStaff, listBookingHourSetting } = useSelector((state: RootState) => state.staff);
-    const timeSlotWidth = 200;
+    const staffColumnWidth = 200;
+    const timeSlotHeight = 80;
     const [hideStaffWithoutWorkingHours, setHideStaffWithoutWorkingHours] = useState(false);
 
     const getDayOfWeek = (date: Date): string => {
@@ -120,40 +117,6 @@ const CalenderDayComponent = ({ selectedDate: _selectedDate, onPressScheduleItem
         };
     }, [listBookingHourSetting, dayOfWeek]);
 
-    const { minVisibleHour, maxVisibleHour } = useMemo(() => {
-        let minHour = 24;
-        let maxHour = 0;
-        let hasAnyWorkingHours = false;
-
-        filteredListStaff.forEach(staff => {
-            const workingHours = getWorkingHoursForStaff(staff.id, dayOfWeek);
-            if (workingHours) {
-                hasAnyWorkingHours = true;
-                const startHour = workingHours.startHour;
-                const endHour = workingHours.endHour;
-
-                if (startHour < minHour) minHour = startHour;
-                if (endHour > maxHour) maxHour = endHour;
-            }
-        });
-
-        if (!hasAnyWorkingHours && selectedDayWorkingRange) {
-            hasAnyWorkingHours = true;
-            minHour = selectedDayWorkingRange.startHour;
-            maxHour = selectedDayWorkingRange.endHour;
-        }
-
-        if (!hasAnyWorkingHours) {
-            return { minVisibleHour: 0, maxVisibleHour: 23 };
-        }
-
-        const paddingHour = 1;
-        const finalMinHour = Math.max(0, minHour - paddingHour);
-        const finalMaxHour = Math.min(23, maxHour + paddingHour);
-
-        return { minVisibleHour: finalMinHour, maxVisibleHour: finalMaxHour };
-    }, [filteredListStaff, selectedDayWorkingRange, dayOfWeek, getWorkingHoursForStaff]);
-
     const displayTimeSlots = useMemo(() => {
         // Luôn hiển thị tất cả 24 giờ từ 0h đến 23h
         return timeSlots;
@@ -161,9 +124,9 @@ const CalenderDayComponent = ({ selectedDate: _selectedDate, onPressScheduleItem
 
     const isTablet = useIsTablet();
 
-    const styles = $styles(colors, timeSlotWidth, isTablet);
+    const styles = $styles(colors, staffColumnWidth, timeSlotHeight, isTablet);
 
-    const scheduleHeight = filteredListStaff.length * 100;
+    const totalTimeHeight = displayTimeSlots.length * timeSlotHeight;
     const hasDayWorkingHours = Boolean(selectedDayWorkingRange);
     const dayHoursStart = selectedDayWorkingRange?.startHour ?? 0;
     const dayMinutesStart = selectedDayWorkingRange?.startMinute ?? 0;
@@ -211,7 +174,7 @@ const CalenderDayComponent = ({ selectedDate: _selectedDate, onPressScheduleItem
                             return { color: colors.purple, borderColor: colors.purple };
                         case 3:
                             return { color: colors.red, borderColor: colors.red };
-                            case 4:
+                        case 4:
                             return { color: colors.green, borderColor: colors.green };
                         default:
                             return { color: colors.blue, borderColor: colors.blue };
@@ -249,15 +212,15 @@ const CalenderDayComponent = ({ selectedDate: _selectedDate, onPressScheduleItem
             const startDecimal = startHours + startMinutes / 60;
             const endDecimal = endHours + endMinutes / 60;
             const duration = endDecimal - startDecimal;
-            const widthInPixels = duration * timeSlotWidth;
+            const heightInPixelsAdjusted = Math.max(duration * timeSlotHeight, 25);
 
             const slotHour = parseInt(timeSlot.substring(0, 2));
             const slotMinutes = parseInt(timeSlot.substring(2, 4));
             const slotDecimal = slotHour + slotMinutes / 60;
-            const leftPosition = (startDecimal - slotDecimal) * timeSlotWidth;
+            const topPosition = (startDecimal - slotDecimal) * timeSlotHeight;
 
-            const showTitle = widthInPixels >= 28 && heightInPixels >= 18;
-            const showTime = widthInPixels >= 56 && heightInPixels >= 22;
+            const showTitle = heightInPixelsAdjusted >= 10;
+            const showTime = heightInPixelsAdjusted >= 40;
 
             const originalBooking = bookingDataMap.get(item.id);
 
@@ -270,11 +233,12 @@ const CalenderDayComponent = ({ selectedDate: _selectedDate, onPressScheduleItem
                     style={[
                         styles.scheduleItem,
                         {
-                            width: widthInPixels,
-                            left: leftPosition,
+                            height: heightInPixelsAdjusted,
+                            top: topPosition,
+                            width: staffColumnWidth - 6 - index * 6,
+                            left: index * 6,
                             backgroundColor: item.color,
                             borderLeftColor: item.borderColor,
-                            marginLeft: index * 5,
                             zIndex: 10 - index,
                         }
                     ]}
@@ -282,16 +246,16 @@ const CalenderDayComponent = ({ selectedDate: _selectedDate, onPressScheduleItem
                     {showTitle && (
                         <TextFieldLabel style={[
                             styles.scheduleItemTitle,
-                            widthInPixels < 40 && styles.smallScheduleItemTitle
+                            heightInPixelsAdjusted < 40 && styles.smallScheduleItemTitle
                         ]} numberOfLines={1} ellipsizeMode="tail">
-                            {item.title}
+                            {item.title} -/- {formatTime(item.startTime)} - {formatTime(item.endTime)}
                         </TextFieldLabel>
                     )}
-                    {showTime && (
+                    {/* {showTime && (
                         <TextFieldLabel style={styles.scheduleItemTime} numberOfLines={1} ellipsizeMode="clip">
                             {formatTime(item.startTime)} - {formatTime(item.endTime)}
                         </TextFieldLabel>
-                    )}
+                    )} */}
                 </Pressable>
             );
         });
@@ -308,9 +272,9 @@ const CalenderDayComponent = ({ selectedDate: _selectedDate, onPressScheduleItem
     const renderQuarterHourLines = () => {
         return (
             <>
-                <View style={[styles.quarterHourLine, { left: '25%' }]} />
-                <View style={[styles.quarterHourLine, { left: '50%' }]} />
-                <View style={[styles.quarterHourLine, { left: '75%' }]} />
+                <View style={[styles.quarterHourLine, { top: '25%' }]} />
+                <View style={[styles.quarterHourLine, { top: '50%' }]} />
+                <View style={[styles.quarterHourLine, { top: '75%' }]} />
             </>
         );
     };
@@ -321,24 +285,9 @@ const CalenderDayComponent = ({ selectedDate: _selectedDate, onPressScheduleItem
 
     return (
         <View style={styles.mainContainer}>
-            <View style={styles.fixedUserColumn}>
-
-                <Pressable onPress={() => setHideStaffWithoutWorkingHours(!hideStaffWithoutWorkingHours)} style={styles.userColumnHeader}>
-
-                    <View style={styles.filterContainer}>
-
-                        {/* <Switch
-                            value={hideStaffWithoutWorkingHours}
-                            onValueChange={setHideStaffWithoutWorkingHours}
-                            trackColor={{ false: colors.backgroundDisabled, true: colors.yellow + '80' }}
-                            thumbColor={hideStaffWithoutWorkingHours ? colors.yellow : colors.primary}
-                            ios_backgroundColor={colors.backgroundDisabled}
-                        /> */}
-
-                        {/* {isTablet ? <TextFieldLabel style={styles.filterLabel} numberOfLines={1} ellipsizeMode="tail">{t('calenderDashboard.calenderHeader.hideStaffWithoutWorkingHours')}</TextFieldLabel> : null} */}
-
-                    </View>
-
+            <View style={styles.fixedTimeColumn}>
+                <Pressable onPress={() => setHideStaffWithoutWorkingHours(!hideStaffWithoutWorkingHours)} style={styles.timeColumnHeader}>
+                    <View style={styles.filterContainer} />
                 </Pressable>
 
                 <ScrollView
@@ -348,22 +297,14 @@ const CalenderDayComponent = ({ selectedDate: _selectedDate, onPressScheduleItem
                     nestedScrollEnabled={false}
                     pointerEvents="none"
                 >
-
-                    <View style={styles.userColumnContent}>
-
-                        {filteredListStaff.map((staff) => (
-
-                            <View key={staff.id} style={styles.userColumnRow}>
-
-                                <UserAvatar listStaff={staff} />
-
+                    <View style={styles.timeColumnContent}>
+                        {displayTimeSlots.map((slot) => (
+                            <View key={slot.time} style={[styles.timeColumnRow, { height: timeSlotHeight }]}>
+                                <TextFieldLabel style={styles.timeText}>{slot.label}</TextFieldLabel>
                             </View>
                         ))}
-
                     </View>
-
                 </ScrollView>
-
             </View>
 
             <View style={styles.scrollableContent}>
@@ -377,9 +318,9 @@ const CalenderDayComponent = ({ selectedDate: _selectedDate, onPressScheduleItem
                         pointerEvents="none"
                     >
                         <View style={styles.headerRow}>
-                            {displayTimeSlots.map((slot) => (
-                                <View key={slot.time} style={styles.timeHeaderCell}>
-                                    <TextFieldLabel style={styles.timeText}>{slot.label}</TextFieldLabel>
+                            {filteredListStaff.map((staff) => (
+                                <View key={staff.id} style={[styles.staffHeaderCell, { width: staffColumnWidth }]}>
+                                    <UserAvatar listStaff={staff} />
                                 </View>
                             ))}
                         </View>
@@ -416,28 +357,8 @@ const CalenderDayComponent = ({ selectedDate: _selectedDate, onPressScheduleItem
                         }}
                     >
                         <View style={styles.container}>
-                            <View style={styles.userRowsContainer}>
-                                {/* {selectedDayWorkingRange && (
-                                    <>
-                                        <CurrentTimeLine
-                                            scheduleHeight={scheduleHeight}
-                                            timeSlotWidth={timeSlotWidth}
-                                            hours={selectedDayWorkingRange.startHour}
-                                            minutes={selectedDayWorkingRange.startMinute}
-                                            type={'start'}
-                                            baseHourOffset={minVisibleHour}
-                                        />
-                                        <CurrentTimeLine
-                                            scheduleHeight={scheduleHeight}
-                                            timeSlotWidth={timeSlotWidth}
-                                            hours={selectedDayWorkingRange.endHour}
-                                            minutes={selectedDayWorkingRange.endMinute}
-                                            type={'end'}
-                                            baseHourOffset={minVisibleHour}
-                                        />
-                                    </>
-                                )} */}
-                                {filteredListStaff.map((staff, index) => {
+                            <View style={styles.staffColumnsContainer}>
+                                {filteredListStaff.map((staff) => {
                                     const staffWorkingHours = getWorkingHoursForStaff(staff.id, dayOfWeek);
                                     const hasWorkingHours = staffWorkingHours !== null;
                                     const staffHoursStart = staffWorkingHours?.startHour ?? 0;
@@ -445,36 +366,9 @@ const CalenderDayComponent = ({ selectedDate: _selectedDate, onPressScheduleItem
                                     const staffHoursEnd = staffWorkingHours?.endHour ?? 0;
                                     const staffMinutesEnd = staffWorkingHours?.endMinute ?? 0;
 
-                                    const staffTopPosition = index * 100;
-
                                     return (
-                                        <React.Fragment key={staff.id}>
-                                            {hasWorkingHours && (
-                                                <>
-                                                    <View style={[styles.timeLineWrapper, { top: staffTopPosition }]}>
-                                                        <CurrentTimeLine
-                                                            scheduleHeight={80}
-                                                            timeSlotWidth={timeSlotWidth}
-                                                            hours={staffHoursStart}
-                                                            minutes={staffMinutesStart}
-                                                            type={'start'}
-                                                            baseHourOffset={minVisibleHour}
-                                                        />
-                                                    </View>
-                                                    <View style={[styles.timeLineWrapper, { top: staffTopPosition }]}>
-                                                        <CurrentTimeLine
-                                                            scheduleHeight={80}
-                                                            timeSlotWidth={timeSlotWidth}
-                                                            hours={staffHoursEnd}
-                                                            minutes={staffMinutesEnd}
-                                                            type={'end'}
-                                                            baseHourOffset={minVisibleHour}
-                                                        />
-                                                    </View>
-                                                </>
-                                            )}
-
-                                            <View style={styles.userRow}>
+                                        <View key={staff.id} style={[styles.staffColumn, { width: staffColumnWidth }]}>
+                                            <View style={[styles.staffColumnContent, { height: totalTimeHeight }]}>
                                                 {displayTimeSlots.map((slot) => {
                                                     const slotHour = parseInt(slot.time.substring(0, 2));
                                                     const slotMinutes = parseInt(slot.time.substring(2, 4));
@@ -488,6 +382,7 @@ const CalenderDayComponent = ({ selectedDate: _selectedDate, onPressScheduleItem
                                                             key={`${slot.time}-${staff.id}`}
                                                             style={[
                                                                 styles.scheduleCell,
+                                                                { height: timeSlotHeight },
                                                                 // !working && styles.nonWorkingHoursCell
                                                             ]}
                                                         >
@@ -498,7 +393,7 @@ const CalenderDayComponent = ({ selectedDate: _selectedDate, onPressScheduleItem
                                                                 <View style={[
                                                                     styles.partialOverlay,
                                                                     {
-                                                                        width: (staffMinutesStart / 60) * timeSlotWidth,
+                                                                        height: (staffMinutesStart / 60) * timeSlotHeight,
                                                                         backgroundColor: colors.bacgroundCalendar,
                                                                         opacity: 0.8
                                                                     }
@@ -509,8 +404,8 @@ const CalenderDayComponent = ({ selectedDate: _selectedDate, onPressScheduleItem
                                                                 <View style={[
                                                                     styles.partialOverlay,
                                                                     {
-                                                                        left: (staffMinutesEnd / 60) * timeSlotWidth,
-                                                                        width: ((60 - staffMinutesEnd) / 60) * timeSlotWidth,
+                                                                        top: (staffMinutesEnd / 60) * timeSlotHeight,
+                                                                        height: ((60 - staffMinutesEnd) / 60) * timeSlotHeight,
                                                                         backgroundColor: colors.bacgroundCalendar,
                                                                         opacity: 0.8
                                                                     }
@@ -520,7 +415,7 @@ const CalenderDayComponent = ({ selectedDate: _selectedDate, onPressScheduleItem
                                                     );
                                                 })}
                                             </View>
-                                        </React.Fragment>
+                                        </View>
                                     );
                                 })}
                             </View>
@@ -532,19 +427,19 @@ const CalenderDayComponent = ({ selectedDate: _selectedDate, onPressScheduleItem
     );
 };
 
-const $styles = (colors: Colors, timeSlotWidth: number, isTablet: boolean) => StyleSheet.create({
+const $styles = (colors: Colors, staffColumnWidth: number, timeSlotHeight: number, isTablet: boolean) => StyleSheet.create({
     mainContainer: {
         flex: 1,
         flexDirection: 'row',
     },
-    fixedUserColumn: {
-        width: isTablet ? 180 : 80,
+    fixedTimeColumn: {
+        width: isTablet ? 120 : 90,
         backgroundColor: colors.background,
         borderRightWidth: 1,
         borderColor: colors.borderTable,
         zIndex: 1000,
     },
-    userColumnHeader: {
+    timeColumnHeader: {
         height: 80,
         justifyContent: 'center',
         alignItems: 'center',
@@ -558,16 +453,11 @@ const $styles = (colors: Colors, timeSlotWidth: number, isTablet: boolean) => St
         alignItems: 'center',
         justifyContent: 'center',
     },
-    filterLabel: {
-        fontSize: 12,
-        color: colors.text,
-        marginLeft: 8,
-    },
-    userColumnContent: {
+    timeColumnContent: {
         position: 'relative',
     },
-    userColumnRow: {
-        height: 100,
+    timeColumnRow: {
+        height: timeSlotHeight,
         justifyContent: 'center',
         alignItems: 'center',
         borderBottomWidth: 1,
@@ -589,8 +479,8 @@ const $styles = (colors: Colors, timeSlotWidth: number, isTablet: boolean) => St
         borderColor: colors.borderTable,
     },
     container: {
-        borderLeftWidth: 1,
         borderTopWidth: 1,
+        borderLeftWidth: 1,
         borderColor: colors.borderTable,
     },
     headerRow: {
@@ -601,43 +491,39 @@ const $styles = (colors: Colors, timeSlotWidth: number, isTablet: boolean) => St
         backgroundColor: colors.backgroundTable,
         zIndex: 100,
     },
-    timeHeaderCell: {
-        width: timeSlotWidth,
+    staffHeaderCell: {
+        width: staffColumnWidth,
         justifyContent: 'center',
         alignItems: 'center',
         borderRightWidth: 1,
         borderColor: colors.borderTable,
         backgroundColor: colors.backgroundTable,
     },
-    userRowsContainer: {
-        position: 'relative',
-    },
-    timeLineWrapper: {
-        position: 'absolute',
-        left: 0,
-        right: 0,
-        zIndex: 500,
-    },
-    userRow: {
+    staffColumnsContainer: {
         flexDirection: 'row',
-        height: 100,
-        borderBottomWidth: 1,
+    },
+    staffColumn: {
+        borderRightWidth: 1,
         borderColor: colors.borderTable,
+    },
+    staffColumnContent: {
+        position: 'relative',
+        borderLeftWidth: 1,
+        borderColor: colors.borderTable,
+        overflow: 'visible',
     },
     timeText: {
         fontSize: 16,
         color: colors.text,
     },
-    userText: {
-        fontSize: 16,
-        color: colors.text,
-    },
     scheduleCell: {
-        width: timeSlotWidth,
+        width: staffColumnWidth,
+        borderBottomWidth: 1,
         borderRightWidth: 1,
         borderColor: colors.borderTable,
         backgroundColor: colors.backgroundTable,
         position: 'relative',
+        overflow: 'visible',
     },
     nonWorkingHoursCell: {
         backgroundColor: colors.bacgroundCalendar,
@@ -645,17 +531,17 @@ const $styles = (colors: Colors, timeSlotWidth: number, isTablet: boolean) => St
     },
     partialOverlay: {
         position: 'absolute',
-        top: 0,
-        bottom: 0,
+        left: 0,
+        right: 0,
         zIndex: 10
     },
     quarterHourLine: {
         position: 'absolute',
-        top: 0,
-        bottom: 0,
-        width: 1,
-        borderRightWidth: 1,
-        borderRightColor: colors.borderTable,
+        left: 0,
+        right: 0,
+        height: 1,
+        borderBottomWidth: 1,
+        borderBottomColor: colors.borderTable,
         borderStyle: 'dashed',
         opacity: 0.5
     },
@@ -669,8 +555,6 @@ const $styles = (colors: Colors, timeSlotWidth: number, isTablet: boolean) => St
         overflow: 'hidden',
         zIndex: 10,
         position: 'absolute',
-        top: 0,
-        bottom: 0,
     },
     scheduleItemTitle: {
         fontSize: 14,
@@ -691,3 +575,4 @@ const $styles = (colors: Colors, timeSlotWidth: number, isTablet: boolean) => St
 });
 
 export default CalenderDayComponent;
+
