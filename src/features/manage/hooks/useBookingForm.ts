@@ -1,5 +1,5 @@
 import { useAppDispatch, useAppSelector } from "@/app/store";
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { getDetailBookingItemApi, getHistoryBookingItemApi, getlistBookingManagerApi, getListBookingStatusApi, getListTimeSlotApi, postCancelBookingApi, putCheckinBookingApi, putEditBookingApi } from "../api/BookingApi";
 import { setListBookingManager, setListBookingManagerByDate, setListBookingManagerByRange, setListBookingStatus, appendListBookingManager, resetPageIndex, setDetailBookingItem, setHistoryBookingItem, appendHistoryBookingItem, setFilters, resetFilters } from "../model/bookingSlice";
 import { alertService } from "@/services/alertService";
@@ -13,6 +13,7 @@ export function useBookingForm() {
     const { pageIndex: reduxPageIndex, historyBookingItem, filters } = useAppSelector((state) => state.booking);
     const [loading, setLoading] = useState<boolean>(false);
     const [loadingMore, setLoadingMore] = useState<boolean>(false);
+    const loadingRef = useRef(false);
 
     const dateFrom = filters.dateFrom ? new Date(filters.dateFrom) : null;
     const dateTo = filters.dateTo ? new Date(filters.dateTo) : null;
@@ -102,6 +103,9 @@ export function useBookingForm() {
 
     const getListBookingManagerByDate = useCallback(async (bookingDate: Date, searchText: string) => {
         try {
+            if (loadingRef.current) return;
+            loadingRef.current = true;
+            setLoading(true);
             const pageSizeDate = 10000;
             const response = await getlistBookingManagerApi(undefined, undefined, bookingDate, undefined, undefined, undefined, undefined, searchText, undefined, undefined, pageSizeDate, undefined);
             dispatch(setListBookingManagerByDate(response));
@@ -114,13 +118,15 @@ export function useBookingForm() {
                 onConfirm: () => {},
             });
         } finally {
+            loadingRef.current = false;
             setLoading(false);
         }
-    }, [dispatch, t, loading]);
+    }, [dispatch, t]);
 
     const getListBookingManagerByRange = useCallback(async (startDate?: Date | null, endDate?: Date | null, searchText?: string, staffId?: number) => {
         try {
-            if (loading) return;
+            if (loadingRef.current) return;
+            loadingRef.current = true;
             setLoading(true);
             const pageSizeDate = 10000;
             const response = await getlistBookingManagerApi(startDate, endDate, undefined, undefined, undefined, undefined, undefined, searchText, undefined, undefined, pageSizeDate, undefined, staffId);
@@ -134,9 +140,10 @@ export function useBookingForm() {
                 onConfirm: () => {},
             });
         } finally {
+            loadingRef.current = false;
             setLoading(false);
         }
-    }, [dispatch, t, loading]);
+    }, [dispatch, t]);
 
     const loadMoreBookings = useCallback(async () => {
         if (loadingMore || loading) return;
