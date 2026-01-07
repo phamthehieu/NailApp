@@ -34,22 +34,25 @@ const BottomNavigator = () => {
 
     return (
         <Tab.Navigator
-            screenOptions={{
+            screenOptions={({ route }) => ({
                 headerShown: false,
                 tabBarActiveTintColor: colors.yellow,
                 tabBarInactiveTintColor: colors.placeholderTextColor,
-                tabBarStyle: {
-                    borderTopWidth: 1,
-                    borderTopColor: colors.border,
-                    backgroundColor: colors.card,
-                    paddingTop: 8,
-                    paddingBottom: Math.max(insets.bottom, 8),
-                    height: 60 + Math.max(insets.bottom, 8),
-                },
+                tabBarStyle:
+                    route.name === Paths.Checkin
+                        ? { display: 'none' }
+                        : {
+                            borderTopWidth: 1,
+                            borderTopColor: colors.border,
+                            backgroundColor: colors.card,
+                            paddingTop: 8,
+                            paddingBottom: Math.max(insets.bottom, 8),
+                            height: 60 + Math.max(insets.bottom, 8),
+                        },
                 tabBarLabelStyle: {
                     marginBottom: 4,
                 },
-            }}
+            })}
         >
 
             <Tab.Screen

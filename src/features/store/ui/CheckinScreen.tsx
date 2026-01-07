@@ -2,17 +2,21 @@ import { Paths } from '@/app/providers/navigation/paths';
 import { RootScreenProps } from '@/app/providers/navigation/types';
 import { Colors, useAppTheme } from '@/shared/theme';
 import StatusBarComponent from '@/shared/ui/StatusBar';
-import { StyleSheet, Dimensions, View, TouchableOpacity, ScrollView } from 'react-native';
+import { StyleSheet, Dimensions, View, TouchableOpacity, ScrollView, BackHandler } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useIsTablet } from '@/shared/lib/useIsTablet';
 import { useTranslation } from 'react-i18next';
 import { useState, useEffect } from 'react';
 import { TextFieldLabel } from '@/shared/ui/Text';
 import Loader from '@/shared/ui/Loader';
-import { ChevronUp, ChevronDown, Printer, Settings, Check, ChevronLeft } from 'lucide-react-native';
-import LinearGradient from 'react-native-linear-gradient';
+import { Check, LogIn } from 'lucide-react-native';
+import Keychain from 'react-native-keychain';
 import { postCheckinApi } from '../api/storeApi';
 import { alertService } from '@/services/alertService';
+import { RootState, useAppDispatch } from '@/app/store';
+import { useSelector } from 'react-redux';
+import { clearAuth } from '@/services/auth/authService';
+import { clearAuthState } from '@/features/auth/model/authSlice';
 
 const CheckinScreen = ({ navigation }: RootScreenProps<Paths.Checkin>) => {
     const { theme: { colors } } = useAppTheme();
@@ -24,6 +28,25 @@ const CheckinScreen = ({ navigation }: RootScreenProps<Paths.Checkin>) => {
     const [phone, setPhone] = useState('');
     const [loading, setLoading] = useState(false);
     const [consentChecked, setConsentChecked] = useState(true);
+    const dispatch = useAppDispatch();
+    const userInfo = useSelector((state: RootState) => state.auth.userInfo);
+
+    useEffect(() => {
+        const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
+            return true;
+        });
+
+        const unsubscribeBeforeRemove = navigation.addListener('beforeRemove', (e) => {
+            if (e.data.action.type === 'GO_BACK') {
+                e.preventDefault();
+            }
+        });
+
+        return () => {
+            backHandler.remove();
+            unsubscribeBeforeRemove();
+        };
+    }, [navigation]);
 
     const formatPhoneNumber = (value: string): string => {
         const cleaned = value.replace(/\D/g, '');
@@ -109,23 +132,54 @@ const CheckinScreen = ({ navigation }: RootScreenProps<Paths.Checkin>) => {
         return '0XXX XXX XXX';
     };
 
+    const handleLogout = async () => {
+        const savedUsername = userInfo?.username;
+
+        dispatch(clearAuthState());
+        clearAuth();
+
+        // try {
+        //     let usernameToSave = savedUsername;
+
+        //     if (!usernameToSave) {
+        //         const credentials = await Keychain.getGenericPassword();
+        //         if (credentials && typeof credentials === 'object' && 'username' in credentials) {
+        //             usernameToSave = credentials.username;
+        //         }
+        //     }
+
+        //     await Keychain.resetGenericPassword();
+
+        //     if (usernameToSave) {
+        //         await Keychain.setGenericPassword(usernameToSave, '');
+        //     }
+        // } catch (error) {
+        //     await Keychain.resetGenericPassword();
+        // }
+
+        navigation.reset({
+            index: 0,
+            routes: [{ name: Paths.Login }],
+        });
+    };
+
     return (
         <SafeAreaView style={styles.container} edges={['top', 'left', 'right', 'bottom']}>
             <StatusBarComponent backgroundColor={colors.yellow} />
 
             <View style={styles.topSection}>
                 <View style={styles.topChevronContainer}>
-                    <TouchableOpacity style={styles.topIconButton} onPress={() => navigation.goBack()}>
+                    {/* <TouchableOpacity style={styles.topIconButton} onPress={() => navigation.goBack()}>
                         <ChevronLeft size={20} color={colors.text} />
-                    </TouchableOpacity>
+                    </TouchableOpacity> */}
                 </View>
                 <View style={styles.topRightIcons}>
                     {/* <TouchableOpacity style={styles.topIconButton}>
                         <Printer size={20} color={colors.text} />
                     </TouchableOpacity> */}
-                    {/* <TouchableOpacity style={styles.topIconButton}>
-                        <Settings size={20} color={colors.text} />
-                    </TouchableOpacity> */}
+                    <TouchableOpacity style={styles.topIconButton} onPress={handleLogout}>
+                        <LogIn size={20} color={colors.yellow} />
+                    </TouchableOpacity>
                 </View>
             </View>
 
@@ -151,7 +205,7 @@ const CheckinScreen = ({ navigation }: RootScreenProps<Paths.Checkin>) => {
 
                 <View style={styles.mainContent}>
                     <View style={styles.contentRow}>
-                        {!isSmallScreen && (
+                        {/* {!isSmallScreen && (
                             <View style={styles.loyaltyContainer}>
                                 <View style={styles.loyaltyScrollIndicator}>
                                     <ChevronUp size={16} color={colors.text} />
@@ -178,7 +232,7 @@ const CheckinScreen = ({ navigation }: RootScreenProps<Paths.Checkin>) => {
                                     <ChevronDown size={16} color={colors.text} />
                                 </View>
                             </View>
-                        )}
+                        )} */}
 
                         <View style={styles.phoneKeypadContainer}>
                             <View style={styles.phoneDisplayContainer}>

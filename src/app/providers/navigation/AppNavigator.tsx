@@ -37,7 +37,13 @@ const AppStack = () => {
             <Stack.Screen name={Paths.Splash} component={SplashScreen} />
             <Stack.Screen name={Paths.Login} component={LoginScreen} />
 
-            <Stack.Screen name={Paths.Checkin} component={CheckinScreen} />
+            <Stack.Screen
+                name={Paths.Checkin}
+                component={CheckinScreen}
+                options={{
+                    gestureEnabled: false,
+                }}
+            />
             <Stack.Screen name={Paths.ChooseShop} component={ChooseShopScreen} />
 
             <Stack.Screen name={Paths.BottomNavigator} component={BottomNavigator} />
