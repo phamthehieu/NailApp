@@ -4,6 +4,7 @@ import { ArrowLeft, Search, X } from "lucide-react-native";
 import { useAppTheme } from '../theme';
 import { TextFieldLabel } from './Text';
 import { TextField } from './TextField';
+import { useTranslation } from 'react-i18next';
 
 interface IProps {
     label?: string;
@@ -48,7 +49,7 @@ export default function MHeader({
     statusColor,
     statusBgColor,
 }: IProps) {
-    ;
+    const { t } = useTranslation();
     const { theme: { colors }} = useAppTheme();
     const [isSearching, setIsSearching] = React.useState(false);
     const [searchText, setSearchText] = React.useState('');
@@ -58,8 +59,7 @@ export default function MHeader({
     const rightIconsCount = (enableSearch ? 1 : 0) + (showIconRight ? 1 : 0);
     const searchContainerWidth = (rightIconsCount === 2 && showIconLeft) ? '60%' : (rightIconsCount === 2 && !showIconLeft) ? '70%' : rightIconsCount === 1 ? '80%' : '90%';
     const rightIconsWidthPx = rightIconsCount * 40;
-    
-    // Tính toán padding cho label để tránh bị che bởi status badge và icon
+
     const statusBadgeWidth = status ? 120 : 0;
     const iconLeftPadding = showIconLeft ? 48 : 16;
     const iconRightPadding = status ? statusBadgeWidth + 16 : (showIconRight || enableSearch ? rightIconsWidthPx + 16 : 16);
@@ -127,18 +127,23 @@ export default function MHeader({
                 )}
 
                 {(showIconRight || enableSearch || status) && (
-                    <View style={[styles.iconRight, { 
+                    <View style={[styles.iconRight, {
                         width: status ? Math.max(120, widthIconRight) : Math.max(widthIconRight, enableSearch && showIconRight ? 80 : widthIconRight),
                         flexDirection: 'row',
                         alignItems: 'center',
-                    }]}> 
+                        flexShrink: 1,
+                    }]}>
                         {status && (
-                            <View style={[styles.statusBadge, { 
-                                backgroundColor: statusBgColor || colors.yellow, 
-                                borderColor: statusColor || colors.yellow,
+                            <View style={[styles.statusBadge, {
+                                backgroundColor: statusBgColor || colors.yellow,
+                                borderColor: status == t("bookingStatusLabel.waitingCheckin") ? colors.white : statusColor || colors.yellow,
                                 borderWidth: 1,
                             }]}>
-                                <TextFieldLabel style={[styles.statusText, { color: statusColor || colors.yellow }]}>
+                                <TextFieldLabel
+                                    style={[styles.statusText, { color: status == t("bookingStatusLabel.waitingCheckin") ? colors.white : statusColor || colors.yellow, fontSize: status == t("bookingStatusLabel.checkedIn") ? 10 : 13 }]}
+                                    numberOfLines={1}
+                                    ellipsizeMode="tail"
+                                >
                                     {status}
                                 </TextFieldLabel>
                             </View>
@@ -229,11 +234,14 @@ const styles = StyleSheet.create({
         borderRadius: 8,
         marginRight: 0,
         minWidth: 100,
+        maxWidth: 200,
+        flexShrink: 1,
         alignItems: 'center',
         justifyContent: 'center',
     },
     statusText: {
         fontSize: 13,
         fontWeight: '600',
+        textAlign: 'center',
     },
 });

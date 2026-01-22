@@ -5,21 +5,21 @@ type ColorToken = keyof Colors
 
 const STATUS_NAME_COLOR_MAP: Record<string, ColorToken> = {
     "Chờ CheckIn": "blue",
-    "Chờ Thanh toán": "yellow",
+    "Chờ Thanh toán": "orange",
     "Người dùng CheckIn": "purple",
     "Đã hủy": "red",
     "Hoàn thành": "green",
 }
 
 const STATUS_ID_COLOR_MAP: Record<number, ColorToken> = {
-    0: "blue",
-    1: "yellow",
+    0: "orange",
+    1: "blue",
     2: "purple",
     3: "red",
     4: "green",
 }
 
-const DEFAULT_FALLBACK_COLOR: ColorToken = "yellow"
+const DEFAULT_FALLBACK_COLOR: ColorToken = "orange"
 
 export const getBookingStatusColor = (
     status: BookingStatus,

@@ -200,31 +200,6 @@ const SettingScreen = ({navigation}: RootScreenProps<Paths.Settings>) => {
                         </Pressable>
                     </View>
 
-                    <View style={styles.sectionCard}>
-                        <TextFieldLabel weight="medium" style={styles.sectionTitle}>
-                            {t('settings.more')}
-                        </TextFieldLabel>
-
-                        <TouchableOpacity
-                            style={styles.row}
-                            activeOpacity={0.7}
-                            onPress={handleAboutUs}
-                        >
-                            <TextFieldLabel style={styles.rowLabel}>{t('settings.aboutUs')}</TextFieldLabel>
-                            <ChevronRight size={isTablet ? 22 : 18} color={colors.placeholderTextColor} />
-                        </TouchableOpacity>
-                        <View style={styles.rowDivider} />
-
-                        <TouchableOpacity
-                            style={styles.row}
-                            activeOpacity={0.7}
-                            onPress={handlePrivacyPolicy}
-                        >
-                            <TextFieldLabel style={styles.rowLabel}>{t('settings.privacyPolicy')}</TextFieldLabel>
-                            <ChevronRight size={isTablet ? 22 : 18} color={colors.placeholderTextColor} />
-                        </TouchableOpacity>
-                    </View>
-
                     <View style={[styles.sectionCard, styles.logoutCard]}>
                         <TouchableOpacity style={styles.row} activeOpacity={0.7} onPress={handleLogout}>
                             <TextFieldLabel style={styles.rowLabel}>

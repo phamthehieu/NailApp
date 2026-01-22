@@ -15,6 +15,7 @@ import Loader from "@/shared/ui/Loader";
 import Toast from "react-native-toast-message";
 import { ToastProvider } from "@/shared/ui/toast/ToastProvider";
 import { useBookingForm } from "../../hooks/useBookingForm";
+import { useSelector } from "react-redux";
 
 export type PaymentServiceItem = {
     id: number | string;
@@ -71,6 +72,7 @@ const BookingPaymentModal = ({
     const [promotionsByService, setPromotionsByService] = useState<Record<number, promotionItem[]>>({});
     const [loadingPromotions, setLoadingPromotions] = useState<Record<number, boolean>>({});
     const [paymentList, setPaymentList] = useState<{ label: string, value: number }[]>([]);
+    const [customerGroupIds, setCustomerGroupIds] = useState<any>([]);
 
     const [voucherCode, setVoucherCode] = useState("");
     const [paymentMethod, setPaymentMethod] = useState(null);
@@ -127,7 +129,7 @@ const BookingPaymentModal = ({
         return Math.max(0, originalPrice - discount);
     };
 
-    const loadPromotionsForService = useCallback(async (serviceId: number) => {
+    const loadPromotionsForService = useCallback(async (serviceId: number, customerGroupIds: any) => {
         if (loadedServicesRef.current.has(serviceId) || loadingServicesRef.current.has(serviceId)) {
             return;
         }
@@ -136,7 +138,7 @@ const BookingPaymentModal = ({
             loadingServicesRef.current.add(serviceId);
             setLoadingPromotions(prev => ({ ...prev, [serviceId]: true }));
             const PageSize = 10000;
-            const response = await getListPromotionApi(0, PageSize, serviceId);
+            const response = await getListPromotionApi(0, PageSize, serviceId, customerGroupIds);
             if (response?.items) {
                 setPromotionsByService(prev => ({
                     ...prev,
@@ -200,6 +202,7 @@ const BookingPaymentModal = ({
     };
 
     const getPromotionOptions = (serviceId: number) => {
+        console.log('promotionsByService', promotionsByService);
         const servicePromotionsList = promotionsByService[serviceId] || [];
         return servicePromotionsList.map(promotion => ({
             label: promotion.name,
@@ -260,6 +263,9 @@ const BookingPaymentModal = ({
                 serviceCode: service.serviceCode,
             }));
 
+            let customerGroup = detailBookingItem.customer?.customerGroup;
+            setCustomerGroupIds(customerGroup);
+
             setDataPaymentBooking({
                 id: detailBookingItem.id,
                 services,
@@ -282,7 +288,7 @@ const BookingPaymentModal = ({
             setServicePromotions(initialPromotions);
 
             services.forEach(service => {
-                loadPromotionsForService(service.serviceId);
+                loadPromotionsForService(service.serviceId, customerGroup);
             });
         }
     }, [detailBookingItem, visible, loadPromotionsForService]);
@@ -388,6 +394,7 @@ const BookingPaymentModal = ({
             }
         }
     };
+    console.log("detailBookingItem", detailBookingItem);
 
     return (
         <Modal
@@ -465,7 +472,7 @@ const BookingPaymentModal = ({
                                                         valueField="value"
                                                         value={promotion?.id || null}
                                                         onChange={(selected) => handlePromotionChange(item.serviceId, selected.value)}
-                                                        onFocus={() => loadPromotionsForService(item.serviceId)}
+                                                        onFocus={() => loadPromotionsForService(item.serviceId, customerGroupIds)}
                                                         style={styles.promotionDropdown}
                                                         containerStyle={styles.dropdownContainer}
                                                         itemContainerStyle={styles.dropdownItem}
@@ -521,7 +528,7 @@ const BookingPaymentModal = ({
                                                     valueField="value"
                                                     value={servicePromotions[item.serviceId]?.id || null}
                                                     onChange={(selected) => handlePromotionChange(item.serviceId, selected.value)}
-                                                    onFocus={() => loadPromotionsForService(item.serviceId)}
+                                                    onFocus={() => loadPromotionsForService(item.serviceId, customerGroupIds)}
                                                     style={styles.mobilePromotionDropdown}
                                                     containerStyle={styles.dropdownContainer}
                                                     itemContainerStyle={styles.dropdownItem}

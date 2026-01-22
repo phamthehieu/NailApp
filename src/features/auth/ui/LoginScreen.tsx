@@ -3,7 +3,7 @@ import { RootScreenProps } from '@/app/providers/navigation/types';
 import { useAppTheme } from '@/shared/theme';
 import StatusBarComponent from '@/shared/ui/StatusBar';
 import { TextFieldLabel } from '@/shared/ui/Text';
-import { ScrollView, View, Dimensions, KeyboardAvoidingView, Platform, Keyboard, Animated, PanResponder, PanResponderInstance, findNodeHandle, Pressable } from 'react-native';
+import { ScrollView, View, Dimensions, KeyboardAvoidingView, Platform, Keyboard, findNodeHandle, Pressable } from 'react-native';
 import { LayoutAnimation, UIManager } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AutoImage } from '@/shared/ui/AutoImage';
@@ -13,12 +13,13 @@ import { TextField, TextFieldAccessoryProps } from '@/shared/ui/TextField';
 import { useRef, useMemo, useEffect, useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { TextInput, TouchableOpacity } from 'react-native';
-import { Eye, EyeOff, MapPinCheck } from 'lucide-react-native';
+import { Eye, EyeOff } from 'lucide-react-native';
 import { Button } from '@/shared/ui/Button';
 import { useAuthForm } from '@/features/auth/hooks/useAuthForm';
 import { useLanguage } from '@/shared/lib/useLanguage';
 import { $styles } from './styles';
 import Loader from '@/shared/ui/Loader';
+import { requestNotificationPermission } from '@/services/permissionService';
 
 const LoginScreen = ({ navigation }: RootScreenProps<Paths.Login>) => {
     const { t } = useTranslation();
@@ -97,6 +98,16 @@ const LoginScreen = ({ navigation }: RootScreenProps<Paths.Login>) => {
 
         return () => {
             keyboardDidHideListener.remove();
+        };
+    }, []);
+
+    useEffect(() => {
+        const timeoutId = setTimeout(async () => {
+            await requestNotificationPermission(true);
+        }, 500);
+
+        return () => {
+            clearTimeout(timeoutId);
         };
     }, []);
 
@@ -180,7 +191,6 @@ const LoginScreen = ({ navigation }: RootScreenProps<Paths.Login>) => {
 
                             <TextField
                                 label={t('login.username')}
-                                keyboardType='numeric'
                                 placeholder={t('login.usernamePlaceholder')}
                                 value={username}
                                 onChangeText={(text) => {
@@ -258,7 +268,7 @@ const LoginScreen = ({ navigation }: RootScreenProps<Paths.Login>) => {
                             textStyle={styles.buttonLoginText}
                         />
 
-                        <View style={styles.optionsContainer}>
+                        {/* <View style={styles.optionsContainer}>
                             <TouchableOpacity
                                 onPress={() => {
                                     console.log('Forgot password');
@@ -270,7 +280,7 @@ const LoginScreen = ({ navigation }: RootScreenProps<Paths.Login>) => {
                                     style={styles.forgotPasswordText}
                                 />
                             </TouchableOpacity>
-                        </View>
+                        </View> */}
 
                     </View>
 

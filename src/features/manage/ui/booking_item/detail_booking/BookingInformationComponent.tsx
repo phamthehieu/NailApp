@@ -92,9 +92,9 @@ const BookingInformationComponent = ({ bookingId }: BookingInformationComponentP
             <View style={styles.section}>
                 <TextFieldLabel style={styles.sectionTitle}>{t('bookingInformation.serviceInfo')}</TextFieldLabel>
                 {detailBookingItem.services.map((service, index) => (
-                    <View key={service.id} style={[styles.card, {marginBottom: 16}]}>
+                    <View key={`${service.id ?? 'service'}-${index}`} style={[styles.card, {marginBottom: 16}]}>
                         <>
-                            <View key={index} style={styles.infoRow}>
+                            <View style={styles.infoRow}>
                                 <TextFieldLabel style={styles.infoLabel}>{t('bookingInformation.serviceName')}</TextFieldLabel>
                                 <TextFieldLabel style={styles.infoValue}>{service.serviceName || '-'}</TextFieldLabel>
                             </View>

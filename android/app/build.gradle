@@ -77,13 +77,13 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace "com.nailapp"
+    namespace "com.lachongbookingnail"
     defaultConfig {
-        applicationId "com.nailapp"
+        applicationId "com.lachongbookingnail"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 3
-        versionName "0.0.3"
+        versionCode 13
+        versionName "0.0.13"
     }
     signingConfigs {
         debug {

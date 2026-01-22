@@ -21,6 +21,7 @@ export const colors = {
   green: '#10B981',
   red: '#EF4444',
   bacgroundCalendar: '#E1F5FE',
+  orange: '#F79009',
 
   ...sharedColors,
 } as const;

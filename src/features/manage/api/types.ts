@@ -27,6 +27,7 @@ export interface Customer {
     name: string;
     phoneNumber: string;
     email: string;
+    customerGroup: any;
 }
 
 export interface Frequency {

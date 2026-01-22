@@ -30,13 +30,13 @@ export interface PostSelectStoreRequest {
 }
 
 export async function listChooseShopApi(userId: number): Promise<ListChooseShopResponse[]> {
-    return http.getPortal<ListChooseShopResponse[]>(`/api/AppUser/ListStore_ByIdUser?UserId=${userId}`);
+    return http.getPortal<ListChooseShopResponse[]>(`/AppUser/ListStore_ByIdUser?UserId=${userId}`);
 }
 
 export async function postSelectStoreApi(storeId: number): Promise<PostSelectStoreRequest> {
-    return http.postPortal<PostSelectStoreRequest>(`/api/StaffProfile/SelectStore?IdStore=${storeId}`);
+    return http.postPortal<PostSelectStoreRequest>(`/StaffProfile/SelectStore?IdStore=${storeId}`);
 }
 
 export async function postCheckinApi(data: { phoneNumber: string }): Promise<any> {
-    return http.put<any>(`/api/Booking/CustomerCheckIn`, data);
+    return http.put<any>(`/Booking/CustomerCheckIn`, data);
 }

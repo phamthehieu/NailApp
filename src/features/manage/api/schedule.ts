@@ -50,30 +50,71 @@ export const getScheduleBlocksForHour = (
 
     const startHours = parseInt(item.startTime.substring(0, 2));
     const startMinutes = parseInt(item.startTime.substring(2, 4));
+    const endHours = parseInt(item.endTime.substring(0, 2));
+    const endMinutes = parseInt(item.endTime.substring(2, 4));
 
     const itemStartDecimal = startHours + startMinutes / 60;
+    const itemEndDecimal = endHours + endMinutes / 60;
 
-    return itemStartDecimal >= timeSlotStart && itemStartDecimal < timeSlotEnd;
+    // Kiểm tra xem item có overlap với timeSlot không
+    return (
+      itemStartDecimal >= timeSlotStart && itemStartDecimal < timeSlotEnd ||
+      (itemStartDecimal < timeSlotStart && itemEndDecimal > timeSlotStart)
+    );
   });
 
-  return filtered
-    .map((item, index) => {
-      const startHours = parseInt(item.startTime.substring(0, 2));
-      const startMinutes = parseInt(item.startTime.substring(2, 4));
-      const endHours = parseInt(item.endTime.substring(0, 2));
-      const endMinutes = parseInt(item.endTime.substring(2, 4));
+  // Sắp xếp các items theo thời gian bắt đầu
+  const sorted = filtered.sort((a, b) => {
+    const aStart = parseInt(a.startTime.substring(0, 2)) + parseInt(a.startTime.substring(2, 4)) / 60;
+    const bStart = parseInt(b.startTime.substring(0, 2)) + parseInt(b.startTime.substring(2, 4)) / 60;
+    return aStart - bStart;
+  });
 
-      const startDecimal = startHours + startMinutes / 60;
-      const endDecimal = endHours + endMinutes / 60;
-      const duration = endDecimal - startDecimal;
-      const calculatedHeight = duration * 100;
-      const heightInPixels = Math.max(calculatedHeight, 25);
+  // Tính toán index cho các items chồng lấn nhau
+  const blocks: Array<{item: ScheduleItem; index: number; heightInPixels: number}> = [];
+  const columns: Array<Array<ScheduleItem>> = [];
 
-      return {item, index, heightInPixels};
-    })
-    .filter(Boolean) as {
-    item: ScheduleItem;
-    index: number;
-    heightInPixels: number;
-  }[];
+  sorted.forEach(item => {
+    const startHours = parseInt(item.startTime.substring(0, 2));
+    const startMinutes = parseInt(item.startTime.substring(2, 4));
+    const endHours = parseInt(item.endTime.substring(0, 2));
+    const endMinutes = parseInt(item.endTime.substring(2, 4));
+
+    const startDecimal = startHours + startMinutes / 60;
+    const endDecimal = endHours + endMinutes / 60;
+    const duration = endDecimal - startDecimal;
+    const calculatedHeight = duration * 100;
+    const heightInPixels = Math.max(calculatedHeight, 25);
+
+    // Tìm cột đầu tiên không có overlap với item này
+    let columnIndex = 0;
+    for (let i = 0; i < columns.length; i++) {
+      const column = columns[i];
+      const hasOverlap = column.some(existingItem => {
+        const existingStart = parseInt(existingItem.startTime.substring(0, 2)) + 
+                             parseInt(existingItem.startTime.substring(2, 4)) / 60;
+        const existingEnd = parseInt(existingItem.endTime.substring(0, 2)) + 
+                           parseInt(existingItem.endTime.substring(2, 4)) / 60;
+        
+        // Kiểm tra overlap: một trong hai item bắt đầu trước khi item kia kết thúc
+        return !(endDecimal <= existingStart || startDecimal >= existingEnd);
+      });
+
+      if (!hasOverlap) {
+        columnIndex = i;
+        break;
+      }
+      columnIndex = i + 1;
+    }
+
+    // Tạo cột mới nếu cần
+    if (columnIndex >= columns.length) {
+      columns.push([]);
+    }
+
+    columns[columnIndex].push(item);
+    blocks.push({item, index: columnIndex, heightInPixels});
+  });
+
+  return blocks;
 };

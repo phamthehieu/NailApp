@@ -36,11 +36,11 @@ export type {
 } from "./types";
 
 export const getListStaffApi = async () => {
-    return http.getPortal<ListStaffResponse>('/api/Staff/List');
+    return http.getPortal<ListStaffResponse>('/Staff/List');
 }
 
 export const getListBookingHourSettingApi = async () => {
-    return http.getPortal<ListBookingHourSettingResponse[]>('/api/BookingHours/ListSetting');
+    return http.getPortal<ListBookingHourSettingResponse[]>('/BookingHours/ListSetting');
 }
 
 const pad = (value: number) => value.toString().padStart(2, '0');
@@ -112,15 +112,15 @@ export const getlistBookingManagerApi = async (
     if (staffId) {
         params.append('StaffId', staffId.toString());
     }
-    return http.get<ListBookingManagerResponse>(`/api/Booking/List?${params.toString()}`);
+    return http.get<ListBookingManagerResponse>(`/Booking/List?${params.toString()}`);
 }
 
 export const getListBookingStatusApi = async () => {
-    return http.get<ListBookingStatusResponse>('/api/Booking/ListBookingStatus');
+    return http.get<ListBookingStatusResponse>('/Booking/ListBookingStatus');
 }
 
 export const getDetailBookingItemApi = async (bookingCode: string) => {
-    return http.get<DetailBookingItemResponse>(`/api/Booking/Get/${bookingCode}`);
+    return http.get<DetailBookingItemResponse>(`/Booking/Get/${bookingCode}`);
 }
 
 export const getHistoryBookingItemApi = async (CustomerId?: string, Search?: string, SortBy?: string,PageIndex?: number, PageSize?: number, SortType?: string) => {
@@ -143,15 +143,15 @@ export const getHistoryBookingItemApi = async (CustomerId?: string, Search?: str
     if (SortType) {
         params.append('SortType', SortType);
     }
-    return http.get<HistoryBookingItemResponse>(`/api/Booking/HistoryBooking?${params.toString()}`);
+    return http.get<HistoryBookingItemResponse>(`/Booking/HistoryBooking?${params.toString()}`);
 }
 
 export const getListBookingHourSettingByStaffIdApi = async (staffId: number) => {
-    return http.getPortal<ListBookingHourSettingResponse[]>(`/api/BookingHours/ListBookingHoursByStaffId?staffId=${staffId}`);
+    return http.getPortal<ListBookingHourSettingResponse[]>(`/BookingHours/ListBookingHoursByStaffId?staffId=${staffId}`);
 }
 
 export const getListBookingSettingApi = async () => {
-    return http.get<ListBookingSettingResponse>('/api/Booking/GetBookingSetting');
+    return http.get<ListBookingSettingResponse>('/Booking/GetBookingSetting');
 }
 
 export const getListServiceApi = async (BookingDate?: string, BookingTime?: string, SystemCatalogId?: number, Search?: string, SortBy?: number, PageIndex?: number, PageSize?: number, SortType?: string) => {
@@ -180,11 +180,11 @@ export const getListServiceApi = async (BookingDate?: string, BookingTime?: stri
     if (SortType) {
         params.append('SortType', SortType);
     }
-    return http.get<ListServiceResponse>(`/api/Booking/GetServiceManagementByConfigPrice?${params.toString()}`);
+    return http.get<ListServiceResponse>(`/Booking/GetServiceManagementByConfigPrice?${params.toString()}`);
 }
 
 export const getListBookingFrequencyApi = async () => {
-    return http.get<ListBookingFrequencyResponse[]>('/api/Booking/ListBookingFrequecy');
+    return http.get<ListBookingFrequencyResponse[]>('/Booking/ListBookingFrequecy');
 }
 
 export const getListCustomerListApi = async (PageSize?: number, name?: string) => {
@@ -195,30 +195,30 @@ export const getListCustomerListApi = async (PageSize?: number, name?: string) =
     if (name) {
         params.append('Name', name);
     }
-    return http.get<ListCustomerListResponse>(`/api/Customer/List?${params.toString()}`);
+    return http.get<ListCustomerListResponse>(`/Customer/List?${params.toString()}`);
 }
 
 export const postCreateUserBookingApi = async (data: CreateUserBookingRequest) => {
-    return http.post<any>('/api/Customer/Create', data);
+    return http.post<any>('/Customer/Create', data);
 }
 
 export const postCreateBookingApi = async (data: CreateBookingRequest) => {
-    return http.post<any>('/api/Booking/Create', data);
+    return http.post<any>('/Booking/Create', data);
 }
 
 export const putEditBookingApi = async (data: EditBookingRequest) => {
-    return http.put<any>('/api/Booking/Update', data);
+    return http.put<any>('/Booking/Update', data);
 }
 
 export const postCancelBookingApi = async (data: {bookingId: number}) => {
-    return http.post<any>('/api/Booking/Cancel', data);
+    return http.post<any>('/Booking/Cancel', data);
 }
 
 export const putCheckinBookingApi = async (data: EditBookingRequest) => {
-    return http.put<any>('/api/Booking/CheckIn', data);
+    return http.put<any>('/Booking/CheckIn', data);
 }
 
-export const getListPromotionApi = async (PageIndex?: number, PageSize?: number, ServiceManagementIds?: number) => {
+export const getListPromotionApi = async (PageIndex?: number, PageSize?: number, ServiceManagementIds?: number, CustomerGroupIds?: number) => {
     const params = new URLSearchParams();
     if (PageIndex) {
         params.append('PageIndex', PageIndex.toString());
@@ -229,25 +229,28 @@ export const getListPromotionApi = async (PageIndex?: number, PageSize?: number,
     if (ServiceManagementIds) {
         params.append('ServiceManagementIds', ServiceManagementIds.toString());
     }
-    return http.get<ListPromotionResponse>(`/api/Promotion/List?${params.toString()}`);
+    if (CustomerGroupIds) {
+        params.append('SystemCatalogId', CustomerGroupIds.toString());
+    }
+    return http.get<ListPromotionResponse>(`/Promotion/List?${params.toString()}`);
 }
 
 export const getListPaymentTypeApi = async () => {
-    return http.get<CustomerCreateBookingRequest[]>('/api/Booking/ListBookingPaymentType');
+    return http.get<CustomerCreateBookingRequest[]>('/Booking/ListBookingPaymentType');
 }
 
 export const getCheckVoucherApi = async (voucherCode: string) => {
-    return http.get<any>(`/api/Vouchers/CheckVoucher/${voucherCode}`);
+    return http.get<any>(`/Vouchers/CheckVoucher/${voucherCode}`);
 }
 
 export const putPaymentBookingApi = async (data: PutPaymentBookingRequest) => {
-    return http.put<any>('/api/Booking/Payment', data);
+    return http.put<any>('/Booking/Payment', data);
 }
 
 export const getListTimeSlotApi = async (date: Date) => {
-    return http.get<any>(`/api/Booking/ListTimeRangeBooking?FromDate=${formatDateParam(date)}`);
+    return http.get<any>(`/Booking/ListTimeRangeBooking?FromDate=${formatDateParam(date)}`);
 }
 
 export const getListStaffManagerApi = async () => {
-    return http.get<ListStaffManager[]>('/api/ServiceManagement/ListStaff');
+    return http.get<ListStaffManager[]>('/ServiceManagement/ListStaff');
 }

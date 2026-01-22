@@ -6,6 +6,18 @@ const {getDefaultConfig, mergeConfig} = require('@react-native/metro-config');
  *
  * @type {import('@react-native/metro-config').MetroConfig}
  */
-const config = {};
+const isProduction = process.env.NODE_ENV === 'production';
+
+const config = {
+  transformer: {
+    getTransformOptions: async () => ({
+      transform: {
+        experimentalImportSupport: false,
+        inlineRequires: true,
+      },
+    }),
+    unstable_allowRequireContext: true,
+  },
+};
 
 module.exports = mergeConfig(getDefaultConfig(__dirname), config);

@@ -20,7 +20,7 @@ export const getLocalizedBookingStatusName = (
         const translated = t(translationKey, { defaultValue: fallbackName ?? "" })
         if (typeof translated === "string" && translated.trim().length > 0) {
             return translated
-        }
+        }  
     }
     return fallbackName ?? ""
 }

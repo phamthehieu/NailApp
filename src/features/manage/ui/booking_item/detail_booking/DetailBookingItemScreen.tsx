@@ -145,6 +145,7 @@ const DetailBookingItem = ({ navigation, route }: RootScreenProps<Paths.DetailBo
     useFocusEffect(useCallback(() => {
         getDetailBookingItem(bookingId as string);
     }, [navigation]));
+    console.log('localizedStatus', localizedStatus);
     return (
         <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
 

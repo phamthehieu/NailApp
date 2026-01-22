@@ -26,8 +26,21 @@ import {TxKeyPath} from '.';
  * ```
  */
 export function translate(key: TxKeyPath, options?: TOptions): string {
-  if (i18n.isInitialized) {
-    return i18n.t(key, options);
+  // Convert dấu hai chấm thành dấu chấm cho nested keys
+  // vì i18next sử dụng dấu chấm để phân tách nested keys
+  // Ví dụ: "permission:deniedTitle" -> "permission.deniedTitle"
+  const normalizedKey = key.replace(/:/g, '.');
+  
+  // Kiểm tra xem i18n đã được khởi tạo chưa
+  if (!i18n.isInitialized) {
+    console.warn(`i18n chưa được khởi tạo khi translate key: ${key}`);
+    return normalizedKey;
   }
-  return key;
+  
+  // Gọi i18n.t() với key đã được normalize
+  const translated = i18n.t(normalizedKey, { ...options, ns: 'translation' });
+  
+  // Nếu kết quả trả về giống key (có nghĩa là không tìm thấy translation), trả về key gốc
+  // Ngược lại trả về giá trị dịch
+  return translated === normalizedKey ? normalizedKey : translated;
 }

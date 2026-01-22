@@ -1,6 +1,6 @@
 {
   "name": "NailApp",
-  "version": "0.0.9",
+  "version": "0.0.13",
   "private": true,
   "scripts": {
     "android": "react-native run-android",

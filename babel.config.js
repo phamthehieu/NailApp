@@ -1,8 +1,17 @@
 const envName = process.env.NODE_ENV || 'development';
 const envPath = envName === 'production' ? '.env.production' : '.env.development';
+const isProduction = envName === 'production';
 
 module.exports = {
-  presets: ['module:@react-native/babel-preset'],
+  presets: [
+    [
+      'module:@react-native/babel-preset',
+      {
+        // Tắt React Refresh runtime trong production
+        unstable_transformProfile: isProduction ? 'hermes-stable' : 'default',
+      },
+    ],
+  ],
   plugins: [
     [
       'module-resolver',

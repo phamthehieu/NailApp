@@ -132,7 +132,6 @@ const ServiceListComponent = ({
                                 updateService(index, {
                                     serviceId: Number(value),
                                     serviceTime: selected?.serviceTime ?? 0,
-                                    staffId: null,
                                     servicePrice: selected?.price ?? 0,
                                 });
                             }}

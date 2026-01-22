@@ -100,7 +100,7 @@ const ListBookingGridComponent = ({ navigation, dashboardHook }: ListBookingForm
             }
 
             return filteredServices.map((service, index) => ({
-                key: `${booking.id}-${service.id ?? index}`,
+                key: `${booking.id}-${service.id ?? 'service'}-${index}`,
                 booking,
                 service,
             }));

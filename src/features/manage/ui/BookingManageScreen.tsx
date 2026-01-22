@@ -204,7 +204,7 @@ const BookingManageScreen = ({ navigation }: RootScreenProps<Paths.BookingManage
     const handlePressScheduleItem = (item: any) => {
         console.log('item', item);
         getDetailBookingItem(item.id);
-        getHistoryBookingItem(item.customer.id);
+        getHistoryBookingItem(item.customerId);
         navigation.navigate(Paths.DetailBookingItem, { bookingId: item.id });
     };
 
@@ -410,7 +410,7 @@ const BookingManageScreen = ({ navigation }: RootScreenProps<Paths.BookingManage
 
             <ModalFliterComponent showAdvanced={showAdvanced} setShowAdvanced={setShowAdvanced} form={form} setForm={setForm} />
 
-            <Loader loading={loading} title={t('loading.processing')} />
+            {/* <Loader loading={loading} title={t('loading.processing')} /> */}
         </SafeAreaView >
     );
 };

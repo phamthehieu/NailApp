@@ -165,15 +165,28 @@ const CalenderDayComponent = ({
     }, [filteredListStaff.length, pageSize]);
 
     useEffect(() => {
-        // Nếu lọc làm giảm số staff, đảm bảo currentPage không vượt quá tổng trang
         if (currentPage > totalPagesLocal) {
             setCurrentPage(totalPagesLocal);
         }
     }, [currentPage, totalPagesLocal]);
 
     const visibleStaff = useMemo(() => {
-        const start = (currentPage - 1) * pageSize;
-        return filteredListStaff.slice(start, start + pageSize);
+        const totalStaff = filteredListStaff.length;
+        const totalPages = Math.max(1, Math.ceil(totalStaff / pageSize));
+        const isLastPage = currentPage === totalPages;
+        
+        let start = (currentPage - 1) * pageSize;
+        let end = start + pageSize;
+
+        if (isLastPage && totalStaff > 0) {
+            const remainingItems = totalStaff - start;
+            if (remainingItems < pageSize && start > 0) {
+                start = Math.max(0, totalStaff - pageSize);
+                end = totalStaff;
+            }
+        }
+        
+        return filteredListStaff.slice(start, end);
     }, [filteredListStaff, currentPage, pageSize]);
 
     const isTablet = useIsTablet();
@@ -284,8 +297,12 @@ const CalenderDayComponent = ({
 
         if (!blocks.length) return null;
 
+        // Tính số lượng cột thực tế (index cao nhất + 1)
+        const maxIndex = Math.max(...blocks.map(b => b.index), 0);
+        const columnCount = maxIndex + 1;
+
         const minItemWidth = 200;
-        const idealWidth = staffColumnWidth / blocks.length;
+        const idealWidth = staffColumnWidth / columnCount;
         const itemWidth = Math.max(idealWidth, minItemWidth);
 
         return blocks.map(({ item, index, heightInPixels }) => {
@@ -321,10 +338,20 @@ const CalenderDayComponent = ({
                             height: heightInPixelsAdjusted,
                             top: topPosition,
                             width: itemWidth - 6,
-                            left: index * itemWidth,
+                            left: index * itemWidth + (index > 0 ? 2 : 0), // Thêm offset nhỏ để phân biệt các phần tử chồng lấn
                             backgroundColor: item.color,
                             borderLeftColor: item.borderColor,
+                            borderLeftWidth: 3,
                             zIndex: 10 - index,
+                            // Thêm shadow để phân biệt các phần tử chồng lấn
+                            shadowColor: '#000',
+                            shadowOffset: {
+                                width: index * 1,
+                                height: index * 1,
+                            },
+                            shadowOpacity: 0.15 + index * 0.05,
+                            shadowRadius: 2 + index,
+                            elevation: 2 + index, // Cho Android
                         },
                     ]}>
                     {showTitle && (
@@ -717,6 +744,8 @@ const $styles = (
             overflow: 'hidden',
             zIndex: 10,
             position: 'absolute',
+            borderWidth: 1,
+            borderColor: 'rgba(0, 0, 0, 0.1)',
         },
         scheduleItemTitle: {
             fontSize: 14,
@@ -725,8 +754,7 @@ const $styles = (
         },
         scheduleItemTime: {
             fontSize: 11,
-            color: colors.black,
-            marginTop: 4,
+            color: colors.black
         },
         smallScheduleItemTitle: {
             fontSize: 10,

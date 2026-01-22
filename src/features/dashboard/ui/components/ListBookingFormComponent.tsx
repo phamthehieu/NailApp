@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useRef, useMemo } from "react";
-import { View, StyleSheet, FlatList, RefreshControl, TouchableOpacity } from "react-native";
+import { View, StyleSheet, FlatList, RefreshControl, TouchableOpacity, Dimensions } from "react-native";
 import { User, MoreHorizontal } from "lucide-react-native";
 import { TextFieldLabel } from "@/shared/ui/Text";
 import { useAppTheme } from "@/shared/theme";
@@ -27,7 +27,9 @@ interface BookingServiceFlatItem {
 
 const ListBookingFormComponent = ({ navigation, dashboardHook }: ListBookingFormProps) => {
     const { theme: { colors } } = useAppTheme();
-    const styles = useMemo(() => $styles(colors), [colors]);
+    const screenWidth = Dimensions.get('window').width;
+    const isSmallScreen = screenWidth < 400;
+    const styles = useMemo(() => $styles(colors, isSmallScreen), [colors, isSmallScreen]);
     const { t, i18n } = useTranslation();
     const { getListBookingByDashBoard, loadMoreBookings, loading, loadingMore, staffId } = dashboardHook;
     const { listBookingManager, pageIndex, totalPages } = useAppSelector((state) => state.booking);
@@ -97,7 +99,7 @@ const ListBookingFormComponent = ({ navigation, dashboardHook }: ListBookingForm
             }
 
             return filteredServices.map((service, index) => ({
-                key: `${booking.id}-${service.id ?? index}`,
+                key: `${booking.id}-${service.id ?? 'service'}-${index}`,
                 booking,
                 service,
             }));
@@ -271,7 +273,7 @@ const ListBookingFormComponent = ({ navigation, dashboardHook }: ListBookingForm
     );
 };
 
-const $styles = (colors: Colors) =>
+const $styles = (colors: Colors, isSmallScreen: boolean) =>
     StyleSheet.create({
         listContainer: {
             paddingHorizontal: 12,
@@ -282,11 +284,13 @@ const $styles = (colors: Colors) =>
             alignItems: 'center',
             borderBottomWidth: StyleSheet.hairlineWidth,
             borderBottomColor: colors.border,
-            paddingVertical: 16,
-            gap: 12,
+            paddingVertical: isSmallScreen ? 12 : 16,
+            paddingHorizontal: isSmallScreen ? 4 : 0,
+            gap: isSmallScreen ? 4 : 12,
         },
         dateContainer: {
-            width: 140,
+            width: isSmallScreen ? 85 : 140,
+            flexShrink: 0,
         },
         dateLabel: {
             fontSize: 14,
@@ -300,13 +304,14 @@ const $styles = (colors: Colors) =>
             marginTop: 4,
         },
         avatarWrapper: {
-            width: 48,
-            height: 48,
-            borderRadius: 24,
+            width: isSmallScreen ? 40 : 48,
+            height: isSmallScreen ? 40 : 48,
+            borderRadius: isSmallScreen ? 20 : 24,
             borderWidth: 1,
             justifyContent: 'center',
             alignItems: 'center',
             backgroundColor: colors.background,
+            flexShrink: 0,
         },
         avatarInitials: {
             fontSize: 16,
@@ -315,27 +320,32 @@ const $styles = (colors: Colors) =>
         },
         detailContainer: {
             flex: 1,
-            minWidth: 120,
+            minWidth: isSmallScreen ? 70 : 120,
+            flexShrink: 1,
+            maxWidth: isSmallScreen ? 100 : undefined,
         },
         customerName: {
-            fontSize: 15,
+            fontSize: isSmallScreen ? 13 : 15,
             fontWeight: '600',
             color: colors.text,
         },
         phoneNumber: {
-            fontSize: 13,
+            fontSize: isSmallScreen ? 11 : 13,
             color: colors.text,
             marginTop: 2,
             opacity: 0.7,
         },
         staffText: {
-            fontSize: 13,
+            fontSize: isSmallScreen ? 11 : 13,
             color: colors.text,
             marginTop: 2,
         },
         serviceContainer: {
             flex: 1,
-            paddingHorizontal: 8,
+            paddingHorizontal: isSmallScreen ? 4 : 8,
+            flexShrink: 1,
+            minWidth: isSmallScreen ? 60 : 100,
+            maxWidth: isSmallScreen ? 100 : undefined,
         },
         serviceText: {
             fontSize: 14,
@@ -351,12 +361,16 @@ const $styles = (colors: Colors) =>
         pointsContainer: {
             alignItems: 'flex-end',
             justifyContent: 'center',
+            width: isSmallScreen ? 70 : 80,
+            flexShrink: 0,
+            flexGrow: 0,
         },
         pointsText: {
-            fontSize: 14,
+            fontSize: isSmallScreen ? 12 : 14,
             fontWeight: '600',
             color: colors.text,
             marginBottom: 8,
+            textAlign: 'right',
         },
         moreButton: {
             padding: 6,
