@@ -118,7 +118,8 @@ const ListBookingGridComponent = ({ navigation, dashboardHook, onScroll }: ListB
     }, []);
 
     const isLandscape = dimensions.width > dimensions.height;
-    const numColumns = isTablet() && isLandscape ? 3 : 1;
+    const tablet = isTablet();
+    const numColumns = tablet && isLandscape ? 3 : (!tablet && isLandscape ? 2 : 1);
     const screenWidth = dimensions.width;
     const paddingHorizontal = 16 * 2;
     const gap = 12;
@@ -266,6 +267,7 @@ const ListBookingGridComponent = ({ navigation, dashboardHook, onScroll }: ListB
                 onScroll={onScroll}
                 scrollEventThrottle={16}
                 contentContainerStyle={styles.listContainer}
+                columnWrapperStyle={numColumns > 1 ? styles.columnWrapper : undefined}
                 showsVerticalScrollIndicator={false}
                 onEndReached={handleLoadMore}
                 onEndReachedThreshold={0.1}
@@ -307,6 +309,9 @@ const $styles = (colors: Colors) =>
             paddingHorizontal: 16,
             paddingBottom: 32,
             gap: 12,
+        },
+        columnWrapper: {
+            justifyContent: 'space-between',
         },
         bookingCard: {
             margin: 6,

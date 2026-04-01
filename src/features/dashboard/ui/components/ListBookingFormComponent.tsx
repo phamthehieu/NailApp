@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useRef, useMemo } from "react";
 import type { NativeSyntheticEvent, NativeScrollEvent } from "react-native";
-import { View, StyleSheet, FlatList, RefreshControl, TouchableOpacity, Dimensions } from "react-native";
+import { View, StyleSheet, FlatList, RefreshControl, TouchableOpacity, useWindowDimensions } from "react-native";
 import { User, MoreHorizontal } from "lucide-react-native";
 import { TextFieldLabel } from "@/shared/ui/Text";
 import { useAppTheme } from "@/shared/theme";
@@ -29,9 +29,13 @@ interface BookingServiceFlatItem {
 
 const ListBookingFormComponent = ({ navigation, dashboardHook, onScroll }: ListBookingFormProps) => {
     const { theme: { colors } } = useAppTheme();
-    const screenWidth = Dimensions.get('window').width;
+    const { width: screenWidth, height: screenHeight } = useWindowDimensions();
+    const isLandscape = screenWidth > screenHeight;
     const isSmallScreen = screenWidth < 400;
-    const styles = useMemo(() => $styles(colors, isSmallScreen), [colors, isSmallScreen]);
+    const styles = useMemo(
+        () => $styles(colors, { isSmallScreen, isLandscape }),
+        [colors, isSmallScreen, isLandscape],
+    );
     const { t, i18n } = useTranslation();
     const { getListBookingByDashBoard, loadMoreBookings, loading, loadingMore, staffId } = dashboardHook;
     const { listBookingManager, pageIndex, totalPages } = useAppSelector((state) => state.booking);
@@ -277,7 +281,7 @@ const ListBookingFormComponent = ({ navigation, dashboardHook, onScroll }: ListB
     );
 };
 
-const $styles = (colors: Colors, isSmallScreen: boolean) =>
+const $styles = (colors: Colors, opts: { isSmallScreen: boolean; isLandscape: boolean }) =>
     StyleSheet.create({
         listContainer: {
             paddingHorizontal: 12,
@@ -288,12 +292,12 @@ const $styles = (colors: Colors, isSmallScreen: boolean) =>
             alignItems: 'center',
             borderBottomWidth: StyleSheet.hairlineWidth,
             borderBottomColor: colors.border,
-            paddingVertical: isSmallScreen ? 12 : 16,
-            paddingHorizontal: isSmallScreen ? 4 : 0,
-            gap: isSmallScreen ? 4 : 12,
+            paddingVertical: opts.isLandscape ? 10 : (opts.isSmallScreen ? 12 : 16),
+            paddingHorizontal: opts.isSmallScreen ? 4 : 0,
+            gap: opts.isSmallScreen ? 4 : 12,
         },
         dateContainer: {
-            width: isSmallScreen ? 85 : 140,
+            width: opts.isSmallScreen ? 85 : (opts.isLandscape ? 110 : 140),
             flexShrink: 0,
         },
         dateLabel: {
@@ -308,9 +312,9 @@ const $styles = (colors: Colors, isSmallScreen: boolean) =>
             marginTop: 4,
         },
         avatarWrapper: {
-            width: isSmallScreen ? 40 : 48,
-            height: isSmallScreen ? 40 : 48,
-            borderRadius: isSmallScreen ? 20 : 24,
+            width: opts.isSmallScreen ? 40 : (opts.isLandscape ? 40 : 48),
+            height: opts.isSmallScreen ? 40 : (opts.isLandscape ? 40 : 48),
+            borderRadius: opts.isSmallScreen ? 20 : (opts.isLandscape ? 20 : 24),
             borderWidth: 1,
             justifyContent: 'center',
             alignItems: 'center',
@@ -324,40 +328,40 @@ const $styles = (colors: Colors, isSmallScreen: boolean) =>
         },
         detailContainer: {
             flex: 1,
-            minWidth: isSmallScreen ? 70 : 120,
+            minWidth: opts.isSmallScreen ? 70 : (opts.isLandscape ? 90 : 120),
             flexShrink: 1,
-            maxWidth: isSmallScreen ? 100 : undefined,
+            maxWidth: opts.isSmallScreen ? 100 : undefined,
         },
         customerName: {
-            fontSize: isSmallScreen ? 13 : 15,
+            fontSize: opts.isSmallScreen ? 13 : (opts.isLandscape ? 14 : 15),
             fontWeight: '600',
             color: colors.text,
         },
         phoneNumber: {
-            fontSize: isSmallScreen ? 11 : 13,
+            fontSize: opts.isSmallScreen ? 11 : (opts.isLandscape ? 12 : 13),
             color: colors.text,
             marginTop: 2,
             opacity: 0.7,
         },
         staffText: {
-            fontSize: isSmallScreen ? 11 : 13,
+            fontSize: opts.isSmallScreen ? 11 : (opts.isLandscape ? 12 : 13),
             color: colors.text,
             marginTop: 2,
         },
         serviceContainer: {
             flex: 1,
-            paddingHorizontal: isSmallScreen ? 4 : 8,
+            paddingHorizontal: opts.isSmallScreen ? 4 : (opts.isLandscape ? 6 : 8),
             flexShrink: 1,
-            minWidth: isSmallScreen ? 60 : 100,
-            maxWidth: isSmallScreen ? 100 : undefined,
+            minWidth: opts.isSmallScreen ? 60 : (opts.isLandscape ? 80 : 100),
+            maxWidth: opts.isSmallScreen ? 100 : undefined,
         },
         serviceText: {
-            fontSize: 14,
+            fontSize: opts.isLandscape ? 13 : 14,
             color: colors.text,
             fontWeight: '600',
         },
         serviceSubText: {
-            fontSize: 13,
+            fontSize: opts.isLandscape ? 12 : 13,
             color: colors.text,
             opacity: 0.8,
             marginTop: 4,
@@ -365,12 +369,12 @@ const $styles = (colors: Colors, isSmallScreen: boolean) =>
         pointsContainer: {
             alignItems: 'flex-end',
             justifyContent: 'center',
-            width: isSmallScreen ? 70 : 80,
+            width: opts.isSmallScreen ? 70 : (opts.isLandscape ? 76 : 80),
             flexShrink: 0,
             flexGrow: 0,
         },
         pointsText: {
-            fontSize: isSmallScreen ? 12 : 14,
+            fontSize: opts.isSmallScreen ? 12 : (opts.isLandscape ? 13 : 14),
             fontWeight: '600',
             color: colors.text,
             marginBottom: 8,

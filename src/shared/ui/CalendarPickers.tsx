@@ -33,7 +33,7 @@ export const CalendarDayPickerModal: React.FC<CalendarDayPickerModalProps> = ({
 }) => {
     const { theme: { colors } } = useAppTheme();
     const { t } = useTranslation();
-    const { width } = useWindowDimensions();
+    const { width, height } = useWindowDimensions();
     const isSmall = width < 420;
     const styles = useMemo(() => createStyles(colors, isSmall), [colors, isSmall]);
     const iconSize = isSmall ? 16 : 18;
@@ -134,6 +134,9 @@ export const CalendarDayPickerModal: React.FC<CalendarDayPickerModalProps> = ({
 
     const matrix = getMonthMatrix(displayYear, displayMonth);
     const localeToUse = locale || 'vi-VN';
+    const modalPadding = isSmall ? 12 : 16;
+    const modalMaxHeight = Math.max(280, height - modalPadding * 2);
+    const modalBodyMaxHeight = Math.max(160, modalMaxHeight - (isSmall ? 128 : 140));
 
     return (
         <Modal
@@ -143,77 +146,82 @@ export const CalendarDayPickerModal: React.FC<CalendarDayPickerModalProps> = ({
             onRequestClose={onClose}
         >
             <View style={styles.modalBackdrop}>
-                <View style={styles.modalContainer}>
-                    <View style={styles.weekHeaderRow}>
-                        <TouchableOpacity
-                            style={[styles.iconButton, !canGoPrev && styles.iconButtonDisabled]}
-                            onPress={handlePrev}
-                            activeOpacity={0.7}
-                            disabled={!canGoPrev}
-                        >
-                            <ChevronLeft size={iconSize} color={colors.text} />
-                        </TouchableOpacity>
-                        <TextFieldLabel style={styles.monthYearText}>
-                            {new Intl.DateTimeFormat(localeToUse, { month: 'long', year: 'numeric' }).format(new Date(displayYear, displayMonth, 1))}
-                        </TextFieldLabel>
-                        <TouchableOpacity
-                            style={[styles.iconButton, !canGoNext && styles.iconButtonDisabled]}
-                            onPress={handleNext}
-                            activeOpacity={0.7}
-                            disabled={!canGoNext}
-                        >
-                            <ChevronRight size={iconSize} color={colors.text} />
-                        </TouchableOpacity>
-                    </View>
+                <View style={[styles.modalContainer, { maxHeight: modalMaxHeight }]}>
+                    <ScrollView
+                        style={{ maxHeight: modalBodyMaxHeight }}
+                        showsVerticalScrollIndicator={false}
+                    >
+                        <View style={styles.weekHeaderRow}>
+                            <TouchableOpacity
+                                style={[styles.iconButton, !canGoPrev && styles.iconButtonDisabled]}
+                                onPress={handlePrev}
+                                activeOpacity={0.7}
+                                disabled={!canGoPrev}
+                            >
+                                <ChevronLeft size={iconSize} color={colors.text} />
+                            </TouchableOpacity>
+                            <TextFieldLabel style={styles.monthYearText}>
+                                {new Intl.DateTimeFormat(localeToUse, { month: 'long', year: 'numeric' }).format(new Date(displayYear, displayMonth, 1))}
+                            </TextFieldLabel>
+                            <TouchableOpacity
+                                style={[styles.iconButton, !canGoNext && styles.iconButtonDisabled]}
+                                onPress={handleNext}
+                                activeOpacity={0.7}
+                                disabled={!canGoNext}
+                            >
+                                <ChevronRight size={iconSize} color={colors.text} />
+                            </TouchableOpacity>
+                        </View>
 
-                    <View style={styles.weekdayRow}>
-                        {WEEKDAY_LABELS.map((d) => (
-                            <TextFieldLabel key={d} style={styles.weekdayText}>{d}</TextFieldLabel>
-                        ))}
-                    </View>
+                        <View style={styles.weekdayRow}>
+                            {WEEKDAY_LABELS.map((d) => (
+                                <TextFieldLabel key={d} style={styles.weekdayText}>{d}</TextFieldLabel>
+                            ))}
+                        </View>
 
-                    <View style={styles.monthGrid}>
-                        {matrix.map((d, idx) => {
-                            const inMonth = d.getMonth() === displayMonth;
-                            const dayStart = startOfDay(d);
-                            const isBeforeMin = normalizedMin && dayStart < normalizedMin;
-                            const isAfterMax = normalizedMax && dayStart > normalizedMax;
-                            const isDisabled = !!(isBeforeMin || isAfterMax);
-                            const isTodayCell = isSameDay(d, today);
-                            const selected = tempSelectedDate ? isSameDay(d, tempSelectedDate) : false;
-                            if (hideOutOfRangeDates && isDisabled) {
+                        <View style={styles.monthGrid}>
+                            {matrix.map((d, idx) => {
+                                const inMonth = d.getMonth() === displayMonth;
+                                const dayStart = startOfDay(d);
+                                const isBeforeMin = normalizedMin && dayStart < normalizedMin;
+                                const isAfterMax = normalizedMax && dayStart > normalizedMax;
+                                const isDisabled = !!(isBeforeMin || isAfterMax);
+                                const isTodayCell = isSameDay(d, today);
+                                const selected = tempSelectedDate ? isSameDay(d, tempSelectedDate) : false;
+                                if (hideOutOfRangeDates && isDisabled) {
+                                    return (
+                                        <View key={`single-day-${idx}`} style={[styles.dayCell, styles.hiddenDay]} />
+                                    );
+                                }
                                 return (
-                                    <View key={`single-day-${idx}`} style={[styles.dayCell, styles.hiddenDay]} />
-                                );
-                            }
-                            return (
-                                <TouchableOpacity
-                                    key={`single-day-${idx}`}
-                                    style={[
-                                        styles.dayCell,
-                                        !inMonth && styles.outMonthDay,
-                                        selected && styles.dayCellSelected,
-                                        isTodayCell && !selected && styles.todayOutline,
-                                        isDisabled && styles.disabledDay,
-                                    ]}
-                                    activeOpacity={0.8}
-                                    onPress={() => {
-                                        if (isDisabled) { return; }
-                                        setTempSelectedDate(startOfDay(new Date(d)));
-                                    }}
-                                >
-                                    <TextFieldLabel style={[
-                                        styles.dayNumber,
-                                        selected && styles.dayNumberSelected,
-                                        isDisabled && styles.dayNumberDisabled,
-                                    ]}
+                                    <TouchableOpacity
+                                        key={`single-day-${idx}`}
+                                        style={[
+                                            styles.dayCell,
+                                            !inMonth && styles.outMonthDay,
+                                            selected && styles.dayCellSelected,
+                                            isTodayCell && !selected && styles.todayOutline,
+                                            isDisabled && styles.disabledDay,
+                                        ]}
+                                        activeOpacity={0.8}
+                                        onPress={() => {
+                                            if (isDisabled) { return; }
+                                            setTempSelectedDate(startOfDay(new Date(d)));
+                                        }}
                                     >
-                                        {d.getDate()}
-                                    </TextFieldLabel>
-                                </TouchableOpacity>
-                            );
-                        })}
-                    </View>
+                                        <TextFieldLabel style={[
+                                            styles.dayNumber,
+                                            selected && styles.dayNumberSelected,
+                                            isDisabled && styles.dayNumberDisabled,
+                                        ]}
+                                        >
+                                            {d.getDate()}
+                                        </TextFieldLabel>
+                                    </TouchableOpacity>
+                                );
+                            })}
+                        </View>
+                    </ScrollView>
 
                     <View style={styles.modalActions}>
                         <TouchableOpacity style={[styles.actionButton, styles.cancelButton]} onPress={onClose}>
@@ -252,7 +260,7 @@ export const CalendarWeekPickerModal: React.FC<CalendarWeekPickerModalProps> = (
 }) => {
     const { theme: { colors } } = useAppTheme();
     const { t } = useTranslation();
-    const { width } = useWindowDimensions();
+    const { width, height } = useWindowDimensions();
     const isSmall = width < 420;
     const styles = useMemo(() => createStyles(colors, isSmall), [colors, isSmall]);
     const iconSize = isSmall ? 16 : 18;
@@ -430,6 +438,9 @@ export const CalendarWeekPickerModal: React.FC<CalendarWeekPickerModalProps> = (
     const weeks = getWeeksOfMonth(displayYear, displayMonth);
     const chosen = weeks[Math.max(0, Math.min(tempWeekIndex, weeks.length - 1))];
     const localeToUse = locale || 'vi-VN';
+    const modalPadding = isSmall ? 12 : 16;
+    const modalMaxHeight = Math.max(320, height - modalPadding * 2);
+    const modalBodyMaxHeight = Math.max(200, modalMaxHeight - (rangeOnly ? (isSmall ? 132 : 144) : (isSmall ? 170 : 182)));
 
     return (
         <Modal
@@ -439,125 +450,130 @@ export const CalendarWeekPickerModal: React.FC<CalendarWeekPickerModalProps> = (
             onRequestClose={onClose}
         >
             <View style={styles.modalBackdrop}>
-                <View style={styles.modalContainer}>
-                    <TextFieldLabel style={styles.modalTitle}>
-                        {rangeOnly
-                            ? t('calenderDashboard.calenderHeader.range')
-                            : t('calenderDashboard.calenderHeader.selectWeek')}
-                    </TextFieldLabel>
-                    {!rangeOnly && (
-                        <View style={styles.segmentContainer}>
-                            <TouchableOpacity
-                                style={[styles.segmentButton, !rangeMode && styles.segmentActive]}
-                                onPress={handleSwitchToWeek}
-                                activeOpacity={0.7}
-                            >
-                                <TextFieldLabel style={[styles.segmentText, !rangeMode && styles.segmentTextActive]}>
-                                    {t('calenderDashboard.calenderHeader.week')}
-                                </TextFieldLabel>
+                <View style={[styles.modalContainer, { maxHeight: modalMaxHeight }]}>
+                    <ScrollView
+                        style={{ maxHeight: modalBodyMaxHeight }}
+                        showsVerticalScrollIndicator={false}
+                    >
+                        <TextFieldLabel style={styles.modalTitle}>
+                            {rangeOnly
+                                ? t('calenderDashboard.calenderHeader.range')
+                                : t('calenderDashboard.calenderHeader.selectWeek')}
+                        </TextFieldLabel>
+                        {!rangeOnly && (
+                            <View style={styles.segmentContainer}>
+                                <TouchableOpacity
+                                    style={[styles.segmentButton, !rangeMode && styles.segmentActive]}
+                                    onPress={handleSwitchToWeek}
+                                    activeOpacity={0.7}
+                                >
+                                    <TextFieldLabel style={[styles.segmentText, !rangeMode && styles.segmentTextActive]}>
+                                        {t('calenderDashboard.calenderHeader.week')}
+                                    </TextFieldLabel>
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                    style={[styles.segmentButton, rangeMode && styles.segmentActive]}
+                                    onPress={handleSwitchToRange}
+                                    activeOpacity={0.7}
+                                >
+                                    <TextFieldLabel style={[styles.segmentText, rangeMode && styles.segmentTextActive]}>
+                                        {t('calenderDashboard.calenderHeader.range')}
+                                    </TextFieldLabel>
+                                </TouchableOpacity>
+                            </View>
+                        )}
+
+                        <View style={styles.weekHeaderRow}>
+                            <TouchableOpacity style={styles.iconButton} onPress={handlePrevMonth} activeOpacity={0.7}>
+                                <ChevronLeft size={iconSize} color={colors.text} />
                             </TouchableOpacity>
-                            <TouchableOpacity
-                                style={[styles.segmentButton, rangeMode && styles.segmentActive]}
-                                onPress={handleSwitchToRange}
-                                activeOpacity={0.7}
-                            >
-                                <TextFieldLabel style={[styles.segmentText, rangeMode && styles.segmentTextActive]}>
-                                    {t('calenderDashboard.calenderHeader.range')}
-                                </TextFieldLabel>
+                            <TextFieldLabel style={styles.monthYearText}>
+                                {new Intl.DateTimeFormat(localeToUse, { month: 'long', year: 'numeric' }).format(new Date(displayYear, displayMonth, 1))}
+                            </TextFieldLabel>
+                            <TouchableOpacity style={styles.iconButton} onPress={handleNextMonth} activeOpacity={0.7}>
+                                <ChevronRight size={iconSize} color={colors.text} />
                             </TouchableOpacity>
                         </View>
-                    )}
 
-                    <View style={styles.weekHeaderRow}>
-                        <TouchableOpacity style={styles.iconButton} onPress={handlePrevMonth} activeOpacity={0.7}>
-                            <ChevronLeft size={iconSize} color={colors.text} />
-                        </TouchableOpacity>
-                        <TextFieldLabel style={styles.monthYearText}>
-                            {new Intl.DateTimeFormat(localeToUse, { month: 'long', year: 'numeric' }).format(new Date(displayYear, displayMonth, 1))}
-                        </TextFieldLabel>
-                        <TouchableOpacity style={styles.iconButton} onPress={handleNextMonth} activeOpacity={0.7}>
-                            <ChevronRight size={iconSize} color={colors.text} />
-                        </TouchableOpacity>
-                    </View>
+                        <View style={styles.weekdayRow}>
+                            {WEEKDAY_LABELS.map((d) => (
+                                <TextFieldLabel key={d} style={styles.weekdayText}>{d}</TextFieldLabel>
+                            ))}
+                        </View>
 
-                    <View style={styles.weekdayRow}>
-                        {WEEKDAY_LABELS.map((d) => (
-                            <TextFieldLabel key={d} style={styles.weekdayText}>{d}</TextFieldLabel>
-                        ))}
-                    </View>
+                        <View style={styles.monthGrid}>
+                            {matrix.map((d, idx) => {
+                                const inMonth = d.getMonth() === displayMonth;
+                                const isInChosenWeek = !rangeMode && chosen && d >= chosen.start && d <= chosen.end;
+                                const isTodayCell = d.getTime() === today.getTime();
+                                const isInRangeSelected = rangeMode && !!(tempStartDate && tempEndDate && d >= tempStartDate && d <= tempEndDate);
+                                const dNormalized = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+                                const startNormalized = tempStartDate ? new Date(tempStartDate.getFullYear(), tempStartDate.getMonth(), tempStartDate.getDate()) : null;
+                                const endNormalized = tempEndDate ? new Date(tempEndDate.getFullYear(), tempEndDate.getMonth(), tempEndDate.getDate()) : null;
+                                const isRangeStart = rangeMode && startNormalized && dNormalized.getTime() === startNormalized.getTime();
+                                const isRangeEnd = rangeMode && endNormalized && dNormalized.getTime() === endNormalized.getTime();
 
-                    <View style={styles.monthGrid}>
-                        {matrix.map((d, idx) => {
-                            const inMonth = d.getMonth() === displayMonth;
-                            const isInChosenWeek = !rangeMode && chosen && d >= chosen.start && d <= chosen.end;
-                            const isTodayCell = d.getTime() === today.getTime();
-                            const isInRangeSelected = rangeMode && !!(tempStartDate && tempEndDate && d >= tempStartDate && d <= tempEndDate);
-                            const dNormalized = new Date(d.getFullYear(), d.getMonth(), d.getDate());
-                            const startNormalized = tempStartDate ? new Date(tempStartDate.getFullYear(), tempStartDate.getMonth(), tempStartDate.getDate()) : null;
-                            const endNormalized = tempEndDate ? new Date(tempEndDate.getFullYear(), tempEndDate.getMonth(), tempEndDate.getDate()) : null;
-                            const isRangeStart = rangeMode && startNormalized && dNormalized.getTime() === startNormalized.getTime();
-                            const isRangeEnd = rangeMode && endNormalized && dNormalized.getTime() === endNormalized.getTime();
-
-                            return (
-                                <TouchableOpacity
-                                    key={`week-day-${idx}`}
-                                    style={[
-                                        styles.dayCell,
-                                        !inMonth && styles.outMonthDay,
-                                        isInRangeSelected && styles.rangeSelected,
-                                        isRangeStart && styles.rangeStart,
-                                        isRangeEnd && styles.rangeEnd,
-                                        !rangeMode && isInChosenWeek && styles.dayCellSelected,
-                                        isTodayCell && !isInChosenWeek && styles.todayOutline,
-                                        isTodayCell && isInChosenWeek && styles.todayInWeek,
-                                    ]}
-                                    activeOpacity={0.8}
-                                    onPress={() => {
-                                        const currentWeeks = getWeeksOfMonth(displayYear, displayMonth);
-                                        const weekIdx = currentWeeks.findIndex((w) => d >= w.start && d <= w.end);
-                                        if (!rangeMode) {
-                                            const nextIdx = Math.max(0, weekIdx);
-                                            setTempWeekIndex(nextIdx);
-                                            const newChosen = currentWeeks[Math.max(0, nextIdx)];
-                                            if (newChosen) {
-                                                setTempStartDate(new Date(newChosen.start));
-                                                setTempEndDate(new Date(newChosen.end));
+                                return (
+                                    <TouchableOpacity
+                                        key={`week-day-${idx}`}
+                                        style={[
+                                            styles.dayCell,
+                                            !inMonth && styles.outMonthDay,
+                                            isInRangeSelected && styles.rangeSelected,
+                                            isRangeStart && styles.rangeStart,
+                                            isRangeEnd && styles.rangeEnd,
+                                            !rangeMode && isInChosenWeek && styles.dayCellSelected,
+                                            isTodayCell && !isInChosenWeek && styles.todayOutline,
+                                            isTodayCell && isInChosenWeek && styles.todayInWeek,
+                                        ]}
+                                        activeOpacity={0.8}
+                                        onPress={() => {
+                                            const currentWeeks = getWeeksOfMonth(displayYear, displayMonth);
+                                            const weekIdx = currentWeeks.findIndex((w) => d >= w.start && d <= w.end);
+                                            if (!rangeMode) {
+                                                const nextIdx = Math.max(0, weekIdx);
+                                                setTempWeekIndex(nextIdx);
+                                                const newChosen = currentWeeks[Math.max(0, nextIdx)];
+                                                if (newChosen) {
+                                                    setTempStartDate(new Date(newChosen.start));
+                                                    setTempEndDate(new Date(newChosen.end));
+                                                }
+                                                return;
                                             }
-                                            return;
-                                        }
 
-                                        if (!tempStartDate) {
+                                            if (!tempStartDate) {
+                                                setTempStartDate(new Date(d));
+                                                setTempEndDate(null);
+                                                return;
+                                            }
+                                            if (!tempEndDate) {
+                                                if (d < tempStartDate) {
+                                                    setTempEndDate(new Date(tempStartDate));
+                                                    setTempStartDate(new Date(d));
+                                                } else {
+                                                    setTempEndDate(new Date(d));
+                                                }
+                                                return;
+                                            }
+
+                                            if (d < tempStartDate) {
+                                                setTempStartDate(new Date(d));
+                                                return;
+                                            }
+                                            if (d > tempEndDate) {
+                                                setTempEndDate(new Date(d));
+                                                return;
+                                            }
                                             setTempStartDate(new Date(d));
                                             setTempEndDate(null);
-                                            return;
-                                        }
-                                        if (!tempEndDate) {
-                                            if (d < tempStartDate) {
-                                                setTempEndDate(new Date(tempStartDate));
-                                                setTempStartDate(new Date(d));
-                                            } else {
-                                                setTempEndDate(new Date(d));
-                                            }
-                                            return;
-                                        }
-
-                                        if (d < tempStartDate) {
-                                            setTempStartDate(new Date(d));
-                                            return;
-                                        }
-                                        if (d > tempEndDate) {
-                                            setTempEndDate(new Date(d));
-                                            return;
-                                        }
-                                        setTempStartDate(new Date(d));
-                                        setTempEndDate(null);
-                                    }}
-                                >
-                                    <TextFieldLabel style={styles.dayNumber}>{d.getDate()}</TextFieldLabel>
-                                </TouchableOpacity>
-                            );
-                        })}
-                    </View>
+                                        }}
+                                    >
+                                        <TextFieldLabel style={styles.dayNumber}>{d.getDate()}</TextFieldLabel>
+                                    </TouchableOpacity>
+                                );
+                            })}
+                        </View>
+                    </ScrollView>
 
                     <View style={styles.modalActions}>
                         <TouchableOpacity style={[styles.actionButton, styles.cancelButton]} onPress={onClose}>
