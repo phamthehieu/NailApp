@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useRef, useMemo } from "react";
+import type { NativeSyntheticEvent, NativeScrollEvent } from "react-native";
 import { View, StyleSheet, FlatList, RefreshControl, TouchableOpacity, Dimensions } from "react-native";
 import { User, MoreHorizontal } from "lucide-react-native";
 import { TextFieldLabel } from "@/shared/ui/Text";
@@ -17,6 +18,7 @@ import type { DashBoardHookResult } from "../../hooks/useDashBoardHook";
 interface ListBookingFormProps {
     navigation: RootScreenProps<Paths.DashBoard>['navigation'];
     dashboardHook: DashBoardHookResult;
+    onScroll?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
 }
 
 interface BookingServiceFlatItem {
@@ -25,7 +27,7 @@ interface BookingServiceFlatItem {
     service: ServiceItem | null;
 }
 
-const ListBookingFormComponent = ({ navigation, dashboardHook }: ListBookingFormProps) => {
+const ListBookingFormComponent = ({ navigation, dashboardHook, onScroll }: ListBookingFormProps) => {
     const { theme: { colors } } = useAppTheme();
     const screenWidth = Dimensions.get('window').width;
     const isSmallScreen = screenWidth < 400;
@@ -237,6 +239,8 @@ const ListBookingFormComponent = ({ navigation, dashboardHook }: ListBookingForm
                 keyExtractor={keyExtractor}
                 renderItem={renderBookingItem}
                 numColumns={1}
+                onScroll={onScroll}
+                scrollEventThrottle={16}
                 contentContainerStyle={styles.listContainer}
                 showsVerticalScrollIndicator={false}
                 onEndReached={handleLoadMore}

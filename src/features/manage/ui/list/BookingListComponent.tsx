@@ -261,15 +261,19 @@ const BookingListComponent = ({ navigation }: BookingListComponentProps) => {
     }, [loadingMore, hasMoreData, styles.footerLoader, styles.footerText, t]);
 
     const keyExtractor = useCallback((item: BookingManagerItem) => item.id.toString(), []);
+    const numColumns = isTablet ? 3 : 1;
 
     return (
         <>
             <FlatList
+                key={`booking-list-${numColumns}`}
                 data={listBookingManager}
                 keyExtractor={keyExtractor}
                 renderItem={renderBookingItem}
-                numColumns={isTablet ? 3 : 1}
+                numColumns={numColumns}
+                extraData={numColumns}
                 contentContainerStyle={styles.listContainer}
+                columnWrapperStyle={numColumns > 1 ? styles.columnWrapper : undefined}
                 showsVerticalScrollIndicator={false}
                 onEndReached={handleLoadMore}
                 onEndReachedThreshold={0.1}

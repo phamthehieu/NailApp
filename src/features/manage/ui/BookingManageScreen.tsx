@@ -2,13 +2,13 @@ import { Paths } from '@/app/providers/navigation/paths';
 import { RootScreenProps } from '@/app/providers/navigation/types';
 import { Colors, useAppTheme } from '@/shared/theme';
 import StatusBarComponent from '@/shared/ui/StatusBar';
-import { StyleSheet, View, Animated } from 'react-native';
+import { StyleSheet, View, Animated, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import Loader from '@/shared/ui/Loader';
 import MHeader from '@/shared/ui/MHeader';
-import { Funnel, Store } from 'lucide-react-native';
+import { ChevronsDown, ChevronsUp, Funnel, Store } from 'lucide-react-native';
 import ModalFliterComponent from '../components/ModalFliterComponent';
 import CalendarHeader from '../components/CalenderHeader';
 import { CalenderDayComponent, CalenderWeedComponent, CalenderMonthComponent } from './schedule';
@@ -91,6 +91,10 @@ const BookingManageScreen = ({ navigation }: RootScreenProps<Paths.BookingManage
     const tab1TranslateX = useRef(new Animated.Value(0)).current;
     const tab2Opacity = useRef(new Animated.Value(0)).current;
     const tab2TranslateX = useRef(new Animated.Value(50)).current;
+    const [isChromeCollapsed, setIsChromeCollapsed] = useState(false);
+    const [chromeHeight, setChromeHeight] = useState(0);
+    const [calendarHeaderHeight, setCalendarHeaderHeight] = useState(0);
+    const chromeAnim = useRef(new Animated.Value(1)).current;
 
     const getStartOfWeek = (date: Date) => {
         const d = new Date(date);
@@ -309,31 +313,102 @@ const BookingManageScreen = ({ navigation }: RootScreenProps<Paths.BookingManage
         getListBookingManager();
     }, [activeTab.value, dateFromKey, dateToKey, bookingDateKey, status, bookingCode, customerName, phone, search, getListBookingManager]);
 
+    const handleToggleChrome = () => {
+        const nextCollapsed = !isChromeCollapsed;
+        setIsChromeCollapsed(nextCollapsed);
+        Animated.timing(chromeAnim, {
+            toValue: nextCollapsed ? 0 : 1,
+            duration: 250,
+            useNativeDriver: false,
+        }).start();
+    };
+
+    const chromeAnimatedStyle = {
+        height: chromeHeight
+            ? chromeAnim.interpolate({
+                inputRange: [0, 1],
+                outputRange: [0, chromeHeight],
+            })
+            : undefined,
+        opacity: chromeAnim,
+        transform: [
+            {
+                translateY: chromeAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [-10, 0],
+                }),
+            },
+        ],
+    } as const;
+
+    const calendarHeaderAnimatedStyle = {
+        height: calendarHeaderHeight
+            ? chromeAnim.interpolate({
+                inputRange: [0, 1],
+                outputRange: [0, calendarHeaderHeight],
+            })
+            : undefined,
+        opacity: chromeAnim,
+        transform: [
+            {
+                translateY: chromeAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [-6, 0],
+                }),
+            },
+        ],
+    } as const;
+
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
             <StatusBarComponent backgroundColor={colors.yellow} />
 
-            <MHeader
-                label={t('bookingManage.title')}
-                onBack={() => navigation.goBack()}
-                showIconLeft={true}
-                iconLeft={<Store size={24} color={colors.background} />}
-                bgColor={colors.yellow}
-                showIconRight={activeTab.value === 2 ? true : false}
-                iconRight={<Funnel size={24} color={colors.background} />}
-                onPressIconRight={() => setShowAdvanced(true)}
-            />
+            <Animated.View
+                style={[styles.chromeContainer, chromeAnimatedStyle]}
+                pointerEvents={isChromeCollapsed ? 'none' : 'auto'}
+            >
+                <View
+                    onLayout={(e) => {
+                        const h = e.nativeEvent.layout.height;
+                        if (h > 0) setChromeHeight((prev) => (h > prev ? h : prev));
+                    }}
+                >
+                    <MHeader
+                        label={t('bookingManage.title')}
+                        onBack={() => navigation.goBack()}
+                        showIconLeft={true}
+                        iconLeft={<Store size={24} color={colors.background} />}
+                        bgColor={colors.yellow}
+                        showIconRight={activeTab.value === 2 ? true : false}
+                        iconRight={<Funnel size={24} color={colors.background} />}
+                        onPressIconRight={() => setShowAdvanced(true)}
+                    />
 
-            <TabComponent
-                activeTab={activeTab}
-                onTabChange={(tab) => setActiveTab(tab)}
-                tabs={[{ label: t('calenderDashboard.calenderTab.schedule'), value: 1 }, { label: t('calenderDashboard.calenderTab.list'), value: 2 }]}
-                showBookButton={true}
-                maxWidth={400}
-                onBookPress={() => navigation.navigate(Paths.AddNewBooking)}
-            />
+                    <TabComponent
+                        activeTab={activeTab}
+                        onTabChange={(tab) => setActiveTab(tab)}
+                        tabs={[{ label: t('calenderDashboard.calenderTab.schedule'), value: 1 }, { label: t('calenderDashboard.calenderTab.list'), value: 2 }]}
+                        showBookButton={true}
+                        maxWidth={400}
+                        onBookPress={() => navigation.navigate(Paths.AddNewBooking)}
+                    />
+                </View>
+            </Animated.View>
 
             <View style={styles.tabsWrapper}>
+                <TouchableOpacity
+                    style={[styles.collapseButton, { backgroundColor: colors.yellow }]}
+                    onPress={handleToggleChrome}
+                    accessibilityRole="button"
+                    accessibilityLabel={isChromeCollapsed ? t('common.expand', { defaultValue: 'Mở rộng' }) : t('common.collapse', { defaultValue: 'Thu gọn' })}
+                >
+                    {isChromeCollapsed ? (
+                        <ChevronsDown size={18} color={colors.background} />
+                    ) : (
+                        <ChevronsUp size={18} color={colors.background} />
+                    )}
+                </TouchableOpacity>
+
                 <Animated.View
                     style={[
                         styles.tabContainer,
@@ -345,26 +420,38 @@ const BookingManageScreen = ({ navigation }: RootScreenProps<Paths.BookingManage
                     pointerEvents={activeTab.value === 2 ? 'auto' : 'none'}
                 >
 
-                    <CalendarHeader
-                        searchText={searchText}
-                        setSearchText={setSearchText}
-                        selectedDate={anchorDate}
-                        onChange={handleDateChange}
-                        onChangeRange={handleRangeChange}
-                        viewMode={viewMode}
-                        onViewModeChange={(mode) => {
-                            setViewMode(mode);
-                            if (mode === 'Tuần') {
-                                const start = getStartOfWeek(anchorDate);
-                                const end = new Date(start);
-                                end.setDate(end.getDate() + 6);
-                                end.setHours(23, 59, 59, 999);
-                                setActiveRange({ start, end });
-                            } else {
-                                setActiveRange(null);
-                            }
-                        }}
-                    />
+                    <Animated.View
+                        style={[styles.calendarHeaderContainer, calendarHeaderAnimatedStyle]}
+                        pointerEvents={isChromeCollapsed ? 'none' : 'auto'}
+                    >
+                        <View
+                            onLayout={(e) => {
+                                const h = e.nativeEvent.layout.height;
+                                if (h > 0) setCalendarHeaderHeight((prev) => (h > prev ? h : prev));
+                            }}
+                        >
+                            <CalendarHeader
+                                searchText={searchText}
+                                setSearchText={setSearchText}
+                                selectedDate={anchorDate}
+                                onChange={handleDateChange}
+                                onChangeRange={handleRangeChange}
+                                viewMode={viewMode}
+                                onViewModeChange={(mode) => {
+                                    setViewMode(mode);
+                                    if (mode === 'Tuần') {
+                                        const start = getStartOfWeek(anchorDate);
+                                        const end = new Date(start);
+                                        end.setDate(end.getDate() + 6);
+                                        end.setHours(23, 59, 59, 999);
+                                        setActiveRange({ start, end });
+                                    } else {
+                                        setActiveRange(null);
+                                    }
+                                }}
+                            />
+                        </View>
+                    </Animated.View>
 
                     <View style={styles.content}>
                         <BookingListComponent navigation={navigation} />
@@ -381,26 +468,33 @@ const BookingManageScreen = ({ navigation }: RootScreenProps<Paths.BookingManage
                     ]}
                     pointerEvents={activeTab.value === 1 ? 'auto' : 'none'}
                 >
-                    <CalendarHeader
-                        searchText={searchText}
-                        setSearchText={setSearchText}
-                        selectedDate={anchorDate}
-                        onChange={handleDateChange}
-                        onChangeRange={handleRangeChange}
-                        viewMode={viewMode}
-                        onViewModeChange={(mode) => {
-                            setViewMode(mode);
-                            if (mode === 'Tuần') {
-                                const start = getStartOfWeek(anchorDate);
-                                const end = new Date(start);
-                                end.setDate(end.getDate() + 6);
-                                end.setHours(23, 59, 59, 999);
-                                setActiveRange({ start, end });
-                            } else {
-                                setActiveRange(null);
-                            }
-                        }}
-                    />
+                    <Animated.View
+                        style={[styles.calendarHeaderContainer, calendarHeaderAnimatedStyle]}
+                        pointerEvents={isChromeCollapsed ? 'none' : 'auto'}
+                    >
+                        <View>
+                            <CalendarHeader
+                                searchText={searchText}
+                                setSearchText={setSearchText}
+                                selectedDate={anchorDate}
+                                onChange={handleDateChange}
+                                onChangeRange={handleRangeChange}
+                                viewMode={viewMode}
+                                onViewModeChange={(mode) => {
+                                    setViewMode(mode);
+                                    if (mode === 'Tuần') {
+                                        const start = getStartOfWeek(anchorDate);
+                                        const end = new Date(start);
+                                        end.setDate(end.getDate() + 6);
+                                        end.setHours(23, 59, 59, 999);
+                                        setActiveRange({ start, end });
+                                    } else {
+                                        setActiveRange(null);
+                                    }
+                                }}
+                            />
+                        </View>
+                    </Animated.View>
 
                     <View style={styles.content}>
                         {renderCalenderComponent()}
@@ -421,6 +515,9 @@ const $styles = (colors: Colors) => {
             flex: 1,
             backgroundColor: colors.background,
         },
+        chromeContainer: {
+            overflow: 'hidden',
+        },
         keyboardAvoidingView: {
             flex: 1,
         },
@@ -435,6 +532,25 @@ const $styles = (colors: Colors) => {
         tabsWrapper: {
             flex: 1,
             position: 'relative',
+        },
+        calendarHeaderContainer: {
+            overflow: 'hidden',
+        },
+        collapseButton: {
+            position: 'absolute',
+            right: 16,
+            bottom: 16,
+            zIndex: 10,
+            width: 36,
+            height: 36,
+            borderRadius: 18,
+            justifyContent: 'center',
+            alignItems: 'center',
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.15,
+            shadowRadius: 6,
+            elevation: 3,
         },
         tabContainer: {
             position: 'absolute',
