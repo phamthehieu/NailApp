@@ -37,6 +37,11 @@ export async function postSelectStoreApi(storeId: number): Promise<PostSelectSto
     return http.postPortal<PostSelectStoreRequest>(`/StaffProfile/SelectStore?IdStore=${storeId}`);
 }
 
-export async function postCheckinApi(data: { phoneNumber: string }): Promise<any> {
-    return http.put<any>(`/Booking/CustomerCheckIn`, data);
+export interface PostCheckinRequest {
+    phoneNumber: string;
+    tenantId: number;
+}
+
+export async function postCheckinApi(data: PostCheckinRequest): Promise<any> {
+    return http.put<any>(`/BookingCustomer/CustomerCheckIn`, data);
 }

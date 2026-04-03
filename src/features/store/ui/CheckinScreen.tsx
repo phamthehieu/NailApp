@@ -2,14 +2,16 @@ import { Paths } from '@/app/providers/navigation/paths';
 import { RootScreenProps } from '@/app/providers/navigation/types';
 import { Colors, useAppTheme } from '@/shared/theme';
 import StatusBarComponent from '@/shared/ui/StatusBar';
-import { StyleSheet, Dimensions, View, TouchableOpacity, ScrollView, BackHandler } from 'react-native';
+import { StyleSheet, Dimensions, View, TouchableOpacity, ScrollView, BackHandler, KeyboardAvoidingView, Platform, Modal, TouchableWithoutFeedback } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useIsTablet } from '@/shared/lib/useIsTablet';
 import { useTranslation } from 'react-i18next';
 import { useState, useEffect } from 'react';
 import { TextFieldLabel } from '@/shared/ui/Text';
 import Loader from '@/shared/ui/Loader';
-import { Check, LogIn } from 'lucide-react-native';
+import { TextField, TextFieldAccessoryProps } from '@/shared/ui/TextField';
+import { Button } from '@/shared/ui/Button';
+import { Check, Eye, EyeOff, LogIn } from 'lucide-react-native';
 import Keychain from 'react-native-keychain';
 import { postCheckinApi } from '../api/storeApi';
 import { alertService } from '@/services/alertService';
@@ -17,6 +19,7 @@ import { RootState, useAppDispatch } from '@/app/store';
 import { useSelector } from 'react-redux';
 import { clearAuth } from '@/services/auth/authService';
 import { clearAuthState } from '@/features/auth/model/authSlice';
+import { createAccountApi, createOTPApi } from '@/features/auth/api/registerApi';
 
 const CheckinScreen = ({ navigation }: RootScreenProps<Paths.Checkin>) => {
     const { theme: { colors } } = useAppTheme();
@@ -27,7 +30,18 @@ const CheckinScreen = ({ navigation }: RootScreenProps<Paths.Checkin>) => {
     const styles = $styles(colors, isTablet, screenWidth, isSmallScreen);
     const [phone, setPhone] = useState('');
     const [loading, setLoading] = useState(false);
+    const [registerLoading, setRegisterLoading] = useState(false);
     const [consentChecked, setConsentChecked] = useState(true);
+    const [registerModalVisible, setRegisterModalVisible] = useState(false);
+    const [registerStep, setRegisterStep] = useState<'form' | 'otp'>('form');
+    const [registerPhoneNumber, setRegisterPhoneNumber] = useState('');
+    const [registerName, setRegisterName] = useState('');
+    const [registerLastName, setRegisterLastName] = useState('');
+    const [registerEmail, setRegisterEmail] = useState('');
+    const [registerPassword, setRegisterPassword] = useState('');
+    const [showRegisterPassword, setShowRegisterPassword] = useState(false);
+    const [otpCode, setOtpCode] = useState('');
+    const [registerGuidId, setRegisterGuidId] = useState('');
     const dispatch = useAppDispatch();
     const userInfo = useSelector((state: RootState) => state.auth.userInfo);
 
@@ -92,23 +106,307 @@ const CheckinScreen = ({ navigation }: RootScreenProps<Paths.Checkin>) => {
         setPhone(formatPhoneNumber(newPhone));
     };
 
+    const resetRegisterFlow = () => {
+        setRegisterModalVisible(false);
+        setRegisterStep('form');
+        setRegisterPhoneNumber('');
+        setRegisterName('');
+        setRegisterLastName('');
+        setRegisterEmail('');
+        setRegisterPassword('');
+        setOtpCode('');
+        setRegisterGuidId('');
+        setRegisterLoading(false);
+    };
+
+    const openRegisterFlow = (phoneNumberClean: string) => {
+        setRegisterPhoneNumber(phoneNumberClean);
+        setRegisterStep('form');
+        setOtpCode('');
+        setRegisterGuidId('');
+        setRegisterModalVisible(true);
+    };
+
+    const validatePassword = (password: string): boolean => {
+        if (!password || password.length <= 8) return false;
+
+        const hasUpperCase = /[A-Z]/.test(password);
+        const hasLowerCase = /[a-z]/.test(password);
+        const hasNumber = /[0-9]/.test(password);
+        const hasSpecial = /[^A-Za-z0-9]/.test(password);
+
+        return hasUpperCase && hasLowerCase && hasNumber && hasSpecial;
+    };
+
+    const validateRegisterForm = (): boolean => {
+        const name = registerName.trim();
+        const lastName = registerLastName.trim();
+        const email = registerEmail.trim();
+        const password = registerPassword;
+        const phoneNumberClean = registerPhoneNumber.replace(/\D/g, '');
+
+        if (!name) {
+            alertService.showAlert({
+                title: 'Thiếu thông tin',
+                message: 'Vui lòng nhập họ tên',
+                typeAlert: 'Error',
+                onConfirm: () => {},
+            });
+            return false;
+        }
+        if (!lastName) {
+            alertService.showAlert({
+                title: 'Thiếu thông tin',
+                message: 'Vui lòng nhập họ',
+                typeAlert: 'Error',
+                onConfirm: () => {},
+            });
+            return false;
+        }
+        if (phoneNumberClean.length !== 10) {
+            alertService.showAlert({
+                title: 'Thiếu thông tin',
+                message: 'Số điện thoại không hợp lệ',
+                typeAlert: 'Error',
+                onConfirm: () => {},
+            });
+            return false;
+        }
+        if (!email || !email.includes('@') || !email.includes('.')) {
+            alertService.showAlert({
+                title: 'Thiếu thông tin',
+                message: 'Vui lòng nhập email hợp lệ',
+                typeAlert: 'Error',
+                onConfirm: () => {},
+            });
+            return false;
+        }
+        if (!validatePassword(password)) {
+            alertService.showAlert({
+                title: 'Thiếu thông tin',
+                message:
+                    'Mật khẩu phải dài hơn 8 ký tự, bao gồm ít nhất 1 chữ hoa, 1 chữ thường, 1 số và 1 ký tự đặc biệt.',
+                typeAlert: 'Error',
+                onConfirm: () => {},
+            });
+            return false;
+        }
+        return true;
+    };
+
+    const handleCreateOTP = async () => {
+        if (!validateRegisterForm()) return;
+
+        try {
+            setRegisterLoading(true);
+
+            const payload = {
+                id: 0,
+                name: registerName.trim(),
+                lastName: registerLastName.trim(),
+                phoneNumber: registerPhoneNumber.replace(/\D/g, ''),
+                email: registerEmail.trim(),
+                dateOfBirth: 0,
+                monthOfBirth: 0,
+                yearOfBirth: 0,
+                gender: 0,
+                password: registerPassword,
+                description: '',
+                isClause: true,
+                avatarUrl: '',
+                otpCode: '',
+                guidId: '',
+            };
+
+            const res = await createOTPApi(payload);
+
+            const rawData = (res as any)?.data;
+            let parsedData: any = rawData;
+            if (typeof rawData === 'string') {
+                try {
+                    parsedData = JSON.parse(rawData);
+                } catch {
+                    parsedData = null;
+                }
+            }
+
+            const createdId =
+                parsedData?.id ??
+                (res as any)?.id ??
+                0;
+
+            if (!createdId) {
+                alertService.showAlert({
+                    title: 'Tạo tài khoản thất bại',
+                    message: 'Không lấy được mã xác thực. Vui lòng thử lại.',
+                    typeAlert: 'Error',
+                    onConfirm: () => {},
+                });
+                return;
+            }
+
+            setRegisterGuidId(String(createdId));
+            setOtpCode('');
+            setRegisterStep('otp');
+        } catch (error: any) {
+            alertService.showAlert({
+                title: 'Tạo tài khoản thất bại',
+                message: error?.message ?? 'Vui lòng thử lại.',
+                typeAlert: 'Error',
+                onConfirm: () => {},
+            });
+        } finally {
+            setRegisterLoading(false);
+        }
+    };
+
+    const handleConfirmOtp = async () => {
+        const otp = otpCode.replace(/\D/g, '').slice(0, 6);
+        if (otp.length !== 6) {
+            alertService.showAlert({
+                title: 'Mã OTP không hợp lệ',
+                message: 'Vui lòng nhập đúng 6 số OTP.',
+                typeAlert: 'Error',
+                onConfirm: () => {},
+            });
+            return;
+        }
+        try {
+            setRegisterLoading(true);
+
+            const createdId = Number(registerGuidId) || 0;
+
+            const payload = {
+                id: createdId,
+                name: registerName.trim(),
+                lastName: registerLastName.trim(),
+                phoneNumber: registerPhoneNumber.replace(/\D/g, ''),
+                email: registerEmail.trim(),
+                dateOfBirth: 0,
+                monthOfBirth: 0,
+                yearOfBirth: 0,
+                gender: 0,
+                password: registerPassword,
+                description: '',
+                isClause: true,
+                avatarUrl: '',
+                otpCode: otp,
+                guidId: registerGuidId,
+            };
+
+            const phoneNumberClean = registerPhoneNumber.replace(/\D/g, '');
+            const tenantId = userInfo?.tenantId ?? 0;
+            await createAccountApi(payload);
+
+            resetRegisterFlow();
+
+            const checkinResponse = await postCheckinApi({
+                phoneNumber: phoneNumberClean,
+                tenantId,
+            });
+
+            const rawCheckinData = (checkinResponse as any)?.data;
+            let parsedCheckinData: any = rawCheckinData;
+            if (typeof rawCheckinData === 'string') {
+                try {
+                    parsedCheckinData = JSON.parse(rawCheckinData);
+                } catch {
+                    parsedCheckinData = {};
+                }
+            }
+
+            const checkinCode = String(parsedCheckinData?.code ?? (checkinResponse as any)?.code ?? '');
+            if (checkinCode === '-1001') {
+                alertService.showAlert({
+                    title: 'Chưa thể check-in',
+                    message: 'Vui lòng thử lại sau khi tạo tài khoản.',
+                    typeAlert: 'Error',
+                    onConfirm: () => {},
+                    onCancel: () => {setPhone('');},
+                });
+                return;
+            }
+
+            const point = parsedCheckinData?.point ?? 0;
+            const voucher = parsedCheckinData?.voucher ?? null;
+
+            const successMessageParts: string[] = [];
+            successMessageParts.push(t('checkin.successMessage'));
+            successMessageParts.push(`Điểm hiện tại: ${point}`);
+            if (voucher) {
+                successMessageParts.push(`Voucher: ${voucher}`);
+            }
+
+            alertService.showAlert({
+                title: t('checkin.successTitle'),
+                message: successMessageParts.join('\n'),
+                typeAlert: 'Confirm',
+                onConfirm: () => {},
+            });
+        } catch (error: any) {
+            alertService.showAlert({
+                title: 'Xác thực OTP thất bại',
+                message: error?.message ?? 'Vui lòng thử lại.',
+                typeAlert: 'Error',
+                onConfirm: () => {},
+            });
+        } finally {
+            setRegisterLoading(false);
+        }
+    };
+
     const handleCheckin = async () => {
         if (phone.replace(/\D/g, '').length === 10) {
             try {
                 setLoading(true);
+                const phoneNumberClean = phone.replace(/\D/g, '');
                 const data = {
-                    phoneNumber: phone.replace(/\D/g, ''),
+                    phoneNumber: phoneNumberClean,
+                    tenantId: userInfo?.tenantId ?? 0,
                 };
                 const response = await postCheckinApi(data);
-                console.log("response", response);
-                if (response) {
-                    alertService.showAlert({
-                        title: t('checkin.successTitle'),
-                        message: t('checkin.successMessage'),
-                        typeAlert: 'Confirm',
-                        onConfirm: () => {},
-                    });
+
+                const rawData = (response as any)?.data;
+                let parsedData: any = rawData;
+                if (typeof rawData === 'string') {
+                    try {
+                        parsedData = JSON.parse(rawData);
+                    } catch {
+                        parsedData = {};
+                    }
                 }
+
+                const code = String(parsedData?.code ?? (response as any)?.code ?? '');
+                if (code === '-1001') {
+                    alertService.showAlert({
+                        title: 'Chưa tạo tài khoản',
+                        message: 'Bạn có muốn tạo tài khoản trước khi check-in?',
+                        typeAlert: 'Warning',
+                        okText: 'Đồng ý',
+                        cancelText: 'Từ chối',
+                        onConfirm: () => openRegisterFlow(phoneNumberClean),
+                        onCancel: () => {setPhone('');},
+                    });
+                    return;
+                }
+
+                const point = parsedData?.point ?? 0;
+                const voucher = parsedData?.voucher ?? null;
+
+                const successMessageParts: string[] = [];
+                successMessageParts.push(t('checkin.successMessage'));
+                successMessageParts.push(`Điểm hiện tại: ${point}`);
+                if (voucher) {
+                    successMessageParts.push(`Voucher: ${voucher}`);
+                }
+
+                alertService.showAlert({
+                    title: t('checkin.successTitle'),
+                    message: successMessageParts.join('\n'),
+                    typeAlert: 'Confirm',
+                    onConfirm: () => {},
+                });
+                setPhone('');
             } catch (error: any) {
                 alertService.showAlert({
                     title: t('checkin.errorTitle'),
@@ -326,7 +624,163 @@ const CheckinScreen = ({ navigation }: RootScreenProps<Paths.Checkin>) => {
                 </View>
             </ScrollView>
 
-            <Loader loading={loading} title={t('loading.processing')} />
+            <Modal
+                visible={registerModalVisible}
+                transparent
+                animationType="slide"
+                onRequestClose={resetRegisterFlow}
+            >
+                <KeyboardAvoidingView
+                    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                    style={styles.modalKeyboardAvoiding}
+                >
+                    <TouchableWithoutFeedback onPress={resetRegisterFlow}>
+                        <View style={styles.modalBackdrop} />
+                    </TouchableWithoutFeedback>
+
+                    <View style={styles.modalSheetContainer}>
+                        <View style={styles.modalSheet}>
+                            <View style={styles.modalHeader}>
+                                <TextFieldLabel style={styles.modalTitle}>
+                                    {registerStep === 'form' ? 'Tạo tài khoản' : 'Nhập mã OTP'}
+                                </TextFieldLabel>
+                                <TouchableOpacity
+                                    onPress={resetRegisterFlow}
+                                    style={styles.modalCloseButton}
+                                >
+                                    <TextFieldLabel style={styles.modalCloseText}>X</TextFieldLabel>
+                                </TouchableOpacity>
+                            </View>
+
+                            {registerStep === 'form' ? (
+                                <ScrollView
+                                    style={styles.modalScroll}
+                                    contentContainerStyle={styles.modalScrollContent}
+                                    showsVerticalScrollIndicator={false}
+                                >
+                                    <View style={styles.modalBody}>
+                                        <TextField
+                                            label="Họ"
+                                            placeholder="Nhập họ"
+                                            value={registerLastName}
+                                            onChangeText={setRegisterLastName}
+                                        />
+                                        <TextField
+                                            label="Tên"
+                                            placeholder="Nhập tên"
+                                            value={registerName}
+                                            onChangeText={setRegisterName}
+                                        />
+                                        <TextField
+                                            label="Số điện thoại"
+                                            value={registerPhoneNumber}
+                                            keyboardType="phone-pad"
+                                            status="disabled"
+                                        />
+                                        <TextField
+                                            label="Email"
+                                            placeholder="Nhập email"
+                                            autoCapitalize="none"
+                                            keyboardType="email-address"
+                                            value={registerEmail}
+                                            onChangeText={setRegisterEmail}
+                                        />
+                                    <TextField
+                                        label="Mật khẩu"
+                                        placeholder="Nhập mật khẩu"
+                                        secureTextEntry={!showRegisterPassword}
+                                        autoCapitalize="none"
+                                        value={registerPassword}
+                                        onChangeText={setRegisterPassword}
+                                        RightAccessory={({
+                                            style,
+                                            editable,
+                                        }: TextFieldAccessoryProps) => (
+                                            <TouchableOpacity
+                                                activeOpacity={0.7}
+                                                style={style}
+                                                disabled={!editable}
+                                                onPress={() => setShowRegisterPassword((prev) => !prev)}
+                                            >
+                                                {showRegisterPassword ? (
+                                                    <EyeOff
+                                                        size={18}
+                                                        color={editable ? colors.text : colors.placeholderTextColor}
+                                                    />
+                                                ) : (
+                                                    <Eye
+                                                        size={18}
+                                                        color={editable ? colors.text : colors.placeholderTextColor}
+                                                    />
+                                                )}
+                                            </TouchableOpacity>
+                                        )}
+                                    />
+
+                                        <View style={styles.modalFooter}>
+                                            <Button
+                                                preset="filled"
+                                                text="Xác nhận"
+                                                disabled={registerLoading}
+                                                style={styles.confirmButton}
+                                                textStyle={styles.confirmButtonText}
+                                                pressedStyle={styles.confirmButtonPressed}
+                                                disabledStyle={styles.confirmButtonDisabled}
+                                                disabledTextStyle={styles.confirmButtonDisabledText}
+                                                onPress={handleCreateOTP}
+                                            />
+                                        </View>
+                                    </View>
+                                </ScrollView>
+                            ) : (
+                                <View style={styles.modalBody}>
+                                    <TextFieldLabel style={styles.otpInfoText}>
+                                        Mã OTP đã được gửi tới {registerPhoneNumber}.
+                                    </TextFieldLabel>
+
+                                    <TextField
+                                        label="Mã OTP"
+                                        placeholder="Nhập 6 số"
+                                        keyboardType="number-pad"
+                                        value={otpCode}
+                                        onChangeText={(text) =>
+                                            setOtpCode(text.replace(/\D/g, '').slice(0, 6))
+                                        }
+                                        maxLength={6}
+                                    />
+
+                                    <View style={styles.modalFooter}>
+                                        <Button
+                                            preset="filled"
+                                            text="Xác nhận"
+                                            disabled={registerLoading || otpCode.replace(/\D/g, '').length !== 6}
+                                            style={styles.confirmButton}
+                                            textStyle={styles.confirmButtonText}
+                                            pressedStyle={styles.confirmButtonPressed}
+                                            disabledStyle={styles.confirmButtonDisabled}
+                                            disabledTextStyle={styles.confirmButtonDisabledText}
+                                            onPress={handleConfirmOtp}
+                                        />
+                                        <View style={styles.modalFooterSecondary}>
+                                            <Button
+                                                preset="default"
+                                                text="Quay lại"
+                                                disabled={registerLoading}
+                                                onPress={() => {
+                                                    setRegisterStep('form');
+                                                    setOtpCode('');
+                                                }}
+                                            />
+                                        </View>
+                                    </View>
+                                </View>
+                            )}
+                        </View>
+                    </View>
+                </KeyboardAvoidingView>
+            </Modal>
+
+            <Loader loading={loading || registerLoading} title={t('loading.processing')} />
         </SafeAreaView>
     );
 };
@@ -580,7 +1034,116 @@ const $styles = (colors: Colors, isTablet: boolean, screenWidth: number, isSmall
             color: colors.text,
             lineHeight: 20,
             gap: 10,
-        }
+        },
+        // Modal styles
+        modalKeyboardAvoiding: {
+            flex: 1,
+            justifyContent: 'flex-end',
+        },
+        modalBackdrop: {
+            ...StyleSheet.absoluteFillObject,
+            backgroundColor: 'rgba(0,0,0,0.4)',
+        },
+        modalSheetContainer: {
+            width: '100%',
+            alignItems: 'center',
+            paddingHorizontal: basePadding,
+            paddingBottom: isSmallScreen ? 6 : 12,
+        },
+        modalSheet: {
+            backgroundColor: colors.background,
+            paddingTop: 16,
+            paddingBottom: 20,
+            paddingHorizontal: basePadding,
+            borderRadius: 20,
+            width: '100%',
+            height: isSmallScreen ? '88%' : '92%',
+            shadowColor: '#000',
+            shadowOpacity: 0.25,
+            shadowRadius: 12,
+            shadowOffset: { width: 0, height: -4 },
+            elevation: 8,
+            overflow: 'hidden',
+        },
+        modalHeader: {
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: 12,
+        },
+        modalTitle: {
+            fontSize: 18,
+            fontWeight: '700',
+            color: colors.text,
+        },
+        modalCloseButton: {
+            width: 36,
+            height: 36,
+            borderRadius: 18,
+            borderWidth: 1,
+            borderColor: colors.border,
+            justifyContent: 'center',
+            alignItems: 'center',
+        },
+        modalCloseText: {
+            fontSize: 14,
+            fontWeight: '700',
+            color: colors.text,
+        },
+        modalBody: {
+            gap: 12,
+        },
+        modalScroll: {
+            flex: 1,
+        },
+        modalScrollContent: {
+            paddingBottom: 8,
+            flexGrow: 1,
+        },
+        otpInfoText: {
+            fontSize: 13,
+            color: colors.text,
+            opacity: 0.9,
+            lineHeight: 18,
+            marginBottom: 2,
+        },
+        modalFooter: {
+            marginTop: 12,
+            gap: 10,
+        },
+        confirmButton: {
+            width: '100%',
+            backgroundColor: colors.primary,
+            borderRadius: 16,
+            minHeight: 60,
+            paddingHorizontal: isSmallScreen ? 14 : 18,
+            paddingVertical: isSmallScreen ? 14 : 16,
+            shadowColor: '#000',
+            shadowOpacity: 0.18,
+            shadowRadius: 8,
+            shadowOffset: { width: 0, height: 4 },
+            elevation: 3,
+        },
+        confirmButtonText: {
+            color: colors.white,
+            fontSize: isSmallScreen ? 15 : 16,
+            lineHeight: 20,
+        },
+        confirmButtonPressed: {
+            opacity: 0.9,
+        },
+        confirmButtonDisabled: {
+            backgroundColor: colors.backgroundDisabled,
+            shadowOpacity: 0,
+            elevation: 0,
+        },
+        confirmButtonDisabledText: {
+            color: colors.placeholderTextColor,
+            opacity: 0.9,
+        },
+        modalFooterSecondary: {
+            marginTop: 6,
+        },
     });
 };
 
