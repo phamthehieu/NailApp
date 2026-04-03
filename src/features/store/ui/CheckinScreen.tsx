@@ -12,7 +12,6 @@ import Loader from '@/shared/ui/Loader';
 import { TextField, TextFieldAccessoryProps } from '@/shared/ui/TextField';
 import { Button } from '@/shared/ui/Button';
 import { Check, Eye, EyeOff, LogIn } from 'lucide-react-native';
-import Keychain from 'react-native-keychain';
 import { postCheckinApi } from '../api/storeApi';
 import { alertService } from '@/services/alertService';
 import { RootState, useAppDispatch } from '@/app/store';
@@ -147,8 +146,8 @@ const CheckinScreen = ({ navigation }: RootScreenProps<Paths.Checkin>) => {
 
         if (!name) {
             alertService.showAlert({
-                title: 'Thiếu thông tin',
-                message: 'Vui lòng nhập họ tên',
+                title: t('checkin.missingInfoTitle'),
+                message: t('checkin.missingFullNameMessage'),
                 typeAlert: 'Error',
                 onConfirm: () => {},
             });
@@ -156,8 +155,8 @@ const CheckinScreen = ({ navigation }: RootScreenProps<Paths.Checkin>) => {
         }
         if (!lastName) {
             alertService.showAlert({
-                title: 'Thiếu thông tin',
-                message: 'Vui lòng nhập họ',
+                title: t('checkin.missingInfoTitle'),
+                message: t('checkin.missingLastNameMessage'),
                 typeAlert: 'Error',
                 onConfirm: () => {},
             });
@@ -165,8 +164,8 @@ const CheckinScreen = ({ navigation }: RootScreenProps<Paths.Checkin>) => {
         }
         if (phoneNumberClean.length !== 10) {
             alertService.showAlert({
-                title: 'Thiếu thông tin',
-                message: 'Số điện thoại không hợp lệ',
+                title: t('checkin.missingInfoTitle'),
+                message: t('checkin.invalidPhoneMessage'),
                 typeAlert: 'Error',
                 onConfirm: () => {},
             });
@@ -174,8 +173,8 @@ const CheckinScreen = ({ navigation }: RootScreenProps<Paths.Checkin>) => {
         }
         if (!email || !email.includes('@') || !email.includes('.')) {
             alertService.showAlert({
-                title: 'Thiếu thông tin',
-                message: 'Vui lòng nhập email hợp lệ',
+                title: t('checkin.missingInfoTitle'),
+                message: t('checkin.invalidEmailMessage'),
                 typeAlert: 'Error',
                 onConfirm: () => {},
             });
@@ -183,9 +182,8 @@ const CheckinScreen = ({ navigation }: RootScreenProps<Paths.Checkin>) => {
         }
         if (!validatePassword(password)) {
             alertService.showAlert({
-                title: 'Thiếu thông tin',
-                message:
-                    'Mật khẩu phải dài hơn 8 ký tự, bao gồm ít nhất 1 chữ hoa, 1 chữ thường, 1 số và 1 ký tự đặc biệt.',
+                title: t('checkin.missingInfoTitle'),
+                message: t('checkin.invalidPasswordMessage'),
                 typeAlert: 'Error',
                 onConfirm: () => {},
             });
@@ -237,8 +235,8 @@ const CheckinScreen = ({ navigation }: RootScreenProps<Paths.Checkin>) => {
 
             if (!createdId) {
                 alertService.showAlert({
-                    title: 'Tạo tài khoản thất bại',
-                    message: 'Không lấy được mã xác thực. Vui lòng thử lại.',
+                    title: t('checkin.createAccountErrorTitle'),
+                    message: t('checkin.createAccountNoOtpMessage'),
                     typeAlert: 'Error',
                     onConfirm: () => {},
                 });
@@ -250,8 +248,8 @@ const CheckinScreen = ({ navigation }: RootScreenProps<Paths.Checkin>) => {
             setRegisterStep('otp');
         } catch (error: any) {
             alertService.showAlert({
-                title: 'Tạo tài khoản thất bại',
-                message: error?.message ?? 'Vui lòng thử lại.',
+                title: t('checkin.createAccountErrorTitle'),
+                message: error?.message ?? t('checkin.tryAgainMessage'),
                 typeAlert: 'Error',
                 onConfirm: () => {},
             });
@@ -264,8 +262,8 @@ const CheckinScreen = ({ navigation }: RootScreenProps<Paths.Checkin>) => {
         const otp = otpCode.replace(/\D/g, '').slice(0, 6);
         if (otp.length !== 6) {
             alertService.showAlert({
-                title: 'Mã OTP không hợp lệ',
-                message: 'Vui lòng nhập đúng 6 số OTP.',
+                title: t('checkin.invalidOtpTitle'),
+                message: t('checkin.invalidOtpMessage'),
                 typeAlert: 'Error',
                 onConfirm: () => {},
             });
@@ -318,8 +316,8 @@ const CheckinScreen = ({ navigation }: RootScreenProps<Paths.Checkin>) => {
             const checkinCode = String(parsedCheckinData?.code ?? (checkinResponse as any)?.code ?? '');
             if (checkinCode === '-1001') {
                 alertService.showAlert({
-                    title: 'Chưa thể check-in',
-                    message: 'Vui lòng thử lại sau khi tạo tài khoản.',
+                    title: t('checkin.cannotCheckinTitle'),
+                    message: t('checkin.cannotCheckinMessage'),
                     typeAlert: 'Error',
                     onConfirm: () => {},
                     onCancel: () => {setPhone('');},
@@ -332,9 +330,13 @@ const CheckinScreen = ({ navigation }: RootScreenProps<Paths.Checkin>) => {
 
             const successMessageParts: string[] = [];
             successMessageParts.push(t('checkin.successMessage'));
-            successMessageParts.push(`Điểm hiện tại: ${point}`);
+            successMessageParts.push(
+                t('checkin.currentPointLabel', { point }),
+            );
             if (voucher) {
-                successMessageParts.push(`Voucher: ${voucher}`);
+                successMessageParts.push(
+                    t('checkin.voucherLabel', { voucher }),
+                );
             }
 
             alertService.showAlert({
@@ -345,8 +347,8 @@ const CheckinScreen = ({ navigation }: RootScreenProps<Paths.Checkin>) => {
             });
         } catch (error: any) {
             alertService.showAlert({
-                title: 'Xác thực OTP thất bại',
-                message: error?.message ?? 'Vui lòng thử lại.',
+                title: t('checkin.otpErrorTitle'),
+                message: error?.message ?? t('checkin.tryAgainMessage'),
                 typeAlert: 'Error',
                 onConfirm: () => {},
             });
@@ -379,11 +381,11 @@ const CheckinScreen = ({ navigation }: RootScreenProps<Paths.Checkin>) => {
                 const code = String(parsedData?.code ?? (response as any)?.code ?? '');
                 if (code === '-1001') {
                     alertService.showAlert({
-                        title: 'Chưa tạo tài khoản',
-                        message: 'Bạn có muốn tạo tài khoản trước khi check-in?',
+                        title: t('checkin.notCreatedAccountTitle'),
+                        message: t('checkin.notCreatedAccountMessage'),
                         typeAlert: 'Warning',
-                        okText: 'Đồng ý',
-                        cancelText: 'Từ chối',
+                        okText: t('checkin.createAccountOkText'),
+                        cancelText: t('checkin.createAccountCancelText'),
                         onConfirm: () => openRegisterFlow(phoneNumberClean),
                         onCancel: () => {setPhone('');},
                     });
@@ -395,9 +397,13 @@ const CheckinScreen = ({ navigation }: RootScreenProps<Paths.Checkin>) => {
 
                 const successMessageParts: string[] = [];
                 successMessageParts.push(t('checkin.successMessage'));
-                successMessageParts.push(`Điểm hiện tại: ${point}`);
+                successMessageParts.push(
+                    t('checkin.currentPointLabel', { point }),
+                );
                 if (voucher) {
-                    successMessageParts.push(`Voucher: ${voucher}`);
+                    successMessageParts.push(
+                        t('checkin.voucherLabel', { voucher }),
+                    );
                 }
 
                 alertService.showAlert({
@@ -642,7 +648,9 @@ const CheckinScreen = ({ navigation }: RootScreenProps<Paths.Checkin>) => {
                         <View style={styles.modalSheet}>
                             <View style={styles.modalHeader}>
                                 <TextFieldLabel style={styles.modalTitle}>
-                                    {registerStep === 'form' ? 'Tạo tài khoản' : 'Nhập mã OTP'}
+                                    {registerStep === 'form'
+                                        ? t('checkin.registerModalTitle')
+                                        : t('checkin.otpModalTitle')}
                                 </TextFieldLabel>
                                 <TouchableOpacity
                                     onPress={resetRegisterFlow}
@@ -660,34 +668,34 @@ const CheckinScreen = ({ navigation }: RootScreenProps<Paths.Checkin>) => {
                                 >
                                     <View style={styles.modalBody}>
                                         <TextField
-                                            label="Họ"
-                                            placeholder="Nhập họ"
+                                            label={t('checkin.lastNameLabel')}
+                                            placeholder={t('checkin.lastNamePlaceholder')}
                                             value={registerLastName}
                                             onChangeText={setRegisterLastName}
                                         />
                                         <TextField
-                                            label="Tên"
-                                            placeholder="Nhập tên"
+                                            label={t('checkin.firstNameLabel')}
+                                            placeholder={t('checkin.firstNamePlaceholder')}
                                             value={registerName}
                                             onChangeText={setRegisterName}
                                         />
                                         <TextField
-                                            label="Số điện thoại"
+                                            label={t('checkin.phoneLabel')}
                                             value={registerPhoneNumber}
                                             keyboardType="phone-pad"
                                             status="disabled"
                                         />
                                         <TextField
-                                            label="Email"
-                                            placeholder="Nhập email"
+                                            label={t('checkin.emailLabel')}
+                                            placeholder={t('checkin.emailPlaceholder')}
                                             autoCapitalize="none"
                                             keyboardType="email-address"
                                             value={registerEmail}
                                             onChangeText={setRegisterEmail}
                                         />
                                     <TextField
-                                        label="Mật khẩu"
-                                        placeholder="Nhập mật khẩu"
+                                        label={t('checkin.passwordLabel')}
+                                        placeholder={t('checkin.passwordPlaceholder')}
                                         secureTextEntry={!showRegisterPassword}
                                         autoCapitalize="none"
                                         value={registerPassword}
@@ -720,7 +728,7 @@ const CheckinScreen = ({ navigation }: RootScreenProps<Paths.Checkin>) => {
                                         <View style={styles.modalFooter}>
                                             <Button
                                                 preset="filled"
-                                                text="Xác nhận"
+                                                text={t('checkin.confirmButtonText')}
                                                 disabled={registerLoading}
                                                 style={styles.confirmButton}
                                                 textStyle={styles.confirmButtonText}
@@ -735,12 +743,12 @@ const CheckinScreen = ({ navigation }: RootScreenProps<Paths.Checkin>) => {
                             ) : (
                                 <View style={styles.modalBody}>
                                     <TextFieldLabel style={styles.otpInfoText}>
-                                        Mã OTP đã được gửi tới {registerPhoneNumber}.
+                                        {t('checkin.otpSentInfo', { phone: registerPhoneNumber })}
                                     </TextFieldLabel>
 
                                     <TextField
-                                        label="Mã OTP"
-                                        placeholder="Nhập 6 số"
+                                        label={t('checkin.otpLabel')}
+                                        placeholder={t('checkin.otpPlaceholder')}
                                         keyboardType="number-pad"
                                         value={otpCode}
                                         onChangeText={(text) =>
@@ -749,10 +757,10 @@ const CheckinScreen = ({ navigation }: RootScreenProps<Paths.Checkin>) => {
                                         maxLength={6}
                                     />
 
-                                    <View style={styles.modalFooter}>
+                                        <View style={styles.modalFooter}>
                                         <Button
                                             preset="filled"
-                                            text="Xác nhận"
+                                            text={t('checkin.confirmButtonText')}
                                             disabled={registerLoading || otpCode.replace(/\D/g, '').length !== 6}
                                             style={styles.confirmButton}
                                             textStyle={styles.confirmButtonText}
@@ -764,7 +772,7 @@ const CheckinScreen = ({ navigation }: RootScreenProps<Paths.Checkin>) => {
                                         <View style={styles.modalFooterSecondary}>
                                             <Button
                                                 preset="default"
-                                                text="Quay lại"
+                                                text={t('checkin.backButtonText')}
                                                 disabled={registerLoading}
                                                 onPress={() => {
                                                     setRegisterStep('form');
