@@ -43,6 +43,8 @@ const vi = {
     successMessage: 'Checkin thành công',
     currentPointLabel: 'Điểm hiện tại: {{point}}',
     voucherLabel: 'Voucher: {{voucher}}',
+    voucherListLabel: 'Danh sách voucher:',
+    voucherUnknownName: '(Không có tên)',
     missingInfoTitle: 'Thiếu thông tin',
     missingFullNameMessage: 'Vui lòng nhập họ tên',
     missingLastNameMessage: 'Vui lòng nhập họ',

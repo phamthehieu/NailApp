@@ -45,6 +45,8 @@ const en = {
     successMessage: 'Check-in successful',
     currentPointLabel: 'Current points: {{point}}',
     voucherLabel: 'Voucher: {{voucher}}',
+    voucherListLabel: 'Voucher list:',
+    voucherUnknownName: '(No name)',
     missingInfoTitle: 'Missing information',
     missingFullNameMessage: 'Please enter your first name',
     missingLastNameMessage: 'Please enter your last name',

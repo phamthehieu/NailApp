@@ -20,6 +20,55 @@ import { clearAuth } from '@/services/auth/authService';
 import { clearAuthState } from '@/features/auth/model/authSlice';
 import { createAccountApi, createOTPApi } from '@/features/auth/api/registerApi';
 
+type CheckinSuccessVoucher = {
+    name: string;
+    description: string;
+};
+
+/**
+ * Parse body check-in. `http.put` trả về thẳng JSON body (vd `{ point, vouchers }`);
+ * vẫn hỗ trợ wrapper có `data` string/object lồng nhau (tối đa vài lớp).
+ */
+const extractCheckinResult = (
+    response: unknown,
+): { code: string; point: number; vouchers: CheckinSuccessVoucher[] } => {
+    const root = response as any;
+    let node: any = response;
+
+    for (let i = 0; i < 4; i++) {
+        if (node == null || typeof node !== 'object') {
+            node = {};
+            break;
+        }
+        const inner = node.data;
+        if (typeof inner === 'string') {
+            try {
+                node = JSON.parse(inner);
+                continue;
+            } catch {
+                break;
+            }
+        }
+        if (inner && typeof inner === 'object') {
+            node = inner;
+            continue;
+        }
+        break;
+    }
+
+    const code = String(node?.code ?? root?.code ?? '');
+    const point = node?.point ?? 0;
+    const rawList = Array.isArray(node?.vouchers) ? node.vouchers : [];
+    const vouchers = rawList
+        .map((v: any) => ({
+            name: String(v?.name ?? '').trim(),
+            description: String(v?.description ?? '').trim(),
+        }))
+        .filter((v: CheckinSuccessVoucher) => v.name || v.description);
+
+    return { code, point, vouchers };
+};
+
 const CheckinScreen = ({ navigation }: RootScreenProps<Paths.Checkin>) => {
     const { theme: { colors } } = useAppTheme();
     const isTablet = useIsTablet();
@@ -41,8 +90,22 @@ const CheckinScreen = ({ navigation }: RootScreenProps<Paths.Checkin>) => {
     const [showRegisterPassword, setShowRegisterPassword] = useState(false);
     const [otpCode, setOtpCode] = useState('');
     const [registerGuidId, setRegisterGuidId] = useState('');
+    const [checkinSuccessModalVisible, setCheckinSuccessModalVisible] = useState(false);
+    const [checkinSuccessPoint, setCheckinSuccessPoint] = useState(0);
+    const [checkinSuccessVouchers, setCheckinSuccessVouchers] = useState<CheckinSuccessVoucher[]>([]);
     const dispatch = useAppDispatch();
     const userInfo = useSelector((state: RootState) => state.auth.userInfo);
+
+    const openCheckinSuccessModal = (point: number, vouchers: CheckinSuccessVoucher[]) => {
+        setCheckinSuccessPoint(point);
+        setCheckinSuccessVouchers(vouchers);
+        setCheckinSuccessModalVisible(true);
+    };
+
+    const closeCheckinSuccessModal = () => {
+        setCheckinSuccessModalVisible(false);
+        setCheckinSuccessVouchers([]);
+    };
 
     useEffect(() => {
         const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
@@ -303,17 +366,7 @@ const CheckinScreen = ({ navigation }: RootScreenProps<Paths.Checkin>) => {
                 tenantId,
             });
 
-            const rawCheckinData = (checkinResponse as any)?.data;
-            let parsedCheckinData: any = rawCheckinData;
-            if (typeof rawCheckinData === 'string') {
-                try {
-                    parsedCheckinData = JSON.parse(rawCheckinData);
-                } catch {
-                    parsedCheckinData = {};
-                }
-            }
-
-            const checkinCode = String(parsedCheckinData?.code ?? (checkinResponse as any)?.code ?? '');
+            const { code: checkinCode, point, vouchers } = extractCheckinResult(checkinResponse);
             if (checkinCode === '-1001') {
                 alertService.showAlert({
                     title: t('checkin.cannotCheckinTitle'),
@@ -325,26 +378,7 @@ const CheckinScreen = ({ navigation }: RootScreenProps<Paths.Checkin>) => {
                 return;
             }
 
-            const point = parsedCheckinData?.point ?? 0;
-            const voucher = parsedCheckinData?.voucher ?? null;
-
-            const successMessageParts: string[] = [];
-            successMessageParts.push(t('checkin.successMessage'));
-            successMessageParts.push(
-                t('checkin.currentPointLabel', { point }),
-            );
-            if (voucher) {
-                successMessageParts.push(
-                    t('checkin.voucherLabel', { voucher }),
-                );
-            }
-
-            alertService.showAlert({
-                title: t('checkin.successTitle'),
-                message: successMessageParts.join('\n'),
-                typeAlert: 'Confirm',
-                onConfirm: () => {},
-            });
+            openCheckinSuccessModal(point, vouchers);
         } catch (error: any) {
             alertService.showAlert({
                 title: t('checkin.otpErrorTitle'),
@@ -368,17 +402,7 @@ const CheckinScreen = ({ navigation }: RootScreenProps<Paths.Checkin>) => {
                 };
                 const response = await postCheckinApi(data);
 
-                const rawData = (response as any)?.data;
-                let parsedData: any = rawData;
-                if (typeof rawData === 'string') {
-                    try {
-                        parsedData = JSON.parse(rawData);
-                    } catch {
-                        parsedData = {};
-                    }
-                }
-
-                const code = String(parsedData?.code ?? (response as any)?.code ?? '');
+                const { code, point, vouchers } = extractCheckinResult(response);
                 if (code === '-1001') {
                     alertService.showAlert({
                         title: t('checkin.notCreatedAccountTitle'),
@@ -387,32 +411,13 @@ const CheckinScreen = ({ navigation }: RootScreenProps<Paths.Checkin>) => {
                         okText: t('checkin.createAccountOkText'),
                         cancelText: t('checkin.createAccountCancelText'),
                         onConfirm: () => openRegisterFlow(phoneNumberClean),
-                        onCancel: () => {setPhone('');},
+                        // onCancel: () => {setPhone('');},
                     });
                     return;
                 }
 
-                const point = parsedData?.point ?? 0;
-                const voucher = parsedData?.voucher ?? null;
-
-                const successMessageParts: string[] = [];
-                successMessageParts.push(t('checkin.successMessage'));
-                successMessageParts.push(
-                    t('checkin.currentPointLabel', { point }),
-                );
-                if (voucher) {
-                    successMessageParts.push(
-                        t('checkin.voucherLabel', { voucher }),
-                    );
-                }
-
-                alertService.showAlert({
-                    title: t('checkin.successTitle'),
-                    message: successMessageParts.join('\n'),
-                    typeAlert: 'Confirm',
-                    onConfirm: () => {},
-                });
-                setPhone('');
+                openCheckinSuccessModal(point, vouchers);
+                // setPhone('');
             } catch (error: any) {
                 alertService.showAlert({
                     title: t('checkin.errorTitle'),
@@ -788,6 +793,86 @@ const CheckinScreen = ({ navigation }: RootScreenProps<Paths.Checkin>) => {
                 </KeyboardAvoidingView>
             </Modal>
 
+            <Modal
+                visible={checkinSuccessModalVisible}
+                transparent
+                animationType="slide"
+                onRequestClose={closeCheckinSuccessModal}
+            >
+                <KeyboardAvoidingView
+                    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                    style={styles.modalKeyboardAvoiding}
+                >
+                    <TouchableWithoutFeedback onPress={closeCheckinSuccessModal}>
+                        <View style={styles.modalBackdrop} />
+                    </TouchableWithoutFeedback>
+
+                    <View style={styles.modalSheetContainer} pointerEvents="box-none">
+                        <View style={styles.checkinSuccessSheet}>
+                            <View style={styles.modalHeader}>
+                                <TextFieldLabel style={styles.modalTitle}>
+                                    {t('checkin.successTitle')}
+                                </TextFieldLabel>
+                                <TouchableOpacity
+                                    onPress={closeCheckinSuccessModal}
+                                    style={styles.modalCloseButton}
+                                >
+                                    <TextFieldLabel style={styles.modalCloseText}>X</TextFieldLabel>
+                                </TouchableOpacity>
+                            </View>
+
+                            <TextFieldLabel style={styles.checkinSuccessSummaryText}>
+                                {t('checkin.successMessage')}
+                            </TextFieldLabel>
+                            <TextFieldLabel style={styles.checkinSuccessSummaryText}>
+                                {t('checkin.currentPointLabel', { point: checkinSuccessPoint })}
+                            </TextFieldLabel>
+
+                            {checkinSuccessVouchers.length > 0 ? (
+                                <>
+                                    <TextFieldLabel style={styles.checkinSuccessSectionTitle}>
+                                        {t('checkin.voucherListLabel')}
+                                    </TextFieldLabel>
+                                    <ScrollView
+                                        style={styles.checkinSuccessVoucherScroll}
+                                        contentContainerStyle={styles.checkinSuccessVoucherScrollContent}
+                                        nestedScrollEnabled
+                                        showsVerticalScrollIndicator
+                                    >
+                                        {checkinSuccessVouchers.map((v, index) => (
+                                            <View
+                                                key={`checkin-voucher-${index}-${v.name}`}
+                                                style={styles.checkinSuccessVoucherRow}
+                                            >
+                                                <TextFieldLabel style={styles.checkinSuccessVoucherName}>
+                                                    {v.name || t('checkin.voucherUnknownName')}
+                                                </TextFieldLabel>
+                                                {v.description ? (
+                                                    <TextFieldLabel style={styles.checkinSuccessVoucherDesc}>
+                                                        {v.description}
+                                                    </TextFieldLabel>
+                                                ) : null}
+                                            </View>
+                                        ))}
+                                    </ScrollView>
+                                </>
+                            ) : null}
+
+                            <View style={styles.modalFooter}>
+                                <Button
+                                    preset="filled"
+                                    text={t('checkin.confirmButtonText')}
+                                    style={styles.confirmButton}
+                                    textStyle={styles.confirmButtonText}
+                                    pressedStyle={styles.confirmButtonPressed}
+                                    onPress={closeCheckinSuccessModal}
+                                />
+                            </View>
+                        </View>
+                    </View>
+                </KeyboardAvoidingView>
+            </Modal>
+
             <Loader loading={loading || registerLoading} title={t('loading.processing')} />
         </SafeAreaView>
     );
@@ -1151,6 +1236,63 @@ const $styles = (colors: Colors, isTablet: boolean, screenWidth: number, isSmall
         },
         modalFooterSecondary: {
             marginTop: 6,
+        },
+        checkinSuccessSheet: {
+            backgroundColor: colors.background,
+            paddingTop: 16,
+            paddingBottom: 20,
+            paddingHorizontal: basePadding,
+            borderRadius: 20,
+            width: '100%',
+            maxHeight: isSmallScreen ? '85%' : '80%',
+            shadowColor: '#000',
+            shadowOpacity: 0.25,
+            shadowRadius: 12,
+            shadowOffset: { width: 0, height: -4 },
+            elevation: 8,
+            overflow: 'hidden',
+        },
+        checkinSuccessSummaryText: {
+            fontSize: 14,
+            color: colors.text,
+            lineHeight: 20,
+            marginBottom: 4,
+            alignSelf: 'stretch',
+            textAlign: 'left',
+        },
+        checkinSuccessSectionTitle: {
+            fontSize: 15,
+            fontWeight: '700',
+            color: colors.text,
+            marginTop: 12,
+            marginBottom: 6,
+            alignSelf: 'stretch',
+            textAlign: 'left',
+        },
+        checkinSuccessVoucherScroll: {
+            maxHeight: isSmallScreen ? 260 : 340,
+        },
+        checkinSuccessVoucherScrollContent: {
+            paddingBottom: 8,
+        },
+        checkinSuccessVoucherRow: {
+            paddingVertical: 10,
+            borderBottomWidth: StyleSheet.hairlineWidth,
+            borderBottomColor: colors.border,
+        },
+        checkinSuccessVoucherName: {
+            fontSize: 15,
+            fontWeight: '700',
+            color: colors.text,
+            textAlign: 'left',
+        },
+        checkinSuccessVoucherDesc: {
+            fontSize: 13,
+            color: colors.text,
+            opacity: 0.85,
+            marginTop: 4,
+            lineHeight: 18,
+            textAlign: 'left',
         },
     });
 };
