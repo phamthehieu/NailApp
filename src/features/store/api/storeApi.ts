@@ -43,5 +43,5 @@ export interface PostCheckinRequest {
 }
 
 export async function postCheckinApi(data: PostCheckinRequest): Promise<any> {
-    return http.put<any>(`/BookingCustomer/CustomerCheckIn`, data);
+    return http.put<any>(`/BookingCustomer/CustomerCheckInWhenRegister`, data);
 }

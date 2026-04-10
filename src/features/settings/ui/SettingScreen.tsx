@@ -158,7 +158,7 @@ const SettingScreen = ({navigation}: RootScreenProps<Paths.Settings>) => {
                         </TouchableOpacity>
                         <View style={styles.rowDivider} />
 
-                        <TouchableOpacity
+                        {/* <TouchableOpacity
                             style={styles.row}
                             activeOpacity={0.7}
                             onPress={handleChangePassword}
@@ -166,7 +166,7 @@ const SettingScreen = ({navigation}: RootScreenProps<Paths.Settings>) => {
                             <TextFieldLabel style={styles.rowLabel}>{t('settings.changePassword')}</TextFieldLabel>
                             <ChevronRight size={isTablet ? 22 : 18} color={colors.placeholderTextColor} />
                         </TouchableOpacity>
-                        <View style={styles.rowDivider} />
+                        <View style={styles.rowDivider} /> */}
 
                         <Pressable style={styles.row} onPress={handleToggleTheme}>
                             <TextFieldLabel style={styles.rowLabel}>
@@ -187,12 +187,12 @@ const SettingScreen = ({navigation}: RootScreenProps<Paths.Settings>) => {
                             </TextFieldLabel>
                             <Pressable style={styles.languageToggle} onPress={handleToggleLanguage}>
                                 <TextFieldLabel style={styles.languageLabel}>
-                                    {getLanguageName(currentLanguage === 'vi' ? 'en' : 'vi')}
+                                    {getLanguageName(currentLanguage === 'vi' ? 'vi' : 'en')}
                                 </TextFieldLabel>
                                 <AutoImage
                                     source={currentLanguage === 'vi'
-                                        ? require('@assets/images/english.png')
-                                        : require('@assets/images/vietnam.png')}
+                                        ? require('@assets/images/vietnam.png')
+                                        : require('@assets/images/english.png')}
                                     style={styles.languageFlag}
                                     resizeMode="cover"
                                 />
@@ -201,11 +201,15 @@ const SettingScreen = ({navigation}: RootScreenProps<Paths.Settings>) => {
                     </View>
 
                     <View style={[styles.sectionCard, styles.logoutCard]}>
-                        <TouchableOpacity style={styles.row} activeOpacity={0.7} onPress={handleLogout}>
-                            <TextFieldLabel style={styles.rowLabel}>
+                        <TouchableOpacity
+                            style={styles.logoutButton}
+                            activeOpacity={0.7}
+                            onPress={handleLogout}
+                        >
+                            <LogOut size={isTablet ? 20 : 17} color={colors.white} />
+                            <TextFieldLabel style={styles.logoutLabel}>
                                 {t('settings.logOut')}
                             </TextFieldLabel>
-                            <LogOut size={isTablet ? 22 : 18} color={colors.white} />
                         </TouchableOpacity>
                     </View>
 
@@ -319,15 +323,28 @@ const $styles = (colors: Colors, isTablet: boolean) => {
             backgroundColor: 'rgba(0,0,0,0.08)',
         },
         logoutCard: {
-            paddingVertical: 0,
+            alignSelf: 'center',
             backgroundColor: colors.red,
-            borderRadius: isTablet ? 24 : 18,
+            borderRadius: isTablet ? 22 : 17,
             marginHorizontal: basePadding,
             marginTop: isTablet ? 28 : 24,
-            paddingHorizontal: isTablet ? 20 : 16,
+            paddingVertical: isTablet ? 14 : 11,
+            paddingHorizontal: isTablet ? 22 : 17,
+            shadowColor: '#1F2937',
+            shadowOpacity: 0.12,
+            shadowOffset: { width: 0, height: 8 },
+            shadowRadius: 12,
+            elevation: 8,
+        },
+        logoutButton: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: isTablet ? 10 : 8,
         },
         logoutLabel: {
             color: colors.white,
+            fontSize: isTablet ? 17 : 15,
             fontWeight: '600',
         },
         languageToggle: {

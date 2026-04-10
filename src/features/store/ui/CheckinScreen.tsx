@@ -2,11 +2,11 @@ import { Paths } from '@/app/providers/navigation/paths';
 import { RootScreenProps } from '@/app/providers/navigation/types';
 import { Colors, useAppTheme } from '@/shared/theme';
 import StatusBarComponent from '@/shared/ui/StatusBar';
-import { StyleSheet, Dimensions, View, TouchableOpacity, ScrollView, BackHandler, KeyboardAvoidingView, Platform, Modal, TouchableWithoutFeedback } from 'react-native';
+import { ActivityIndicator, StyleSheet, Dimensions, View, TouchableOpacity, ScrollView, BackHandler, KeyboardAvoidingView, Platform, Modal, TouchableWithoutFeedback } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useIsTablet } from '@/shared/lib/useIsTablet';
 import { useTranslation } from 'react-i18next';
-import { useState, useEffect } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { TextFieldLabel } from '@/shared/ui/Text';
 import Loader from '@/shared/ui/Loader';
 import { TextField, TextFieldAccessoryProps } from '@/shared/ui/TextField';
@@ -25,10 +25,6 @@ type CheckinSuccessVoucher = {
     description: string;
 };
 
-/**
- * Parse body check-in. `http.put` trả về thẳng JSON body (vd `{ point, vouchers }`);
- * vẫn hỗ trợ wrapper có `data` string/object lồng nhau (tối đa vài lớp).
- */
 const extractCheckinResult = (
     response: unknown,
 ): { code: string; point: number; vouchers: CheckinSuccessVoucher[] } => {
@@ -69,6 +65,11 @@ const extractCheckinResult = (
     return { code, point, vouchers };
 };
 
+const delayMs = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+
+/** Sau tạo tài khoản, chờ ~2–3s rồi mới check-in (server thường cần thời gian đồng bộ). Loader vẫn bật nhờ `registerLoading`. */
+const CHECKIN_DELAY_AFTER_REGISTER_MS = 2500;
+
 const CheckinScreen = ({ navigation }: RootScreenProps<Paths.Checkin>) => {
     const { theme: { colors } } = useAppTheme();
     const isTablet = useIsTablet();
@@ -87,14 +88,23 @@ const CheckinScreen = ({ navigation }: RootScreenProps<Paths.Checkin>) => {
     const [registerLastName, setRegisterLastName] = useState('');
     const [registerEmail, setRegisterEmail] = useState('');
     const [registerPassword, setRegisterPassword] = useState('');
+    const [registerConfirmPassword, setRegisterConfirmPassword] = useState('');
     const [showRegisterPassword, setShowRegisterPassword] = useState(false);
+    const [showRegisterConfirmPassword, setShowRegisterConfirmPassword] = useState(false);
     const [otpCode, setOtpCode] = useState('');
+    const [otpResendSecondsLeft, setOtpResendSecondsLeft] = useState(0);
     const [registerGuidId, setRegisterGuidId] = useState('');
     const [checkinSuccessModalVisible, setCheckinSuccessModalVisible] = useState(false);
     const [checkinSuccessPoint, setCheckinSuccessPoint] = useState(0);
     const [checkinSuccessVouchers, setCheckinSuccessVouchers] = useState<CheckinSuccessVoucher[]>([]);
     const dispatch = useAppDispatch();
     const userInfo = useSelector((state: RootState) => state.auth.userInfo);
+
+    const registerLastNameRef = useRef<any>(null);
+    const registerFirstNameRef = useRef<any>(null);
+    const registerEmailRef = useRef<any>(null);
+    const registerPasswordRef = useRef<any>(null);
+    const registerConfirmPasswordRef = useRef<any>(null);
 
     const openCheckinSuccessModal = (point: number, vouchers: CheckinSuccessVoucher[]) => {
         setCheckinSuccessPoint(point);
@@ -168,7 +178,7 @@ const CheckinScreen = ({ navigation }: RootScreenProps<Paths.Checkin>) => {
         setPhone(formatPhoneNumber(newPhone));
     };
 
-    const resetRegisterFlow = () => {
+    const resetRegisterFlow = (opts?: { preserveLoading?: boolean }) => {
         setRegisterModalVisible(false);
         setRegisterStep('form');
         setRegisterPhoneNumber('');
@@ -176,21 +186,53 @@ const CheckinScreen = ({ navigation }: RootScreenProps<Paths.Checkin>) => {
         setRegisterLastName('');
         setRegisterEmail('');
         setRegisterPassword('');
+        setRegisterConfirmPassword('');
+        setShowRegisterPassword(false);
+        setShowRegisterConfirmPassword(false);
         setOtpCode('');
+        setOtpResendSecondsLeft(0);
         setRegisterGuidId('');
-        setRegisterLoading(false);
+        if (!opts?.preserveLoading) {
+            setRegisterLoading(false);
+        }
     };
 
     const openRegisterFlow = (phoneNumberClean: string) => {
         setRegisterPhoneNumber(phoneNumberClean);
         setRegisterStep('form');
         setOtpCode('');
+        setOtpResendSecondsLeft(0);
         setRegisterGuidId('');
         setRegisterModalVisible(true);
     };
 
+    useEffect(() => {
+        if (!registerModalVisible || registerStep !== 'otp') return;
+
+        // Start (or restart) the resend countdown when entering OTP step
+        setOtpResendSecondsLeft(180);
+    }, [registerModalVisible, registerStep]);
+
+    useEffect(() => {
+        if (!registerModalVisible || registerStep !== 'otp') return;
+        if (otpResendSecondsLeft <= 0) return;
+
+        const timer = setInterval(() => {
+            setOtpResendSecondsLeft((s) => (s > 0 ? s - 1 : 0));
+        }, 1000);
+
+        return () => clearInterval(timer);
+    }, [registerModalVisible, registerStep, otpResendSecondsLeft]);
+
+    const formatCountdown = (totalSeconds: number) => {
+        const s = Math.max(0, Math.floor(totalSeconds));
+        const mm = String(Math.floor(s / 60)).padStart(2, '0');
+        const ss = String(s % 60).padStart(2, '0');
+        return `${mm}:${ss}`;
+    };
+
     const validatePassword = (password: string): boolean => {
-        if (!password || password.length <= 8) return false;
+        if (!password || password.length < 8) return false;
 
         const hasUpperCase = /[A-Z]/.test(password);
         const hasLowerCase = /[a-z]/.test(password);
@@ -205,6 +247,7 @@ const CheckinScreen = ({ navigation }: RootScreenProps<Paths.Checkin>) => {
         const lastName = registerLastName.trim();
         const email = registerEmail.trim();
         const password = registerPassword;
+        const confirmPassword = registerConfirmPassword;
         const phoneNumberClean = registerPhoneNumber.replace(/\D/g, '');
 
         if (!name) {
@@ -234,19 +277,19 @@ const CheckinScreen = ({ navigation }: RootScreenProps<Paths.Checkin>) => {
             });
             return false;
         }
-        if (!email || !email.includes('@') || !email.includes('.')) {
+        if (!validatePassword(password)) {
             alertService.showAlert({
                 title: t('checkin.missingInfoTitle'),
-                message: t('checkin.invalidEmailMessage'),
+                message: t('checkin.invalidPasswordMessage'),
                 typeAlert: 'Error',
                 onConfirm: () => {},
             });
             return false;
         }
-        if (!validatePassword(password)) {
+        if (!confirmPassword || password !== confirmPassword) {
             alertService.showAlert({
                 title: t('checkin.missingInfoTitle'),
-                message: t('checkin.invalidPasswordMessage'),
+                message: t('checkin.passwordMismatchMessage'),
                 typeAlert: 'Error',
                 onConfirm: () => {},
             });
@@ -276,7 +319,7 @@ const CheckinScreen = ({ navigation }: RootScreenProps<Paths.Checkin>) => {
                 isClause: true,
                 avatarUrl: '',
                 otpCode: '',
-                guidId: '',
+                guidId: "",
             };
 
             const res = await createOTPApi(payload);
@@ -352,20 +395,21 @@ const CheckinScreen = ({ navigation }: RootScreenProps<Paths.Checkin>) => {
                 isClause: true,
                 avatarUrl: '',
                 otpCode: otp,
-                guidId: registerGuidId,
+                guidId: "",
             };
 
             const phoneNumberClean = registerPhoneNumber.replace(/\D/g, '');
             const tenantId = userInfo?.tenantId ?? 0;
             await createAccountApi(payload);
 
-            resetRegisterFlow();
+            resetRegisterFlow({ preserveLoading: true });
+
+            await delayMs(CHECKIN_DELAY_AFTER_REGISTER_MS);
 
             const checkinResponse = await postCheckinApi({
                 phoneNumber: phoneNumberClean,
                 tenantId,
             });
-
             const { code: checkinCode, point, vouchers } = extractCheckinResult(checkinResponse);
             if (checkinCode === '-1001') {
                 alertService.showAlert({
@@ -379,6 +423,47 @@ const CheckinScreen = ({ navigation }: RootScreenProps<Paths.Checkin>) => {
             }
 
             openCheckinSuccessModal(point, vouchers);
+        } catch (error: any) {
+            alertService.showAlert({
+                title: t('checkin.otpErrorTitle'),
+                message: error?.message ?? t('checkin.tryAgainMessage'),
+                typeAlert: 'Error',
+                onConfirm: () => {},
+            });
+        } finally {
+            setRegisterLoading(false);
+        }
+    };
+
+    const handleResendOtp = async () => {
+        if (registerLoading) return;
+        if (otpResendSecondsLeft > 0) return;
+
+        try {
+            setRegisterLoading(true);
+
+            const createdId = Number(registerGuidId) || 0;
+            const payload = {
+                id: createdId,
+                name: registerName.trim(),
+                lastName: registerLastName.trim(),
+                phoneNumber: registerPhoneNumber.replace(/\D/g, ''),
+                email: registerEmail.trim(),
+                dateOfBirth: 0,
+                monthOfBirth: 0,
+                yearOfBirth: 0,
+                gender: 0,
+                password: registerPassword,
+                description: '',
+                isClause: true,
+                avatarUrl: '',
+                otpCode: '',
+                guidId: "",
+            };
+
+            await createOTPApi(payload);
+            setOtpCode('');
+            setOtpResendSecondsLeft(180);
         } catch (error: any) {
             alertService.showAlert({
                 title: t('checkin.otpErrorTitle'),
@@ -639,13 +724,13 @@ const CheckinScreen = ({ navigation }: RootScreenProps<Paths.Checkin>) => {
                 visible={registerModalVisible}
                 transparent
                 animationType="slide"
-                onRequestClose={resetRegisterFlow}
+                onRequestClose={() => resetRegisterFlow()}
             >
                 <KeyboardAvoidingView
                     behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                     style={styles.modalKeyboardAvoiding}
                 >
-                    <TouchableWithoutFeedback onPress={resetRegisterFlow}>
+                    <TouchableWithoutFeedback onPress={() => resetRegisterFlow()}>
                         <View style={styles.modalBackdrop} />
                     </TouchableWithoutFeedback>
 
@@ -658,7 +743,7 @@ const CheckinScreen = ({ navigation }: RootScreenProps<Paths.Checkin>) => {
                                         : t('checkin.otpModalTitle')}
                                 </TextFieldLabel>
                                 <TouchableOpacity
-                                    onPress={resetRegisterFlow}
+                                    onPress={() => resetRegisterFlow()}
                                     style={styles.modalCloseButton}
                                 >
                                     <TextFieldLabel style={styles.modalCloseText}>X</TextFieldLabel>
@@ -673,16 +758,24 @@ const CheckinScreen = ({ navigation }: RootScreenProps<Paths.Checkin>) => {
                                 >
                                     <View style={styles.modalBody}>
                                         <TextField
+                                            ref={registerLastNameRef}
                                             label={t('checkin.lastNameLabel')}
                                             placeholder={t('checkin.lastNamePlaceholder')}
                                             value={registerLastName}
                                             onChangeText={setRegisterLastName}
+                                            returnKeyType="next"
+                                            blurOnSubmit={false}
+                                            onSubmitEditing={() => registerFirstNameRef.current?.focus?.()}
                                         />
                                         <TextField
+                                            ref={registerFirstNameRef}
                                             label={t('checkin.firstNameLabel')}
                                             placeholder={t('checkin.firstNamePlaceholder')}
                                             value={registerName}
                                             onChangeText={setRegisterName}
+                                            returnKeyType="next"
+                                            blurOnSubmit={false}
+                                            onSubmitEditing={() => registerEmailRef.current?.focus?.()}
                                         />
                                         <TextField
                                             label={t('checkin.phoneLabel')}
@@ -691,20 +784,28 @@ const CheckinScreen = ({ navigation }: RootScreenProps<Paths.Checkin>) => {
                                             status="disabled"
                                         />
                                         <TextField
+                                            ref={registerEmailRef}
                                             label={t('checkin.emailLabel')}
                                             placeholder={t('checkin.emailPlaceholder')}
                                             autoCapitalize="none"
                                             keyboardType="email-address"
                                             value={registerEmail}
                                             onChangeText={setRegisterEmail}
+                                            returnKeyType="next"
+                                            blurOnSubmit={false}
+                                            onSubmitEditing={() => registerPasswordRef.current?.focus?.()}
                                         />
                                     <TextField
+                                        ref={registerPasswordRef}
                                         label={t('checkin.passwordLabel')}
                                         placeholder={t('checkin.passwordPlaceholder')}
                                         secureTextEntry={!showRegisterPassword}
                                         autoCapitalize="none"
                                         value={registerPassword}
                                         onChangeText={setRegisterPassword}
+                                        returnKeyType="next"
+                                        blurOnSubmit={false}
+                                        onSubmitEditing={() => registerConfirmPasswordRef.current?.focus?.()}
                                         RightAccessory={({
                                             style,
                                             editable,
@@ -730,6 +831,41 @@ const CheckinScreen = ({ navigation }: RootScreenProps<Paths.Checkin>) => {
                                         )}
                                     />
 
+                                    <TextField
+                                        ref={registerConfirmPasswordRef}
+                                        label={t('checkin.confirmPasswordLabel')}
+                                        placeholder={t('checkin.confirmPasswordPlaceholder')}
+                                        secureTextEntry={!showRegisterConfirmPassword}
+                                        autoCapitalize="none"
+                                        value={registerConfirmPassword}
+                                        onChangeText={setRegisterConfirmPassword}
+                                        returnKeyType="done"
+                                        onSubmitEditing={handleCreateOTP}
+                                        RightAccessory={({
+                                            style,
+                                            editable,
+                                        }: TextFieldAccessoryProps) => (
+                                            <TouchableOpacity
+                                                activeOpacity={0.7}
+                                                style={style}
+                                                disabled={!editable}
+                                                onPress={() => setShowRegisterConfirmPassword((prev) => !prev)}
+                                            >
+                                                {showRegisterConfirmPassword ? (
+                                                    <EyeOff
+                                                        size={18}
+                                                        color={editable ? colors.text : colors.placeholderTextColor}
+                                                    />
+                                                ) : (
+                                                    <Eye
+                                                        size={18}
+                                                        color={editable ? colors.text : colors.placeholderTextColor}
+                                                    />
+                                                )}
+                                            </TouchableOpacity>
+                                        )}
+                                    />
+
                                         <View style={styles.modalFooter}>
                                             <Button
                                                 preset="filled"
@@ -740,6 +876,13 @@ const CheckinScreen = ({ navigation }: RootScreenProps<Paths.Checkin>) => {
                                                 pressedStyle={styles.confirmButtonPressed}
                                                 disabledStyle={styles.confirmButtonDisabled}
                                                 disabledTextStyle={styles.confirmButtonDisabledText}
+                                                RightAccessory={({ style }: any) =>
+                                                    registerLoading ? (
+                                                        <View style={style}>
+                                                            <ActivityIndicator size="small" color={colors.text} />
+                                                        </View>
+                                                    ) : null
+                                                }
                                                 onPress={handleCreateOTP}
                                             />
                                         </View>
@@ -750,6 +893,33 @@ const CheckinScreen = ({ navigation }: RootScreenProps<Paths.Checkin>) => {
                                     <TextFieldLabel style={styles.otpInfoText}>
                                         {t('checkin.otpSentInfo', { phone: registerPhoneNumber })}
                                     </TextFieldLabel>
+
+                                    <View style={styles.otpResendRow}>
+                                        <TextFieldLabel style={styles.otpResendHint}>
+                                            {t('checkin.didNotReceiveOtp')}
+                                        </TextFieldLabel>
+                                        <TouchableOpacity
+                                            activeOpacity={0.8}
+                                            disabled={registerLoading || otpResendSecondsLeft > 0}
+                                            onPress={handleResendOtp}
+                                            style={[
+                                                styles.otpResendButton,
+                                                (registerLoading || otpResendSecondsLeft > 0) && styles.otpResendButtonDisabled,
+                                            ]}
+                                        >
+                                            <TextFieldLabel
+                                                style={[
+                                                    styles.otpResendButtonText,
+                                                    (registerLoading || otpResendSecondsLeft > 0) &&
+                                                        styles.otpResendButtonTextDisabled,
+                                                ]}
+                                            >
+                                                {otpResendSecondsLeft > 0
+                                                    ? t('checkin.resendOtpIn', { time: formatCountdown(otpResendSecondsLeft) })
+                                                    : t('checkin.resendOtpNow')}
+                                            </TextFieldLabel>
+                                        </TouchableOpacity>
+                                    </View>
 
                                     <TextField
                                         label={t('checkin.otpLabel')}
@@ -772,6 +942,13 @@ const CheckinScreen = ({ navigation }: RootScreenProps<Paths.Checkin>) => {
                                             pressedStyle={styles.confirmButtonPressed}
                                             disabledStyle={styles.confirmButtonDisabled}
                                             disabledTextStyle={styles.confirmButtonDisabledText}
+                                            RightAccessory={({ style }: any) =>
+                                                registerLoading ? (
+                                                    <View style={style}>
+                                                        <ActivityIndicator size="small" color={colors.text} />
+                                                    </View>
+                                                ) : null
+                                            }
                                             onPress={handleConfirmOtp}
                                         />
                                         <View style={styles.modalFooterSecondary}>
@@ -1199,6 +1376,38 @@ const $styles = (colors: Colors, isTablet: boolean, screenWidth: number, isSmall
             opacity: 0.9,
             lineHeight: 18,
             marginBottom: 2,
+        },
+        otpResendRow: {
+            marginTop: 6,
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 10,
+        },
+        otpResendHint: {
+            flex: 1,
+            fontSize: 12,
+            color: colors.text,
+            opacity: 0.8,
+        },
+        otpResendButton: {
+            paddingVertical: 8,
+            paddingHorizontal: 12,
+            borderRadius: 12,
+            backgroundColor: colors.background,
+            borderWidth: 1,
+            borderColor: colors.border,
+        },
+        otpResendButtonDisabled: {
+            opacity: 0.55,
+        },
+        otpResendButtonText: {
+            fontSize: 12,
+            fontWeight: '700',
+            color: colors.primary,
+        },
+        otpResendButtonTextDisabled: {
+            color: colors.placeholderTextColor,
         },
         modalFooter: {
             marginTop: 12,

@@ -160,11 +160,11 @@ const LoginScreen = ({ navigation }: RootScreenProps<Paths.Login>) => {
                                 const nextLanguage = currentLanguage === 'vi' ? 'en' : 'vi';
                                 changeLanguage(nextLanguage);
                             }}>
-                                <TextFieldLabel text={getLanguageName(currentLanguage === 'vi' ? 'en' : 'vi')} style={styles.headerFlagText} />
+                                <TextFieldLabel text={getLanguageName(currentLanguage === 'vi' ? 'vi' : 'en')} style={styles.headerFlagText} />
                                 <AutoImage
                                     source={currentLanguage === 'vi'
-                                        ? require('@assets/images/english.png')
-                                        : require('@assets/images/vietnam.png')}
+                                        ? require('@assets/images/vietnam.png')
+                                        : require('@assets/images/english.png')}
                                     style={styles.headerFlagImage}
                                     resizeMode="cover"
                                 />
